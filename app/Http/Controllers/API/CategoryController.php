@@ -8,18 +8,47 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    // Lấy tất cả danh mục
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::with('children')->whereNull('parent_id')->get();
-        return response()->json($categories);
+        $perPage = $request->query('per_page', 10); 
+        $currentPage = $request->query('current_page', 1); 
+
+        $categories = Category::with('children')->whereNull('parent_id')->paginate($perPage, ['*'], 'page', $currentPage);
+       
+        return response()->json([
+            'success' => true,
+            'message' => 'Category list fetched successfully',
+            // 'data' => [
+                'categories' => $categories->items(),
+                'meta' => [
+                    'total' => $categories->total(),
+                    'per_page' => $categories->perPage(),
+                    'current_page' => $categories->currentPage(),
+                    'last_page' => $categories->lastPage(),
+                ],
+            // ],
+            'errors' => null,
+        ]);
     }
 
     // Lấy danh mục theo ID
     public function show($id)
     {
         $category = Category::with('children')->findOrFail($id);
-        return response()->json($category);
+        return response()->json([
+            'success' => true,
+            'message' => 'Category list fetched successfully',
+            'data' => [
+                'categories' => $categories->items(),
+                'pagination' => [
+                    'total' => $categories->total(),
+                    'per_page' => $categories->perPage(),
+                    'current_page' => $categories->currentPage(),
+                    'last_page' => $categories->lastPage(),
+                ],
+            ],
+            'errors' => null,
+        ]);
     }
 
     // Tạo danh mục mới
