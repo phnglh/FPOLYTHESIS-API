@@ -8,8 +8,6 @@ use App\Http\Controllers\API\CategoryController;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Controllers\API\ProductController;
 
-Route::apiResource('products', ProductController::class);
-Route::apiResource('product-variants', ProductVariantController::class);
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');

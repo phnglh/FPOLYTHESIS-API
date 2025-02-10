@@ -10,8 +10,8 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $perPage = $request->query('per_page', 10);
-        $currentPage = $request->query('current_page', 1);
+        $perPage = $request->query('per_page', 10); 
+        $currentPage = $request->query('current_page', 1); 
 
         $products = Product::with('category')
             ->paginate($perPage, ['*'], 'page', $currentPage);
@@ -30,22 +30,5 @@ class ProductController extends Controller
             ],
             'errors' => null,
         ]);
-    }
-    public function show($id)
-    {
-        return Product::findOrFail($id);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $product = Product::findOrFail($id);
-        $product->update($request->all());
-        return response()->json($product, 200);
-    }
-
-    public function destroy($id)
-    {
-        Product::destroy($id);
-        return response()->json(null, 204);
     }
 }

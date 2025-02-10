@@ -10,8 +10,8 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $perPage = $request->query('per_page', 10);
-        $currentPage = $request->query('current_page', 1);
+        $perPage = $request->query('per_page', 10); 
+        $currentPage = $request->query('current_page', 1); 
 
         $products = Product::with('category')
             ->paginate($perPage, ['*'], 'page', $currentPage);
