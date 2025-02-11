@@ -8,25 +8,25 @@ class ProductVariantController extends Controller
 {
     public function index()
     {
-        return response()->json(ProductVariant::with('product')->get());
+        return ProductVariant::all();
     }
 
     public function store(Request $request)
     {
-        $variant = ProductVariant::create($request->all());
-        return response()->json($variant, 201);
+        $productVariant = ProductVariant::create($request->all());
+        return response()->json($productVariant, 201);
     }
 
     public function show($id)
     {
-        return response()->json(ProductVariant::with('product')->findOrFail($id));
+        return ProductVariant::findOrFail($id);
     }
 
     public function update(Request $request, $id)
     {
-        $variant = ProductVariant::findOrFail($id);
-        $variant->update($request->all());
-        return response()->json($variant);
+        $productVariant = ProductVariant::findOrFail($id);
+        $productVariant->update($request->all());
+        return response()->json($productVariant, 200);
     }
 
     public function destroy($id)
