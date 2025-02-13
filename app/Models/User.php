@@ -19,9 +19,12 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
+       'name',
         'email',
         'password',
+        'phone',
+        'address',
+        'role',
     ];
 
     /**
@@ -34,6 +37,14 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    public function isAdmin(){
+        return $this->role === 'admin';
+    }
+
+    public function isCustomer(){
+        return $this->role === 'customer';
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -42,8 +53,19 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            'role' => 'string',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function getRoleAttribute()
+    {
+        return $this->attributes['role'];
     }
 }
