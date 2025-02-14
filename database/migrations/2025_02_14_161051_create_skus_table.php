@@ -9,23 +9,23 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
-{
-    Schema::create('product_variants', function (Blueprint $table) {
+    public function up(): void
+    {
+        Schema::create('Skus', function (Blueprint $table) {
         $table->id();
-        $table->foreignId('product_id')->constrained()->onDelete('cascade');
-        $table->string('sku')->unique()->nullable();
+        $table->string('sku')->comment('The actual alpha-numeric SKU code');
+        $table->foreignId('productId')->constrained('Products')->cascadeOnDelete();
         $table->decimal('price', 10, 2);
         $table->integer('stock');
         $table->timestamps();
-    });
-}
+        });
+    }
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('product_variants');
+        Schema::dropIfExists('Skus');
     }
 };

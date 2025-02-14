@@ -31,6 +31,13 @@ class ProductController extends Controller
             'errors' => null,
         ]);
     }
+
+    public function store(Request $request)
+    {
+        $product = Product::create($request->all());
+        return response()->json($product, 201);
+    }
+
     public function show($id)
     {
         return Product::findOrFail($id);

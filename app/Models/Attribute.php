@@ -5,16 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Brand extends Model
+class Attribute extends Model
 {
     use HasFactory;
 
-    protected $table = 'Brands';
+    protected $table = 'Attributes';
 
     protected $fillable = [
         'name',
-        'description',
-        'slug',
-        'imageUrl',
     ];
+
+    public function values()
+    {
+        return $this->hasMany(AttributeSku::class, 'attributeId');
+    }
+
 }

@@ -7,9 +7,9 @@ use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Controllers\API\ProductController;
+use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\ProductVariantController;
 
-Route::apiResource('products', ProductController::class);
-Route::apiResource('product-variants', ProductVariantController::class);
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
@@ -23,7 +23,10 @@ Route::post('login', [AuthController::class, 'login'])->name('login');
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{id}', [CategoryController::class, 'show']);
 
-Route::get('/products', [ProductController::class, 'index']);
+// Route::get('/products', [ProductController::class, 'index']);
+// Route::post('/products', [ProductController::class, 'store']);
+Route::apiResource('products', ProductController::class);
+Route::apiResource('product-variants', ProductVariantController::class);
 
 Route::middleware('auth:sanctum')->get('/check-user', function (Request $request) {
     return response()->json($request->user());
