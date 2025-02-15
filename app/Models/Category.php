@@ -10,7 +10,7 @@ class Category extends Model
 {
     use HasFactory;
 
-    protected $table = 'Categories';
+    protected $table = 'categories';
 
     protected $fillable = [
         'name',

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AttributeSku extends Model
 {
-    protected $table = 'AttributeSku';
+    protected $table = 'attribute_skus';
 
     protected $fillable = [
         'skuId',

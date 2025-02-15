@@ -5,16 +5,23 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
+use App\Services\ProductService;
 
 class ProductController extends Controller
 {
+    protected $productService;
+
+    public function __construct(ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
+
     public function index(Request $request)
     {
         $perPage = $request->query('per_page', 10);
         $currentPage = $request->query('current_page', 1);
 
-        $products = Product::with('category')
-            ->paginate($perPage, ['*'], 'page', $currentPage);
+        $products = $this->productService->getProducts($perPage, $currentPage);
 
         return response()->json([
             'success' => true,

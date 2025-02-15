@@ -9,7 +9,7 @@ class Sku extends Model
 {
     use HasFactory;
 
-    protected $table = 'Skus';
+    protected $table = 'skus';
 
     protected $fillable = [
         'productId',

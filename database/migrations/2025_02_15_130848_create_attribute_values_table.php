@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('AttributeSkus', function (Blueprint $table) {
-            $table->primary(['attributeId', 'skuId']);
-            $table->foreignId('attributeId')->constrained('Attributes')->cascadeOnDelete();
-            $table->foreignId('skuId')->constrained('Skus')->cascadeOnDelete();
+        Schema::create('attribute_values', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('attributeId')->constrained('attributes')->cascadeOnDelete();
             $table->string('value')->comment('The value for this SKU and attribute combination, i.e. Small, Red, etc.');
+            $table->timestamps();
         });
+
     }
 
     /**
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('AttributeSkus');
+        Schema::dropIfExists('attribute_values');
     }
 };

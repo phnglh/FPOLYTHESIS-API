@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('Skus', function (Blueprint $table) {
+        Schema::create('skus', function (Blueprint $table) {
         $table->id();
         $table->string('sku')->comment('The actual alpha-numeric SKU code');
-        $table->foreignId('productId')->constrained('Products')->cascadeOnDelete();
+        $table->foreignId('productId')->constrained('products')->cascadeOnDelete();
         $table->decimal('price', 10, 2);
         $table->integer('stock');
         $table->timestamps();
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('Skus');
+        Schema::dropIfExists('skus');
     }
 };
