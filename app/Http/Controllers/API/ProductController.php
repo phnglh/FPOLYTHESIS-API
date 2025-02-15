@@ -55,6 +55,7 @@ class ProductController extends Controller
     {
         $product = $this->productService->createProduct($request->all());
 
+        // dd($product);
         return response()->json([
             'success' => true,
             'message' => 'Product created successfully',

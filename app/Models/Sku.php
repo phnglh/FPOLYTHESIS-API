@@ -24,14 +24,19 @@ class Sku extends Model
         return $this->belongsTo(Product::class, 'productId');
     }
 
-    // public function attributeValues()
-    // {
-    //     return $this->belongsToMany(AttributeValue::class, 'attribute_skus', 'skuId', 'attributeValueId');
-    // }
 
     public function attributes() {
         return $this->belongsToMany(Attribute::class, 'attribute_skus')
                     ->withPivot('attributeValueId')
                     ->withTimestamps();
+    }
+    public function attributeValues()
+    {
+        return $this->belongsToMany(
+            AttributeValue::class,
+            'attribute_skus',
+            'skuId',
+            'attributeValueId'
+        )->withPivot('attributeId')->as('attribute_skus');
     }
 }

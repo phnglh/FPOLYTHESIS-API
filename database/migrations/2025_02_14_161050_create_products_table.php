@@ -29,7 +29,7 @@ return new class extends Migration {
         // Bảng thuộc tính (Attribute)
         Schema::create('attributes', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->unique();
             $table->timestamps();
         });
 
@@ -42,6 +42,12 @@ return new class extends Migration {
         });
 
         // Bảng liên kết giữa SKU và giá trị thuộc tính
+        // Schema::create('attribute_skus', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->foreignId('skuId')->constrained('skus')->cascadeOnDelete();
+        //     $table->foreignId('attributeValueId')->constrained('attribute_values')->cascadeOnDelete();
+        //     $table->unique(['skuId', 'attributeValueId']); // Đảm bảo SKU không có trùng thuộc tính
+        // });
         Schema::create('attribute_skus', function (Blueprint $table) {
             $table->id();
             $table->foreignId('skuId')->constrained('skus')->cascadeOnDelete();
@@ -51,7 +57,7 @@ return new class extends Migration {
     }
 
     public function down() {
-        Schema::dropIfExists('attribute_skus');
+        Schema::dropIfExists('attribute_sku');
         Schema::dropIfExists('attribute_values');
         Schema::dropIfExists('attributes');
         Schema::dropIfExists('skus');

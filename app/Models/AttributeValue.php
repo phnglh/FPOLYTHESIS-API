@@ -18,6 +18,17 @@ class AttributeValue extends Model
 
     // public function skus()
     // {
-    //     return $this->belongsToMany(Sku::class, 'attribute_skus', 'attributeValueId', 'skuId');
+    //     return $this->belongsToMany(
+    //         Sku::class,
+    //         'attribute_skus',
+    //         'attributeValueId',
+    //         'skuId'
+    //     );
     // }
+
+    public function skus()
+{
+    return $this->belongsToMany(Sku::class, 'attribute_skus', 'attributeValueId', 'skuId')
+        ->withPivot('attributeId');
+}
 }
