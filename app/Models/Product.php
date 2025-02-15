@@ -20,12 +20,11 @@ class Product extends Model
 
     public function skus()
     {
-        return $this->hasMany(Sku::class);
+        return $this->hasMany(Sku::class, 'productId');
     }
 
     public function category()
-    {
-        return $this->belongsTo(Category::class, 'categoryId');
-    }
-
+{
+    return $this->belongsTo(Category::class, 'categoryId')->withDefault();
+}
 }
