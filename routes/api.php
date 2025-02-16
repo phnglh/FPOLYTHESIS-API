@@ -55,12 +55,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/categories/{id}', [CategoryController::class, 'update']);
         Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
-Route::post('/products', [ProductController::class, 'store']);
-
+        Route::post('/products', [ProductController::class, 'store']);
         Route::put('/products/{id}', [ProductController::class, 'update']);
-Route::patch('/products/{id}', [ProductController::class, 'updatePartial']);
-Route::patch('/{id}/publish', [ProductController::class, 'togglePublish']);
-
-Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+        Route::patch('/products/{id}', [ProductController::class, 'updatePartial']);
+        Route::patch('/{id}/publish', [ProductController::class, 'togglePublish']);
+        Route::delete('/products/{id}', [ProductController::class, 'destroy']);
     });
 });
