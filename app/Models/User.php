@@ -13,13 +13,14 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens,HasFactory, Notifiable;
 
+    protected $table = 'users';
     /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
     protected $fillable = [
-       'name',
+        'name',
         'email',
         'password',
         'phone',
@@ -37,14 +38,6 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    public function isAdmin(){
-        return $this->role === 'admin';
-    }
-
-    public function isCustomer(){
-        return $this->role === 'customer';
-    }
-
     /**
      * Get the attributes that should be cast.
      *
@@ -57,15 +50,5 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
-    }
-
-    public function isAdmin(): bool
-    {
-        return $this->role === 'admin';
-    }
-
-    public function getRoleAttribute()
-    {
-        return $this->attributes['role'];
     }
 }

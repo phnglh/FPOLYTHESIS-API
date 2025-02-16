@@ -9,18 +9,22 @@ class Product extends Model
 {
     use HasFactory;
 
+    protected $table = 'products';
+
     protected $fillable = [
         'name',
+        'categoryId',
+        'slug',
         'description',
-        'price',
-        'stock',
-        'currency',
-        'image_url',
-        'category_id',
     ];
 
-    public function category()
+    public function skus()
     {
-        return $this->belongsTo(Category::class);
+        return $this->hasMany(Sku::class, 'productId');
     }
+
+    public function category()
+{
+    return $this->belongsTo(Category::class, 'categoryId')->withDefault();
+}
 }

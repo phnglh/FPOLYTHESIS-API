@@ -3,89 +3,83 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
+use App\Http\Requests\CategoryRequest;
+use App\Http\Resources\Categories\CategoryCollection;
+use App\Http\Resources\Categories\CategoryResource;
+use App\Services\CategoryService;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
+    protected $categoryService;
+
+    public function __construct(CategoryService $categoryService)
+    {
+        $this->categoryService = $categoryService;
+    }
+
     public function index(Request $request)
     {
-        $perPage = $request->query('per_page', 10); 
-        $currentPage = $request->query('current_page', 1); 
+        $categories = $this->categoryService->getCategoriesWithPagination($request);
 
-        $categories = Category::with('children')->whereNull('parent_id')->paginate($perPage, ['*'], 'page', $currentPage);
-       
         return response()->json([
             'success' => true,
             'message' => 'Category list fetched successfully',
-            // 'data' => [
-                'categories' => $categories->items(),
-                'meta' => [
-                    'total' => $categories->total(),
-                    'per_page' => $categories->perPage(),
-                    'current_page' => $categories->currentPage(),
-                    'last_page' => $categories->lastPage(),
-                ],
-            // ],
+            'data' => new CategoryCollection($categories),
             'errors' => null,
         ]);
     }
 
-    // Lấy danh mục theo ID
     public function show($id)
     {
-        $category = Category::with('children')->findOrFail($id);
+        $category = $this->categoryService->getCategoryById($id);
         return response()->json([
             'success' => true,
-            'message' => 'Category list fetched successfully',
-            'data' => [
-                'categories' => $categories->items(),
-                'pagination' => [
-                    'total' => $categories->total(),
-                    'per_page' => $categories->perPage(),
-                    'current_page' => $categories->currentPage(),
-                    'last_page' => $categories->lastPage(),
-                ],
-            ],
+            'message' => 'Category details fetched successfully',
+            'data' => new CategoryResource($category),
             'errors' => null,
         ]);
     }
 
-    // Tạo danh mục mới
-    public function store(Request $request)
+    public function store(CategoryRequest $request)
     {
-        $request->validate([
-            'name' => 'required|unique:categories',
-            'description' => 'nullable',
-            'image_url' => 'nullable|url',
-            'parent_id' => 'nullable|exists:categories,id',
-        ]);
-
-        $category = Category::create($request->all());
-        return response()->json($category, 201);
+        $category = $this->categoryService->createCategory($request->validated());
+        return response()->json([
+            'success' => true,
+            'message' => 'Category created successfully',
+            'data' => new CategoryResource($category),
+            'errors' => null,
+        ], 201);
     }
 
-    // Cập nhật danh mục
-    public function update(Request $request, $id)
+    public function update(CategoryRequest $request, $id)
     {
-        $category = Category::findOrFail($id);
-
-        $request->validate([
-            'name' => 'required|unique:categories,name,' . $id,
-            'description' => 'nullable',
-            'image_url' => 'nullable|url',
-            'parent_id' => 'nullable|exists:categories,id',
+        $category = $this->categoryService->updateCategory($id, $request->validated());
+        return response()->json([
+            'success' => true,
+            'message' => 'Category updated successfully',
+            'data' => new CategoryResource($category),
+            'errors' => null,
         ]);
-
-        $category->update($request->all());
-        return response()->json($category);
     }
 
-    // Xóa danh mục
     public function destroy($id)
     {
-        $category = Category::findOrFail($id);
-        $category->delete();
-        return response()->json(null, 204);
+        try {
+            $this->categoryService->deleteCategory($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Category deleted successfully',
+                'data' => null,
+                'errors' => null,
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Category not found',
+                'errors' => null,
+            ], 404);
+        }
     }
 }

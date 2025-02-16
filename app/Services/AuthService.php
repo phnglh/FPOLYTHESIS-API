@@ -9,29 +9,28 @@ use Illuminate\Support\Facades\Password;
 
 class AuthService{
 
-    // tạo tài khoản mới
     public function register(array $data)
     {
+
         try {
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
-                'role' => $data['customer']
+                'role' => $data['role'] ?? 'customer',
             ]);
 
             $token = $user->createToken('auth_token')->plainTextToken;
-
             return [
                 'access_token' => $token,
                 'token_type' => 'Bearer',
                 'user' => $user,
             ];
         } catch (\Exception $e) {
-            return null;
+            return $e->getMessage();
         }
     }
- 
+
     // đăng nhập
     public function login(array $data)
     {
