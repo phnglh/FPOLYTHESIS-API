@@ -85,11 +85,12 @@ class AuthService{
     }
 
     // quên mật khẩu (gửi email reset)
-    public function sendResetLinkEmail($email)
+    public function sendResetLink(string $email): array
     {
         $status = Password::sendResetLink(['email' => $email]);
 
         return $status === Password::RESET_LINK_SENT
-            ?['success' => true, 'message' => 'Đã gửi thông tin về Email!'] : ['success'=>false, 'message' => 'Không thể gửi email!'];
+            ? ['success' => true, 'message' => 'Đã gửi thông tin về Email!']
+            : ['success' => false, 'message' => 'Không thể gửi email!'];
     }
 }

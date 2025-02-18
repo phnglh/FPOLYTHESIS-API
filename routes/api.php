@@ -45,7 +45,10 @@ Route::middleware('auth:sanctum')->get('/check-user', function (Request $request
 
 
 Route::post('/change-password', [AuthController::class, 'changePassword'])->middleware('auth:sanctum');
-Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail']);
+Route::get('/reset-password/{token}', function ($token) {
+    return view('auth.reset-password', ['token' => $token]);
+})->name('password.reset');
+Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
