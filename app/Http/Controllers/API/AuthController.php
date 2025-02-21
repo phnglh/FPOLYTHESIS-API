@@ -6,6 +6,8 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Services\AuthService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+
 
 class AuthController extends Controller
 {
@@ -58,4 +60,24 @@ class AuthController extends Controller
 
         return response()->json($result, 200);
     }
+
+
+    public function sendResetLinkEmail(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email không hợp lệ!',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $result = $this->authService->sendResetLink($request->input('email'));
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+    
 }
