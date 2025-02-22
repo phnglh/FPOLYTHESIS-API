@@ -13,8 +13,6 @@ return new class extends Migration {
             $table->text('description')->nullable();
             $table->foreignId('categoryId')->nullable()->constrained('categories')->nullOnDelete();
             $table->boolean('isPublished')->default(false);
-            $table->decimal('price', 8, 2);
-            $table->string('image_path')->nullable(); // Cột ảnh
             $table->timestamps();
         });
 
