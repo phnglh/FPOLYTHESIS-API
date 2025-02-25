@@ -8,6 +8,8 @@ use App\Http\Controllers\API\AttributeController;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\BrandController;
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -62,3 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/products/{id}', [ProductController::class, 'destroy']);
     });
 });
+
+Route::get('/brands', [BrandController::class, 'index']);
+Route::get('/brands/{id}', [BrandController::class, 'show']);
+
