@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\AttributeController;
 use App\Http\Controllers\API\CategoryController;
+use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\UserController;
 
@@ -65,3 +66,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/products/{id}', [ProductController::class, 'destroy']);
     });
 });
+
+
+// API cho khách hàng
+Route::post('/order/create', [OrderController::class, 'createOrder']);
+Route::get('/order/{id}', [OrderController::class, 'getOrderDetails']);
+Route::get('/order/{id}/history', [OrderController::class, 'getOrderHistory']);
+Route::patch('/order/{id}/cancel', [OrderController::class, 'cancelOrder']);
