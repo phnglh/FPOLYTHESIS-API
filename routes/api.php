@@ -65,3 +65,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/products/{id}', [ProductController::class, 'destroy']);
     });
 });
+Route::get('posts', [PostController::class, 'index']);
+use App\Http\Controllers\API\CartController;
+
+Route::middleware('auth:sanctum')->group(function (): void {
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);
+    Route::put('/cart/{id}', [CartController::class, 'update']);
+    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+});
