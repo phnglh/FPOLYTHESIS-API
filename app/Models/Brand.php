@@ -17,20 +17,10 @@ class Brand extends Model
         'description',
         'slug',
         'imageUrl',
-        'parent_id',
     ];
 
-    public function parent()
+    public static function boot()
     {
-        return $this->belongsTo(Category::class, 'parent_id');
-    }
-
-    public function children()
-    {
-        return $this->hasMany(Category::class, 'parent_id');
-    }
-    
-    public static function boot() {
         parent::boot();
 
         static::creating(function ($brand) {

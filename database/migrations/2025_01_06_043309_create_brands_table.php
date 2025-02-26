@@ -17,7 +17,6 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('image_url')->nullable();
             $table->string('slug')->unique();
-            $table->foreignId('parent_id')->nullable()->constrained('brands')->cascadeOnDelete();
             $table->timestamps();
         });
     }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Requests;
 
 use App\Http\Requests\BaseRequest;
@@ -15,7 +16,6 @@ class BrandRequest extends BaseRequest
         return [
             'name' => 'required|string|max:255|unique:brands,name',
             'description' => 'nullable|string',
-            'parent_id' => 'nullable|exists:brands,id',
         ];
     }
 

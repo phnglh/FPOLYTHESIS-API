@@ -19,7 +19,7 @@ class BrandService
         $perPage = $request->query('per_page', 10);
         $currentPage = $request->query('page', 1);
 
-        $query = Brand::with('children')->whereNull('parent_id');
+        $query = Brand::query();
 
         if ($request->has('name')) {
             $query->where('name', 'like', '%' . $request->query('name') . '%');
