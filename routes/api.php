@@ -9,7 +9,7 @@ use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\BrandController;
-
+use App\Http\Controllers\API\CartController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -73,6 +73,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
+Route::get('posts', [PostController::class, 'index']);
 Route::get('/brands', [BrandController::class, 'index']);
 Route::get('/brands/{id}', [BrandController::class, 'show']);
 

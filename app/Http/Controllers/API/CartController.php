@@ -1,10 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Cart;
 use Illuminate\Support\Facades\Auth;
+
 
 class CartController extends Controller
 {
@@ -37,7 +39,9 @@ class CartController extends Controller
     // Cập nhật số lượng sản phẩm
     public function update(Request $request, $id)
     {
-        $request->validate(['quantity' => 'required|integer|min:1']);
+
+        $request->validate(rules: ['quantity' => 'required|integer|min:1']);
+
 
         $cart = Cart::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
         $cart->update(['quantity' => $request->quantity]);
