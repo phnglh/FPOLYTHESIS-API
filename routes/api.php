@@ -8,6 +8,8 @@ use App\Http\Controllers\API\AttributeController;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\BrandController;
+use App\Http\Controllers\API\CartController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -63,14 +65,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/products/{id}', [ProductController::class, 'updatePartial']);
         Route::patch('/{id}/publish', [ProductController::class, 'togglePublish']);
         Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+
+        Route::get('/cart', [CartController::class, 'index']);
+        Route::post('/cart', [CartController::class, 'store']);
+        Route::put('/cart/{id}', [CartController::class, 'update']);
+        Route::delete('/cart/{id}', [CartController::class, 'destroy']);
     });
 });
-Route::get('posts', [PostController::class, 'index']);
-use App\Http\Controllers\API\CartController;
 
-Route::middleware('auth:sanctum')->group(function (): void {
-    Route::get('/cart', [CartController::class, 'index']);
-    Route::post('/cart', [CartController::class, 'store']);
-    Route::put('/cart/{id}', [CartController::class, 'update']);
-    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
-});
+Route::get('posts', [PostController::class, 'index']);
+Route::get('/brands', [BrandController::class, 'index']);
+Route::get('/brands/{id}', [BrandController::class, 'show']);
+

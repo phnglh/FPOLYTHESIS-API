@@ -52,7 +52,27 @@ class ProductController extends Controller
     }
 
     public function store(Request $request)
-    {
+    { 
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Kiểm tra ảnh
+        ]);
+
+        $imagePath = null;
+
+        // Nếu có ảnh, tải lên và lưu đường dẫn
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('products', 'public');
+        }
+        $product = Product::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'price' => $request->price,
+            'image_path' => $imagePath,
+        ]);
+
         $product = $this->productService->createProduct($request->all());
 
         // dd($product);
@@ -66,8 +86,35 @@ class ProductController extends Controller
 
     public function update(Request $request, $id)
     {
-        $product = $this->productService->updateProduct($id, $request->all());
+        // Validate input
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Kiểm tra ảnh
+        ]);
 
+        $product = Product::findOrFail($id); // Tìm sản phẩm theo ID
+
+        $imagePath = $product->image_path; // Giữ lại đường dẫn ảnh cũ nếu không có ảnh mới
+
+        // Nếu có ảnh mới, tải lên và cập nhật đường dẫn
+        if ($request->hasFile('image')) {
+            // Xóa ảnh cũ nếu có
+            if ($imagePath && Storage::disk('public')->exists($imagePath)) {
+                Storage::disk('public')->delete($imagePath);
+            }
+            // Tải ảnh mới lên
+            $imagePath = $request->file('image')->store('products', 'public');
+        }
+        $product = $this->productService->updateProduct($id, $request->all());
+          // Cập nhật sản phẩm
+          $product->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'price' => $request->price,
+            'image_path' => $imagePath,
+        ]);
         return response()->json([
             'success' => true,
             'message' => 'Product updated successfully',

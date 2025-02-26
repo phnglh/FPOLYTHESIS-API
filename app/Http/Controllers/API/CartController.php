@@ -39,7 +39,9 @@ class CartController extends Controller
     // Cập nhật số lượng sản phẩm
     public function update(Request $request, $id)
     {
+
         $request->validate(rules: ['quantity' => 'required|integer|min:1']);
+
 
         $cart = Cart::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
         $cart->update(['quantity' => $request->quantity]);
