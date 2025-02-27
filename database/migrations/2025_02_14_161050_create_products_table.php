@@ -15,8 +15,6 @@ return new class extends Migration {
             $table->foreignId('categoryId')->nullable()->constrained('categories')->nullOnDelete();
             $table->foreignId('brandId')->nullable()->constrained('brands')->nullOnDelete();
             $table->boolean('isPublished')->default(false);
-            $table->decimal('price', 8, 2);
-            $table->string('image_path')->nullable(); // Cột ảnh
             $table->timestamps();
         });
 

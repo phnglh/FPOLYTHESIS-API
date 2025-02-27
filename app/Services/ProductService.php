@@ -6,14 +6,17 @@ use App\Models\AttributeValue;
 use App\Models\Product;
 use App\Models\Sku;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\UploadedFile;
 
-class ProductService {
-    public function getAllProducts($perPage = 10) {
+class ProductService
+{
+    public function getAllProducts($perPage = 10)
+    {
         return Product::with('skus.attributeValues')->paginate($perPage);
-
     }
 
-    public function getProductById($id) {
+    public function getProductById($id)
+    {
         return Product::with('skus.attributes')->findOrFail($id);
     }
 
@@ -25,7 +28,6 @@ class ProductService {
     public function createProduct(array $data)
     {
         return DB::transaction(function () use ($data) {
-            // 1️⃣ Tạo sản phẩm
             $product = Product::create([
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
@@ -33,7 +35,11 @@ class ProductService {
                 'isPublished' => $data['isPublished'] ?? false
             ]);
 
-            // 2️⃣ Thêm các SKU kèm thuộc tính (nếu có)
+
+            if (!empty($data['productImage']) && $data['productImage'] instanceof UploadedFile) {
+                ImageUploadService::upload($data['productImage'], $product);
+            }
+
             if (!empty($data['skus'])) {
                 foreach ($data['skus'] as $skuData) {
                     $sku = Sku::create([
@@ -42,8 +48,9 @@ class ProductService {
                         'price' => $skuData['price'],
                         'stock' => $skuData['stock']
                     ]);
-
-                    // 3️⃣ Gán thuộc tính cho SKU
+                    if (!empty($skuData['image']) && $skuData['image'] instanceof UploadedFile) {
+                        ImageUploadService::upload($skuData['image'], $sku);
+                    }
                     if (!empty($skuData['attributes'])) {
                         foreach ($skuData['attributes'] as $attr) {
                             $attributeValue = AttributeValue::firstOrCreate([
@@ -59,23 +66,26 @@ class ProductService {
                 }
             }
 
-            return $product->load('skus.attributeValues');
+            return $product->load('skus.attributeValues', 'skus.images', 'images');
         });
     }
 
 
-    public function updateProduct($id, array $data) {
+    public function updateProduct($id, array $data)
+    {
         $product = Product::findOrFail($id);
         $product->update($data);
         return $product;
     }
 
-    public function deleteProduct($id) {
+    public function deleteProduct($id)
+    {
         $product = Product::findOrFail($id);
         $product->delete();
     }
 
-    public function togglePublish($id) {
+    public function togglePublish($id)
+    {
         $product = Product::findOrFail($id);
         $product->is_published = !$product->is_published;
         $product->save();

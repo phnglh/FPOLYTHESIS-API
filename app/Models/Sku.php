@@ -25,10 +25,11 @@ class Sku extends Model
     }
 
 
-    public function attributes() {
+    public function attributes()
+    {
         return $this->belongsToMany(Attribute::class, 'attribute_skus')
-                    ->withPivot('attributeValueId')
-                    ->withTimestamps();
+            ->withPivot('attributeValueId')
+            ->withTimestamps();
     }
     public function attributeValues()
     {
@@ -38,5 +39,10 @@ class Sku extends Model
             'skuId',
             'attributeValueId'
         )->withPivot('attributeId')->as('attribute_skus');
+    }
+
+    public function images()
+    {
+        return $this->morphMany(Image::class, 'imageable');
     }
 }

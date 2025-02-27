@@ -23,6 +23,7 @@ class ProductRequest extends BaseRequest
             'sku.*.attributes' => 'required|array',
             'sku.*.attributes.*.attributeId' => 'required|exists:attributes,id',
             'sku.*.attributes.*.value' => 'required|string',
+            'sku.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }
 
