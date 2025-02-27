@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\AttributeController;
 use App\Http\Controllers\API\CategoryController;
+use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\BrandController;
@@ -73,7 +74,10 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-Route::get('posts', [PostController::class, 'index']);
 Route::get('/brands', [BrandController::class, 'index']);
 Route::get('/brands/{id}', [BrandController::class, 'show']);
 
+Route::post('/order/create', [OrderController::class, 'createOrder']);
+Route::get('/order/{id}', [OrderController::class, 'getOrderDetails']);
+Route::get('/order/{id}/history', [OrderController::class, 'getOrderHistory']);
+Route::patch('/order/{id}/cancel', [OrderController::class, 'cancelOrder']);
