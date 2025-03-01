@@ -10,10 +10,10 @@ class OrderStatusHistory extends Model
     use HasFactory;
 
     protected $fillable = [
-        'order_id',
-        'old_status',
-        'new_status',
-        'changed_by',
+        'orderId',
+        'oldStatus',
+        'newStatus',
+        'changedBy',
         'reason',
         'changed_at',
     ];

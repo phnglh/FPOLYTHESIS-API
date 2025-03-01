@@ -38,7 +38,7 @@ class Sku extends Model
             'attribute_skus',
             'skuId',
             'attributeValueId'
-        )->withPivot('attributeId')->as('attribute_skus');
+        )->withPivot('attributeId', 'value')->as('attribute_skus');
     }
 
     public function images()

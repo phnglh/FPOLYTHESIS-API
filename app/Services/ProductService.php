@@ -20,11 +20,6 @@ class ProductService
         return Product::with('skus.attributes')->findOrFail($id);
     }
 
-    // public function createProduct(array $data) {
-    //     return Product::create($data);
-    // }
-
-
     public function createProduct(array $data)
     {
         return DB::transaction(function () use ($data) {
@@ -58,9 +53,9 @@ class ProductService
                                 'value' => $attr['value']
                             ]);
                             $sku->attributeValues()->attach($attributeValue->id, [
-                                'attributeId' => $attr['attributeId']
+                                'attributeId' => $attr['attributeId'],
+                                'value' => $attr['value']
                             ]);
-                            // $sku->attributeValues()->attach($attributeValue->id);
                         }
                     }
                 }
