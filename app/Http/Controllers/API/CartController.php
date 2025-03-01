@@ -3,56 +3,60 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CartRequest;
+use App\Services\CartService;
 use Illuminate\Http\Request;
-use App\Models\Cart;
-use Illuminate\Support\Facades\Auth;
 
 
 class CartController extends Controller
 {
-    // Lấy danh sách giỏ hàng của người dùng
-    public function index()
+    protected $cartService;
+
+    public function __construct(CartService $cartService)
     {
-        $cart = Cart::where('user_id', Auth::id())->with('productVariant')->get();
+        $this->cartService = $cartService;
+    }
+
+    // Lấy danh sách giỏ hàng
+    public function index(Request $request)
+    {
+        $cart = $this->cartService->getUserCart($request->user()->id);
         return response()->json($cart);
     }
 
     // Thêm sản phẩm vào giỏ hàng
-    public function store(Request $request)
+    public function store(CartRequest $request)
     {
-        $request->validate([
-            'product_variant_id' => 'required|exists:product_variants,id',
-            'quantity' => 'required|integer|min:1',
-        ]);
-
-        $cart = Cart::updateOrCreate(
-            [
-                'user_id' => Auth::id(),
-                'product_variant_id' => $request->product_variant_id,
-            ],
-            ['quantity' => $request->quantity]
+        $cartItem = $this->cartService->addToCart(
+            $request->user()->id,
+            $request->product_id,
+            $request->quantity
         );
 
-        return response()->json(['message' => 'Added to cart', 'cart' => $cart]);
+        return response()->json(['message' => 'Thêm vào giỏ hàng thành công', 'cart' => $cartItem]);
     }
 
     // Cập nhật số lượng sản phẩm
-    public function update(Request $request, $id)
+    public function update(CartRequest $request, $id)
     {
+        $cartItem = $this->cartService->updateCartItem($request->user()->id, $id, $request->quantity);
 
-        $request->validate(rules: ['quantity' => 'required|integer|min:1']);
+        if (!$cartItem) {
+            return response()->json(['message' => 'Không tìm thấy sản phẩm trong giỏ hàng'], 404);
+        }
 
-
-        $cart = Cart::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
-        $cart->update(['quantity' => $request->quantity]);
-
-        return response()->json(['message' => 'Cart updated', 'cart' => $cart]);
+        return response()->json(['message' => 'Cập nhật thành công', 'cart' => $cartItem]);
     }
 
     // Xóa sản phẩm khỏi giỏ hàng
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        Cart::where('id', $id)->where('user_id', Auth::id())->delete();
-        return response()->json(['message' => 'Item removed from cart']);
+        $deleted = $this->cartService->removeCartItem($request->user()->id, $id);
+
+        if (!$deleted) {
+            return response()->json(['message' => 'Không tìm thấy sản phẩm trong giỏ hàng'], 404);
+        }
+
+        return response()->json(['message' => 'Xóa thành công']);
     }
 }

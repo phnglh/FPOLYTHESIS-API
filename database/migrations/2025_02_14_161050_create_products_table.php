@@ -43,13 +43,6 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // Bảng liên kết giữa SKU và giá trị thuộc tính
-        // Schema::create('attribute_skus', function (Blueprint $table) {
-        //     $table->id();
-        //     $table->foreignId('skuId')->constrained('skus')->cascadeOnDelete();
-        //     $table->foreignId('attributeValueId')->constrained('attribute_values')->cascadeOnDelete();
-        //     $table->unique(['skuId', 'attributeValueId']); // Đảm bảo SKU không có trùng thuộc tính
-        // });
         Schema::create('attribute_skus', function (Blueprint $table) {
             $table->id();
             $table->foreignId('skuId')->constrained('skus')->cascadeOnDelete();

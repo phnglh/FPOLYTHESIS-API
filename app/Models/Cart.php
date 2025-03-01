@@ -9,17 +9,16 @@ class Cart extends Model
 {
     use HasFactory;
 
-    protected $table = 'cart';
-    protected $fillable = ['user_id', 'product_variant_id', 'quantity'];
+    protected $table = 'cart'; // Đảm bảo đúng với tên bảng trong database
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+    protected $fillable = [
+        'user_id',
+        'product_id',
+        'quantity',
+    ];
 
-    public function productVariant()
+    public function product()
     {
-        return $this->belongsTo(Variant::class);
+        return $this->belongsTo(Product::class, 'product_id');
     }
 }
-

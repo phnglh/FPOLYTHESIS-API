@@ -81,3 +81,8 @@ Route::post('/order/create', [OrderController::class, 'createOrder']);
 Route::get('/order/{id}', [OrderController::class, 'getOrderDetails']);
 Route::get('/order/{id}/history', [OrderController::class, 'getOrderHistory']);
 Route::patch('/order/{id}/cancel', [OrderController::class, 'cancelOrder']);
+
+Route::get('/cart', [CartController::class, 'index']);
+Route::post('/cart', [CartController::class, 'store']);
+Route::put('/cart/{id}', [CartController::class, 'update']);
+Route::delete('/cart/{id}', [CartController::class, 'destroy']);
