@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminOrderController;
 use App\Http\Controllers\API\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -71,6 +72,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/cart', [CartController::class, 'store']);
         Route::put('/cart/{id}', [CartController::class, 'update']);
         Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+
+        Route::get('/admin/orders', [AdminOrderController::class, 'listOrders']); // danh sách đơn hàng có lọc
+        Route::get('/admin/orders/{id}', [AdminOrderController::class, 'getOrderDetails']); // xem chi tiết đơn hàng
+        Route::get('/admin/orders/{id}/history', [AdminOrderController::class, 'getOrderHistory']); // lịch sử trạng thái đơn hàng
+        Route::patch('/admin/orders/{id}/status', [AdminOrderController::class, 'updateStatus']); //  cập nhật trạng thái đơn hàng
+        Route::delete('/admin/orders/{id}', [AdminOrderController::class, 'deleteOrder']); // xóa đơn hàng
     });
 });
 
