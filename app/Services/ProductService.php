@@ -17,7 +17,7 @@ class ProductService
 
     public function getProductById($id)
     {
-        return Product::with('skus.attributes')->findOrFail($id);
+        return Product::with('skus.attributeValues')->findOrFail($id);
     }
 
     public function createProduct(array $data)

@@ -12,6 +12,7 @@ use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\BrandController;
 use App\Http\Controllers\API\CartController;
+use App\Http\Controllers\API\ReviewController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -92,4 +93,4 @@ Route::patch('/order/{id}/cancel', [OrderController::class, 'cancelOrder']);
 Route::get('/cart', [CartController::class, 'index']);
 Route::post('/cart', [CartController::class, 'store']);
 Route::put('/cart/{id}', [CartController::class, 'update']);
-Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+Route::apiResource('reviews', ReviewController::class);
