@@ -139,4 +139,62 @@ class OrderService
             return ['message' => 'Đơn hàng đã được hủy thành công.'];
         });
     }
+
+
+    // lấy danh sách đơn hàng
+    public function listOrders($user, $filters)
+    {
+        $query = Order::query();
+
+        if ($user->role === 'customer') {
+            $query->where('user_id', $user->id);
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        return $query->with('orderDetails.sku')->paginate(10);
+    }
+
+    // Admin cập nhật đơn hàng 
+    public function updateOrderStatus($orderId, $newStatus, $adminId)
+    {
+        return DB::transaction(function () use ($orderId, $newStatus, $adminId) {
+            $order = Order::findOrFail($orderId);
+            $oldStatus = $order->status;
+
+            if ($oldStatus === 'delivered' || $oldStatus === 'cancelled') {
+                throw new Exception("Không thể cập nhật trạng thái đơn hàng đã hoàn thành hoặc bị hủy.");
+            }
+
+            $order->update(['status' => $newStatus]);
+
+            OrderStatusHistory::create([
+                'order_id' => $order->id,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'changed_by' => $adminId,
+                'reason' => "Admin cập nhật trạng thái.",
+            ]);
+
+            return $order;
+        });
+    }
+
+    // xóa đơn hàng
+    public function deleteOrder($orderId)
+    {
+        return DB::transaction(function () use ($orderId) {
+            $order = Order::findOrFail($orderId);
+
+            if ($order->status === 'shipped' || $order->status === 'delivered') {
+                throw new Exception("Không thể xóa đơn hàng đã giao.");
+            }
+
+            $order->delete();
+
+            return ['message' => 'Đơn hàng đã được xóa thành công.'];
+        });
+    }
 }

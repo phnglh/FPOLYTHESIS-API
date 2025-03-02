@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\AdminOrderController;
 use App\Http\Controllers\API\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -74,21 +73,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/cart/{id}', [CartController::class, 'update']);
         Route::delete('/cart/{id}', [CartController::class, 'destroy']);
 
-        Route::get('/admin/orders', [AdminOrderController::class, 'listOrders']); // danh sách đơn hàng có lọc
-        Route::get('/admin/orders/{id}', [AdminOrderController::class, 'getOrderDetails']); // xem chi tiết đơn hàng
-        Route::get('/admin/orders/{id}/history', [AdminOrderController::class, 'getOrderHistory']); // lịch sử trạng thái đơn hàng
-        Route::patch('/admin/orders/{id}/status', [AdminOrderController::class, 'updateStatus']); //  cập nhật trạng thái đơn hàng
-        Route::delete('/admin/orders/{id}', [AdminOrderController::class, 'deleteOrder']); // xóa đơn hàng
+        Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']); // Admin cập nhật trạng thái đơn
+        Route::delete('/orders/{id}', [OrderController::class, 'deleteOrder']); // Admin xóa đơn hàng        
     });
 });
 
 Route::get('/brands', [BrandController::class, 'index']);
 Route::get('/brands/{id}', [BrandController::class, 'show']);
 
-Route::post('/order/create', [OrderController::class, 'createOrder']);
-Route::get('/order/{id}', [OrderController::class, 'getOrderDetails']);
-Route::get('/order/{id}/history', [OrderController::class, 'getOrderHistory']);
-Route::patch('/order/{id}/cancel', [OrderController::class, 'cancelOrder']);
+Route::post('/order/create', [OrderController::class, 'createOrder']); // tạo đơn hàng
+Route::get('/order', [OrderController::class, 'listOrders']); // lấy danh sách đơn hàng
+Route::get('/order/{id}', [OrderController::class, 'getOrderDetails']); // xem đơn hàng chi tiết
+Route::get('/order/{id}/history', [OrderController::class, 'getOrderHistory']); // xem lịch sử đơn hàng
+Route::patch('/order/{id}/cancel', [OrderController::class, 'cancelOrder']); // hủy đơn hàng
 
 Route::get('/cart', [CartController::class, 'index']);
 Route::post('/cart', [CartController::class, 'store']);

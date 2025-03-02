@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\OrderRequest;
 use App\Services\OrderService;
+use Illuminate\Http\Request;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,7 +19,7 @@ class OrderController extends Controller
     }
 
     // tạo đơn hàng mới
-    public function createOrder(OrderRequest $request)
+    public function createOrder(Request $request)
     {
         try {
             $order = $this->orderService->createOrder(
@@ -64,6 +64,38 @@ class OrderController extends Controller
     {
         try {
             $response = $this->orderService->cancelOrder($id,  Auth::id());
+            return response()->json($response, 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+    // lấy danh sách đơn hàng
+    public function listOrders(Request $request)
+    {
+        try {
+            $orders = $this->orderService->listOrders(Auth::user(), $request->all());
+            return response()->json(['orders' => $orders], 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    // Admin cập nhật đơn hàng
+    public function updateStatus(Request $request, $id)
+    {
+        try {
+            $order = $this->orderService->updateOrderStatus($id, $request->status, Auth::id());
+            return response()->json(['order' => $order], 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    // Admin xóa đơn hàng
+    public function deleteOrder($id)
+    {
+        try {
+            $response = $this->orderService->deleteOrder($id);
             return response()->json($response, 200);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
