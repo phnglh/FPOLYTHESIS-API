@@ -54,40 +54,39 @@ Route::get('/reset-password/{token}', function ($token) {
 })->name('password.reset');
 Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
+// Route::middleware('auth:sanctum')->group(function () {
+Route::post('/logout', [AuthController::class, 'logout']);
 
-    Route::middleware('role:admin')->group(function () {
-        Route::post('/categories', [CategoryController::class, 'store']);
-        Route::put('/categories/{id}', [CategoryController::class, 'update']);
-        Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+// Route::middleware('role:admin')->group(function () {
+Route::post('/categories', [CategoryController::class, 'store']);
+Route::put('/categories/{id}', [CategoryController::class, 'update']);
+Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
-        Route::post('/products', [ProductController::class, 'store']);
-        Route::put('/products/{id}', [ProductController::class, 'update']);
-        Route::patch('/products/{id}', [ProductController::class, 'updatePartial']);
-        Route::patch('/{id}/publish', [ProductController::class, 'togglePublish']);
-        Route::delete('/products/{id}', [ProductController::class, 'destroy']);
-
-        Route::get('/cart', [CartController::class, 'index']);
-        Route::post('/cart', [CartController::class, 'store']);
-        Route::put('/cart/{id}', [CartController::class, 'update']);
-        Route::delete('/cart/{id}', [CartController::class, 'destroy']);
-
-        Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']); // Admin cập nhật trạng thái đơn
-        Route::delete('/orders/{id}', [OrderController::class, 'deleteOrder']); // Admin xóa đơn hàng        
-    });
-});
-
-Route::get('/brands', [BrandController::class, 'index']);
-Route::get('/brands/{id}', [BrandController::class, 'show']);
-
-Route::post('/order/create', [OrderController::class, 'createOrder']); // tạo đơn hàng
-Route::get('/order', [OrderController::class, 'listOrders']); // lấy danh sách đơn hàng
-Route::get('/order/{id}', [OrderController::class, 'getOrderDetails']); // xem đơn hàng chi tiết
-Route::get('/order/{id}/history', [OrderController::class, 'getOrderHistory']); // xem lịch sử đơn hàng
-Route::patch('/order/{id}/cancel', [OrderController::class, 'cancelOrder']); // hủy đơn hàng
+Route::post('/products', [ProductController::class, 'store']);
+Route::put('/products/{id}', [ProductController::class, 'update']);
+Route::patch('/products/{id}', [ProductController::class, 'updatePartial']);
+Route::patch('/{id}/publish', [ProductController::class, 'togglePublish']);
+Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
 Route::get('/cart', [CartController::class, 'index']);
 Route::post('/cart', [CartController::class, 'store']);
 Route::put('/cart/{id}', [CartController::class, 'update']);
+Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+
+Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']); // Admin cập nhật trạng thái đơn
+Route::delete('/orders/{id}', [OrderController::class, 'deleteOrder']); // Admin xóa đơn hàng
+
+Route::post('/order/create', [OrderController::class, 'store']);
+Route::get('/order', [OrderController::class, 'listOrders']);
+Route::get('/order/{id}', [OrderController::class, 'getOrderDetails']);
+Route::get('/order/{id}/history', [OrderController::class, 'getOrderHistory']);
+Route::patch('/order/{id}/cancel', [OrderController::class, 'cancelOrder']);
+// });
+// });
+
+Route::get('/brands', [BrandController::class, 'index']);
+Route::get('/brands/{id}', [BrandController::class, 'show']);
+
+
+
 Route::apiResource('reviews', ReviewController::class);

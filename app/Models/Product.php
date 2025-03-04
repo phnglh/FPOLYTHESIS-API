@@ -27,6 +27,11 @@ class Product extends Model
     {
         return $this->belongsTo(Category::class, 'categoryId')->withDefault();
     }
+
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class, 'brandId')->withDefault();
+    }
     public function images()
     {
         return $this->morphMany(Image::class, 'imageable');

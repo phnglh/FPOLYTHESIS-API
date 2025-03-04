@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('userId')->nullable()->constrained('users')->onDelete('cascade');
-            $table->string('order_number')->unique();
+            $table->string('orderNumber')->unique();
             $table->enum('status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'])->default('pending');
             $table->decimal('total', 10, 2)->default(0);
             $table->decimal('finalTotal', 10, 2)->default(0);
@@ -30,7 +30,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('orderId')->constrained('orders')->cascadeOnDelete();
             $table->foreignId('skuId')->constrained('skus')->cascadeOnDelete();
-            $table->string('product_name');
+            $table->string('productName');
             $table->integer('quantity');
             $table->decimal('price', 10, 2);
             $table->decimal('totalPrice', 10, 2);
