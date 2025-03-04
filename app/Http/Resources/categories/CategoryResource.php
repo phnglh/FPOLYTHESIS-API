@@ -11,13 +11,11 @@ class CategoryResource extends JsonResource
         return [
             'type' => 'categories',
             'id' => (string) $this->id,
-            'attributes' => [
-                'name' => $this->name,
-                'description' => $this->description,
-                'image_url' => $this->image_url,
-                'parent_id' => $this->parent_id,
-                'children' => CategoryResource::collection($this->whenLoaded('children')),
-            ],
+            'name' => $this->name,
+            'description' => $this->description,
+            'image_url' => $this->image_url,
+            'parent_id' => $this->parent_id,
+            'children' => CategoryResource::collection($this->whenLoaded('children')),
         ];
     }
 }

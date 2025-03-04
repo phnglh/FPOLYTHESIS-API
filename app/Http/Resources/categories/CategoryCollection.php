@@ -18,15 +18,13 @@ class CategoryCollection extends ResourceCollection
     {
         return [
             'type' => 'categories',
-            'attributes' => [
-                'items' => CategoryResource::collection($this->collection),
-                'meta' => array_merge([
-                    'total' => $this->resource->total(),
-                    'per_page' => $this->resource->perPage(),
-                    'current_page' => $this->resource->currentPage(),
-                    'last_page' => $this->resource->lastPage(),
-                ], $this->metaData),
-            ],
+            'data' => CategoryResource::collection($this->collection),
+            'meta' => array_merge([
+                'total' => $this->resource->total(),
+                'per_page' => $this->resource->perPage(),
+                'current_page' => $this->resource->currentPage(),
+                'last_page' => $this->resource->lastPage(),
+            ], $this->metaData),
         ];
     }
 }

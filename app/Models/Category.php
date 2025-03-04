@@ -16,21 +16,22 @@ class Category extends Model
         'name',
         'description',
         'slug',
-        'image_url',
-        'parent_id',
+        'imageUrl',
+        'parentId',
     ];
 
     public function parent()
     {
-        return $this->belongsTo(Category::class, 'parent_id');
+        return $this->belongsTo(Category::class, 'parentId');
     }
 
     public function children()
     {
-        return $this->hasMany(Category::class, 'parent_id');
+        return $this->hasMany(Category::class, 'parentId');
     }
 
-    public static function boot() {
+    public static function boot()
+    {
         parent::boot();
 
         static::creating(function ($category) {
@@ -40,5 +41,9 @@ class Category extends Model
         static::updating(function ($category) {
             $category->slug = Str::slug($category->name);
         });
+    }
+    public function getRouteKeyName()
+    {
+        return 'slug';
     }
 }
