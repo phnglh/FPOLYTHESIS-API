@@ -11,6 +11,7 @@ use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\BrandController;
 use App\Http\Controllers\API\CartController;
+use App\Http\Controllers\API\PaymentController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -56,22 +57,25 @@ Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    Route::middleware('role:admin')->group(function () {
-        Route::post('/categories', [CategoryController::class, 'store']);
-        Route::put('/categories/{id}', [CategoryController::class, 'update']);
-        Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+    // Route::middleware('role:admin')->group(function () {
+    Route::post('/categories', [CategoryController::class, 'store']);
+    Route::put('/categories/{id}', [CategoryController::class, 'update']);
+    Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
-        Route::post('/products', [ProductController::class, 'store']);
-        Route::put('/products/{id}', [ProductController::class, 'update']);
-        Route::patch('/products/{id}', [ProductController::class, 'updatePartial']);
-        Route::patch('/{id}/publish', [ProductController::class, 'togglePublish']);
-        Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+    Route::post('/products', [ProductController::class, 'store']);
+    Route::put('/products/{id}', [ProductController::class, 'update']);
+    Route::patch('/products/{id}', [ProductController::class, 'updatePartial']);
+    Route::patch('/{id}/publish', [ProductController::class, 'togglePublish']);
+    Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
-        Route::get('/cart', [CartController::class, 'index']);
-        Route::post('/cart', [CartController::class, 'store']);
-        Route::put('/cart/{id}', [CartController::class, 'update']);
-        Route::delete('/cart/{id}', [CartController::class, 'destroy']);
-    });
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);
+    Route::put('/cart/{id}', [CartController::class, 'update']);
+    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+
+    Route::post('/payment', [PaymentController::class, 'createPayment']);
+    Route::get('/payment/vnpay/callback', [PaymentController::class, 'handleVNPayCallback']);
+    // });
 });
 
 Route::get('/brands', [BrandController::class, 'index']);
