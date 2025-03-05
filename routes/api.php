@@ -8,6 +8,7 @@ use App\Http\Controllers\API\AttributeController;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\Api\PromotionController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -25,6 +26,9 @@ Route::get('/categories/{id}', [CategoryController::class, 'show']);
 
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
+
+Route::apiResource('promotions', PromotionController::class);
+
 
 Route::prefix('attributes')->group(function () {
     Route::get('/', [AttributeController::class, 'index']);
