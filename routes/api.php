@@ -11,6 +11,7 @@ use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\BrandController;
 use App\Http\Controllers\API\CartController;
+use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\WishListController;
 use App\Http\Controllers\Api\PromotionController;
@@ -32,16 +33,12 @@ Route::get('/categories/{id}', [CategoryController::class, 'show']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 
-Route::apiResource('promotions', PromotionController::class);
-
-
 Route::prefix('attributes')->group(function () {
     Route::get('/', [AttributeController::class, 'index']);
     Route::post('/', [AttributeController::class, 'store']);
     Route::put('/{id}', [AttributeController::class, 'update']);
     Route::delete('/{id}', [AttributeController::class, 'destroy']);
 
-    // Quản lý giá trị thuộc tính
     Route::get('/{attributeId}/values', [AttributeController::class, 'getAttributeValues']);
     Route::post('/{attributeId}/values', [AttributeController::class, 'storeAttributeValue']);
     Route::put('/values/{id}', [AttributeController::class, 'updateAttributeValue']);
@@ -54,10 +51,6 @@ Route::middleware('auth:sanctum')->get('/check-user', function (Request $request
 
 
 Route::post('/change-password', [AuthController::class, 'changePassword'])->middleware('auth:sanctum');
-Route::get('/reset-password/{token}', function ($token) {
-    return view('auth.reset-password', ['token' => $token]);
-})->name('password.reset');
-Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -78,10 +71,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/cart/{id}', [CartController::class, 'update']);
         Route::delete('/cart/{id}', [CartController::class, 'destroy']);
 
-
-
-        Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']); // Admin cập nhật trạng thái đơn
-        Route::delete('/orders/{id}', [OrderController::class, 'deleteOrder']); // Admin xóa đơn hàng
+        Route::post('/payment', [PaymentController::class, 'createPayment']);
+        Route::get('/payment/vnpay/callback', [PaymentController::class, 'handleVNPayCallback']);
     });
 });
 
@@ -89,17 +80,15 @@ Route::get('/brands', [BrandController::class, 'index']);
 Route::get('/brands/{id}', [BrandController::class, 'show']);
 
 
-Route::post('/order/create', [OrderController::class, 'createOrder']); // tạo đơn hàng
-Route::get('/order', [OrderController::class, 'listOrders']); // lấy danh sách đơn hàng
-Route::get('/order/{id}', [OrderController::class, 'getOrderDetails']); // xem đơn hàng chi tiết
-Route::get('/order/{id}/history', [OrderController::class, 'getOrderHistory']); // xem lịch sử đơn hàng
-Route::patch('/order/{id}/cancel', [OrderController::class, 'cancelOrder']); // hủy đơn hàng
+Route::post('/order/create', [OrderController::class, 'createOrder']);
+Route::get('/order', [OrderController::class, 'listOrders']);
+Route::get('/order/{id}', [OrderController::class, 'getOrderDetails']);
+Route::get('/order/{id}/history', [OrderController::class, 'getOrderHistory']);
+Route::patch('/order/{id}/cancel', [OrderController::class, 'cancelOrder']);
 
 Route::get('/cart', [CartController::class, 'index']);
 Route::post('/cart', [CartController::class, 'store']);
 Route::put('/cart/{id}', [CartController::class, 'update']);
-Route::apiResource('reviews', ReviewController::class);
+Route::delete('/cart/{id}', [CartController::class, 'destroy']);
 
-Route::get('/wishlist', [WishListController::class, 'index']);
-Route::post('/wishlist', [WishListController::class, 'store']);
-Route::delete('/wishlist/{id}', [WishListController::class, 'destroy']);
+Route::apiResource('promotions', PromotionController::class);
