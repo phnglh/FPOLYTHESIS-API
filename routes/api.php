@@ -12,6 +12,8 @@ use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\BrandController;
 use App\Http\Controllers\API\CartController;
 use App\Http\Controllers\API\ReviewController;
+use App\Http\Controllers\API\WishListController;
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -73,13 +75,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/cart/{id}', [CartController::class, 'update']);
         Route::delete('/cart/{id}', [CartController::class, 'destroy']);
 
+
+
         Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']); // Admin cập nhật trạng thái đơn
-        Route::delete('/orders/{id}', [OrderController::class, 'deleteOrder']); // Admin xóa đơn hàng        
+        Route::delete('/orders/{id}', [OrderController::class, 'deleteOrder']); // Admin xóa đơn hàng
     });
 });
 
 Route::get('/brands', [BrandController::class, 'index']);
 Route::get('/brands/{id}', [BrandController::class, 'show']);
+
 
 Route::post('/order/create', [OrderController::class, 'createOrder']); // tạo đơn hàng
 Route::get('/order', [OrderController::class, 'listOrders']); // lấy danh sách đơn hàng
@@ -91,3 +96,7 @@ Route::get('/cart', [CartController::class, 'index']);
 Route::post('/cart', [CartController::class, 'store']);
 Route::put('/cart/{id}', [CartController::class, 'update']);
 Route::apiResource('reviews', ReviewController::class);
+
+Route::get('/wishlist', [WishListController::class, 'index']);
+Route::post('/wishlist', [WishListController::class, 'store']);
+Route::delete('/wishlist/{id}', [WishListController::class, 'destroy']);
