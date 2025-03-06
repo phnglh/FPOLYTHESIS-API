@@ -12,7 +12,6 @@ use Exception;
 
 class OrderService
 {
-    // Tạo đơn hàng mới
 
     public function createOrder($userID, $items, $shippingAddress, $notes = null)
     {
@@ -34,50 +33,49 @@ class OrderService
                 }
 
                 $order = Order::create([
-                    'user_id' => $userID,
-                    'order_number' => 'Flames-' . strtoupper(uniqid()), // flames - render ra 1 mã ngẫu nhiên và duy nhất 
+                    'userId' => $userID,
+                    'orderNumber' => 'ORD' . time(),
                     'total' => $total,
-                    'final_total' => $total,
-                    'shipping_address' => $shippingAddress,
+                    'finalTotal' => $total,
+                    'shippingAddress' => $shippingAddress,
                     'notes' => $notes,
                     'status' => 'pending',
                 ]);
 
                 foreach ($items as $item) {
-
-                    $sku = $sku->get($item['skuId']);
+                    $sku = Sku::find($item['skuId']);
 
                     OrderDetail::create([
-                        'order_id' => $order->id,
+                        'orderId' => $order->id,
                         'skuId' => $item['skuId'],
                         'quantity' => $item['quantity'],
                         'price' => $sku->price,
-                        'total_price' => $sku->price * $item['quantity'],
-                        'product_name' => $sku->product->name ?? 'không tìm thấy sản phẩm',
-                        'product_attributes' => json_encode([
+                        'totalPrice' => $sku->price * $item['quantity'],
+                        'productName' => $sku->product->name ?? 'không tìm thấy sản phẩm',
+                        'productAttributes' => json_encode([
                             'color' => $sku->color ?? 'N/A',
                             'size' => $sku->size ?? 'N/A'
                         ]),
                     ]);
 
-                    $sku->decrement('stock', $item['quantity']); // giảm tồn kho
+                    $sku->decrement('stock', $item['quantity']);
                 }
 
-                OrderStatusHistory::create([
-                    'order_id' => $order->id,
-                    'old_status' => null,
-                    'new_status' => 'pending',
-                    'changed_by' => $userID,
-                    'reason' => 'Đơn hàng mới được tạo.'
-                ]);
+                // OrderStatusHistory::create([
+                //     'orderId' => $order->id,
+                //     'oldStatus' => null,
+                //     'newStatus' => 'pending',
+                //     'changedBy' => $userID,
+                //     'reason' => 'Đơn hàng mới được tạo.'
+                // ]);
 
-                OrderLog::create([
-                    'order_id' => $order->id,
-                    'user_id' => $userID,
-                    'action' => 'create_order',
-                    'description' => 'Khách hàng tạo đơn hàng mới',
-                    'logged_at' => now()
-                ]);
+                // OrderLog::create([
+                //     'orderId' => $order->id,
+                //     'userId' => $userID,
+                //     'action' => 'create_order',
+                //     'description' => 'Khách hàng tạo đơn hàng mới',
+                //     'logged_at' => now()
+                // ]);
 
                 return $order;
             });
@@ -157,7 +155,7 @@ class OrderService
         return $query->with('orderDetails.sku')->paginate(10);
     }
 
-    // Admin cập nhật đơn hàng 
+    // Admin cập nhật đơn hàng
     public function updateOrderStatus($orderId, $newStatus, $adminId)
     {
         return DB::transaction(function () use ($orderId, $newStatus, $adminId) {

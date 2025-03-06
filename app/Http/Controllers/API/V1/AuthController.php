@@ -1,5 +1,6 @@
 <?php
-namespace App\Http\Controllers\API;
+
+namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
@@ -79,5 +80,4 @@ class AuthController extends Controller
         $result = $this->authService->sendResetLink($request->input('email'));
         return response()->json($result, $result['success'] ? 200 : 500);
     }
-    
 }

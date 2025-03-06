@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Http\Requests\BaseRequest;
+use Illuminate\Validation\Rule;
 
 class CategoryRequest extends BaseRequest
 {
@@ -14,9 +15,15 @@ class CategoryRequest extends BaseRequest
     public function rules()
     {
         return [
-            'name' => 'required|string|max:255|unique:categories,name',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('categories', 'name')->ignore($this->route('id')),
+            ],
             'description' => 'nullable|string',
-            'parent_id' => 'nullable|exists:categories,id',
+            'parentId' => 'nullable|exists:categories,id',
+            'imageUrl' => 'nullable|string'
         ];
     }
 

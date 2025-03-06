@@ -19,7 +19,7 @@ class CategoryService
         $perPage = $request->query('per_page', 10);
         $currentPage = $request->query('page', 1);
 
-        $query = Category::with('children')->whereNull('parent_id');
+        $query = Category::with('children')->whereNull('parentId');
 
         if ($request->has('name')) {
             $query->where('name', 'like', '%' . $request->query('name') . '%');
@@ -34,9 +34,14 @@ class CategoryService
      * @param int $id
      * @return \App\Models\Category
      */
-    public function getCategoryById(int $id)
+    public function getCategoryById($id)
     {
-        return Category::with('children')->findOrFail($id);
+        try {
+            return Category::with('children')->findOrFail($id);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+
+            return ["success" => false, "message" => "Category not found",];
+        }
     }
 
     /**
@@ -60,6 +65,7 @@ class CategoryService
     public function updateCategory(int $id, array $data)
     {
         $category = Category::findOrFail($id);
+
         $category->update($data);
 
         return $category;

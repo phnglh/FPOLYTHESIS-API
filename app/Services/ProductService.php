@@ -12,12 +12,12 @@ class ProductService
 {
     public function getAllProducts($perPage = 10)
     {
-        return Product::with('skus.attributeValues')->paginate($perPage);
+        return Product::with('category', 'brand', 'skus.attributeValues')->paginate($perPage);
     }
 
     public function getProductById($id)
     {
-        return Product::with('skus.attributeValues')->findOrFail($id);
+        return Product::with('category', 'brand', 'skus.attributeValues')->findOrFail($id);
     }
 
     public function createProduct(array $data)
@@ -65,12 +65,74 @@ class ProductService
         });
     }
 
-
     public function updateProduct($id, array $data)
     {
-        $product = Product::findOrFail($id);
-        $product->update($data);
-        return $product;
+        return DB::transaction(function () use ($id, $data) {
+            $product = Product::findOrFail($id);
+
+            $product->update([
+                'name' => $data['name'],
+                'description' => $data['description'] ?? null,
+                'categoryId' => $data['categoryId'] ?? null,
+                'isPublished' => $data['isPublished'] ?? false
+            ]);
+
+            if (!empty($data['productImage']) && $data['productImage'] instanceof UploadedFile) {
+                ImageUploadService::upload($data['productImage'], $product);
+            }
+
+            $incomingSkuIds = collect($data['skus'] ?? [])
+                ->pluck('id')
+                ->filter()
+                ->toArray();
+
+            $product->skus()
+                ->whereNotIn('id', $incomingSkuIds)
+                ->each(function ($sku) {
+                    $sku->attributeValues()->detach();
+                    $sku->delete();
+                });
+
+            if (!empty($data['skus'])) {
+                foreach ($data['skus'] as $skuData) {
+                    if (!empty($skuData['id'])) {
+                        $sku = Sku::findOrFail($skuData['id']);
+                        $sku->update([
+                            'sku' => $skuData['sku'],
+                            'price' => $skuData['price'],
+                            'stock' => $skuData['stock']
+                        ]);
+                    } else {
+                        $sku = Sku::create([
+                            'sku' => $skuData['sku'],
+                            'productId' => $product->id,
+                            'price' => $skuData['price'],
+                            'stock' => $skuData['stock']
+                        ]);
+                    }
+
+                    if (!empty($skuData['image']) && $skuData['image'] instanceof UploadedFile) {
+                        ImageUploadService::upload($skuData['image'], $sku);
+                    }
+
+                    $sku->attributeValues()->detach();
+                    if (!empty($skuData['attributes'])) {
+                        foreach ($skuData['attributes'] as $attr) {
+                            $attributeValue = AttributeValue::firstOrCreate([
+                                'attributeId' => $attr['attributeId'],
+                                'value' => $attr['value']
+                            ]);
+                            $sku->attributeValues()->attach($attributeValue->id, [
+                                'attributeId' => $attr['attributeId'],
+                                'value' => $attr['value']
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            return $product->load('skus.attributeValues', 'skus.images', 'images');
+        });
     }
 
     public function deleteProduct($id)

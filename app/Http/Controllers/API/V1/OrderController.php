@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
 use App\Services\OrderService;
@@ -18,15 +18,14 @@ class OrderController extends Controller
         $this->orderService = $orderService;
     }
 
-    // tạo đơn hàng mới
-    public function createOrder(Request $request)
+    public function store(Request $request)
     {
         try {
             $order = $this->orderService->createOrder(
                 Auth::id(),
-                $request->validated()['items'],
-                $request->validated()['shipping_address'],
-                $request->validated()['notes'] ?? null
+                $request['items'],
+                $request['shippingAddress'],
+                $request['notes'] ?? null
             );
 
             return response()->json(['order' => $order, 'message' => 'Đơn hàng tạo thành công'], 201);
@@ -35,7 +34,6 @@ class OrderController extends Controller
         }
     }
 
-    // lấy đơn hàng chi tiết
     public function getOrderDetails($id)
     {
         try {
