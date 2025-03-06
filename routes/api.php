@@ -92,3 +92,5 @@ Route::put('/cart/{id}', [CartController::class, 'update']);
 Route::delete('/cart/{id}', [CartController::class, 'destroy']);
 
 Route::apiResource('promotions', PromotionController::class);
+Route::apiResource('reviews', ReviewController::class);
+Route::apiResource('wishlist', WishListController::class);
