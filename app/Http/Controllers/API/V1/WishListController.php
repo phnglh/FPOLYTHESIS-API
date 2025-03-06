@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
 use App\Services\WishListService;
@@ -14,7 +14,8 @@ class WishListController extends Controller
         $this->wishListService = $wishListService;
     }
     // lấy danh sách
-    public function getWishList(){
+    public function getWishList()
+    {
         return response()->json($this->wishListService->getAllWishLists());
     }
     public function addWishList(Request $request)
@@ -24,14 +25,16 @@ class WishListController extends Controller
         ]);
         $response = $this->wishListService->addWishList($request->sku_id);
         return response()->json([
-            'message' => $response['message'],$response['status'],
+            'message' => $response['message'],
+            $response['status'],
         ]);
     }
     public function deleteWishList($id)
     {
         $response = $this->wishListService->deleteWishList($id);
         return response()->json([
-            'message' => $response['message'],$response['status'],
+            'message' => $response['message'],
+            $response['status'],
         ]);
     }
 }

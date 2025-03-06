@@ -16,18 +16,18 @@ class Category extends Model
         'name',
         'description',
         'slug',
-        'imageUrl',
+        'image_url',
         'parentId',
     ];
 
     public function parent()
     {
-        return $this->belongsTo(Category::class, 'parentId');
+        return $this->belongsTo(Category::class, 'parent_id');
     }
 
     public function children()
     {
-        return $this->hasMany(Category::class, 'parentId');
+        return $this->hasMany(Category::class, 'parent_id');
     }
 
     public static function boot()
