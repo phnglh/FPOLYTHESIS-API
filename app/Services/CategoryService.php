@@ -65,6 +65,7 @@ class CategoryService
     public function updateCategory(int $id, array $data)
     {
         $category = Category::findOrFail($id);
+
         $category->update($data);
 
         return $category;

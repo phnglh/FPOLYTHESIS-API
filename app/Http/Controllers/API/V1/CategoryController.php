@@ -50,6 +50,7 @@ class CategoryController extends BaseController
     {
         $category = $this->categoryService->updateCategory($id, $request->validated());
 
+        // dd($category);
         if (!$category) {
             return $this->errorResponse('CATEGORY_NOT_FOUND', 'Category not found', 404);
         }
