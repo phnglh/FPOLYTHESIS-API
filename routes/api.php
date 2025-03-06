@@ -13,7 +13,7 @@ use App\Http\Controllers\API\BrandController;
 use App\Http\Controllers\API\CartController;
 use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\WishListController;
-
+use App\Http\Controllers\Api\PromotionController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -31,6 +31,9 @@ Route::get('/categories/{id}', [CategoryController::class, 'show']);
 
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
+
+Route::apiResource('promotions', PromotionController::class);
+
 
 Route::prefix('attributes')->group(function () {
     Route::get('/', [AttributeController::class, 'index']);
