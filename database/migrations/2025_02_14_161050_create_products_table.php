@@ -47,7 +47,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('sku_id')->constrained('skus')->cascadeOnDelete();
             $table->foreignId('attribute_id')->constrained('attributes')->cascadeOnDelete();
-            $table->foreignId('attributeValue_id')->constrained('attribute_values')->cascadeOnDelete();
+            $table->foreignId('attribute_value_id')->constrained('attribute_values')->cascadeOnDelete();
             $table->string('value');
         });
     }
@@ -56,7 +56,7 @@ return new class extends Migration {
     {
         Schema::dropIfExists('attribute_skus', function (Blueprint $table) {
             $table->dropForeign(['skuId']);
-            $table->dropForeign(['attributeValue_id']);
+            $table->dropForeign(['attribute_value_id']);
         });
         Schema::dropIfExists('attribute_values');
         Schema::dropIfExists('attributes');

@@ -26,20 +26,20 @@ class ProductService
             $product = Product::create([
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
-                'categoryId' => $data['categoryId'] ?? null,
-                'isPublished' => $data['isPublished'] ?? false
+                'category_id' => $data['category_id'] ?? null,
+                'is_published' => $data['is_published'] ?? false
             ]);
 
 
-            if (!empty($data['productImage']) && $data['productImage'] instanceof UploadedFile) {
-                ImageUploadService::upload($data['productImage'], $product);
+            if (!empty($data['product_image']) && $data['product_image'] instanceof UploadedFile) {
+                ImageUploadService::upload($data['product_image'], $product);
             }
 
             if (!empty($data['skus'])) {
                 foreach ($data['skus'] as $skuData) {
                     $sku = Sku::create([
                         'sku' => $skuData['sku'],
-                        'productId' => $product->id,
+                        'product_id' => $product->id,
                         'price' => $skuData['price'],
                         'stock' => $skuData['stock']
                     ]);
@@ -49,11 +49,11 @@ class ProductService
                     if (!empty($skuData['attributes'])) {
                         foreach ($skuData['attributes'] as $attr) {
                             $attributeValue = AttributeValue::firstOrCreate([
-                                'attributeId' => $attr['attributeId'],
+                                'attribute_id' => $attr['attribute_id'],
                                 'value' => $attr['value']
                             ]);
                             $sku->attributeValues()->attach($attributeValue->id, [
-                                'attributeId' => $attr['attributeId'],
+                                'attribute_id' => $attr['attribute_id'],
                                 'value' => $attr['value']
                             ]);
                         }
@@ -61,7 +61,7 @@ class ProductService
                 }
             }
 
-            return $product->load('skus.attributeValues', 'skus.images', 'images');
+            return $product->load('skus.attribute_values', 'skus.images', 'images');
         });
     }
 
@@ -73,8 +73,8 @@ class ProductService
             $product->update([
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
-                'categoryId' => $data['categoryId'] ?? null,
-                'isPublished' => $data['isPublished'] ?? false
+                'category_id' => $data['category_id'] ?? null,
+                'is_published' => $data['is_published'] ?? false
             ]);
 
             if (!empty($data['productImage']) && $data['productImage'] instanceof UploadedFile) {

@@ -41,7 +41,7 @@ class AttributeService {
     // Tạo giá trị thuộc tính
     public function createAttributeValue($attributeId, array $data) {
         return AttributeValue::create([
-            'attributeId' => $attributeId,
+            'attribute_id' => $attributeId,
             'value' => $data['value']
         ]);
     }
