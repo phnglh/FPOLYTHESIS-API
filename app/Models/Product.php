@@ -13,19 +13,19 @@ class Product extends Model
 
     protected $fillable = [
         'name',
-        'categoryId',
+        'category_id',
         'slug',
         'description',
     ];
 
     public function skus()
     {
-        return $this->hasMany(Sku::class, 'productId');
+        return $this->hasMany(Sku::class, 'product_id');
     }
 
     public function category()
     {
-        return $this->belongsTo(Category::class, 'categoryId')->withDefault();
+        return $this->belongsTo(Category::class, 'category_id')->withDefault();
     }
     public function images()
     {

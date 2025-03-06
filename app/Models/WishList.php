@@ -12,7 +12,7 @@ class WishList extends Model
     protected $table = 'wishlists';
 
     protected $fillable = [
-        'userId',
+        'user_id',
         'sku_id',
     ];
     public function user()

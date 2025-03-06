@@ -12,19 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('vouchers', function (Blueprint $table) {
-        $table->id();
-        $table->string('code')->unique(); // Mã giảm giá
-        $table->enum('type', ['percentage', 'fixed']); // Loại giảm giá (theo % hoặc số tiền cố định)
-        $table->decimal('discount_value', 10, 2); // Giá trị giảm giá
-        $table->decimal('min_order_value', 10, 2)->nullable(); // Giá trị đơn hàng tối thiểu để áp dụng
-        $table->integer('usage_limit')->nullable(); // Giới hạn số lần sử dụng
-        $table->integer('used_count')->default(0); // Số lần đã sử dụng
-        $table->dateTime('start_date')->nullable();
-        $table->dateTime('end_date')->nullable();
-        $table->boolean('is_active')->default(true); // Trạng thái mã giảm giá
-        $table->timestamps();
-});
-
+            $table->id();
+            $table->string('code')->unique();
+            $table->enum('type', ['percentage', 'fixed']);
+            $table->decimal('discount_value', 10, 2);
+            $table->decimal('min_order_value', 10, 2)->nullable();
+            $table->integer('usage_limit')->nullable();
+            $table->integer('used_count')->default(0);
+            $table->dateTime('start_date')->nullable();
+            $table->dateTime('end_date')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
     }
 
     /**

@@ -24,7 +24,7 @@ class OrderRequest extends FormRequest
         return [
             'user_id' => 'required|integer|exists:users,id',
             'items' => 'required|array|min:1',
-            'items.*.skuId' => 'required|integer|exists:skus,id',
+            'items.*.sku_id' => 'required|integer|exists:skus,id',
             'items.*.quantity' => 'required|integer|min:1',
             'shipping_address' => 'required|string|max:255',
             'notes' => 'nullable|string|max:500'

@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('userId')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->string('order_number')->unique();
             $table->enum('status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'])->default('pending');
             $table->decimal('total', 10, 2)->default(0);
-            $table->decimal('finalTotal', 10, 2)->default(0);
-            $table->string('shippingAddress');
+            $table->decimal('final_total', 10, 2)->default(0);
+            $table->string('shipping_address');
             $table->text('notes')->nullable();
             $table->timestamp('ordered_at')->useCurrent();
             $table->timestamp('shipped_at')->nullable();
@@ -28,19 +28,19 @@ return new class extends Migration
 
         Schema::create('order_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('orderId')->constrained('orders')->cascadeOnDelete();
-            $table->foreignId('skuId')->constrained('skus')->cascadeOnDelete();
+            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
+            $table->foreignId('sku_id')->constrained('skus')->cascadeOnDelete();
             $table->string('product_name');
             $table->integer('quantity');
             $table->decimal('price', 10, 2);
-            $table->decimal('totalPrice', 10, 2);
-            $table->text('productAttributes')->nullable();
+            $table->decimal('total_price', 10, 2);
+            $table->text('product_attributes')->nullable();
             $table->timestamps();
         });
 
         Schema::create('order_status_histories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('orderId')->constrained('orders')->cascadeOnDelete();
+            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
             $table->enum('oldStatus', ['pending', 'processing', 'shipped', 'delivered', 'cancelled']);
             $table->enum('newStatus', ['pending', 'processing', 'shipped', 'delivered', 'cancelled']);
             $table->foreignId('changedBy')->nullable()->constrained('users')->nullOnDelete();
@@ -50,8 +50,8 @@ return new class extends Migration
 
         Schema::create('order_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('orderId')->constrained('orders')->cascadeOnDelete();
-            $table->foreignId('userId')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('action');
             $table->text('description')->nullable();
             $table->timestamp('logged_at');

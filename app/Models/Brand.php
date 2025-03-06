@@ -16,7 +16,7 @@ class Brand extends Model
         'name',
         'description',
         'slug',
-        'imageUrl',
+        'image_url',
     ];
 
     public static function boot()

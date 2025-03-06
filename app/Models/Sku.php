@@ -12,23 +12,23 @@ class Sku extends Model
     protected $table = 'skus';
 
     protected $fillable = [
-        'productId',
+        'product_id',
         'sku',
         'price',
         'stock',
-        'imageUrl',
+        'image_url',
     ];
 
     public function product()
     {
-        return $this->belongsTo(Product::class, 'productId');
+        return $this->belongsTo(Product::class, 'product_id');
     }
 
 
     public function attributes()
     {
         return $this->belongsToMany(Attribute::class, 'attribute_skus')
-            ->withPivot('attributeValueId')
+            ->withPivot('attribute_value_id')
             ->withTimestamps();
     }
     public function attributeValues()
@@ -36,9 +36,9 @@ class Sku extends Model
         return $this->belongsToMany(
             AttributeValue::class,
             'attribute_skus',
-            'skuId',
-            'attributeValueId'
-        )->withPivot('attributeId', 'value')->as('attribute_skus');
+            'sku_id',
+            'attribute_value_id'
+        )->withPivot('attribute_id', 'value')->as('attribute_skus');
     }
 
     public function images()

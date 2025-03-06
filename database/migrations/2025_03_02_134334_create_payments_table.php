@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('orderId')->constrained('orders')->cascadeOnDelete();
+            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
             $table->enum('paymentMethod', ['cod', 'vnpay']);
-            $table->string('transactionId')->nullable(); // chỉ có với VNPay
+            $table->string('transaction_id')->nullable();
             $table->decimal('amount', 10, 2);
             $table->enum('status', ['pending', 'paid', 'failed'])->default('pending');
             $table->timestamp('paidAt')->nullable();

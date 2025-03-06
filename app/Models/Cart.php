@@ -9,7 +9,7 @@ class Cart extends Model
 {
     use HasFactory;
 
-    protected $table = 'cart'; // Đảm bảo đúng với tên bảng trong database
+    protected $table = 'cart';
 
     protected $fillable = [
         'user_id',

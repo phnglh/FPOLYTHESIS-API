@@ -24,7 +24,7 @@ class PaymentController extends Controller
         ]);
 
         try {
-            return response()->json($this->paymentService->createPayment($request->orderId, $request->method));
+            return response()->json($this->paymentService->createPayment($request->order_id, $request->method));
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }

@@ -14,14 +14,14 @@ class ProductRequest extends BaseRequest
         return [
             'name' => 'required|string',
             'description' => 'required|string',
-            'brandId' => 'required|exists:brands,id',
+            'brand_id' => 'required|exists:brands,id',
             'price' => 'required|numeric',
             'sku' => 'required|array',
             'sku.*.sku' => 'required|string',
             'sku.*.stock' => 'required|numeric',
             'sku.*.price' => 'required|numeric',
             'sku.*.attributes' => 'required|array',
-            'sku.*.attributes.*.attributeId' => 'required|exists:attributes,id',
+            'sku.*.attributes.*.attribute_id' => 'required|exists:attributes,id',
             'sku.*.attributes.*.value' => 'required|string',
             'sku.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
@@ -36,8 +36,8 @@ class ProductRequest extends BaseRequest
             'description.required' => 'Mô tả là bắt buộc.',
             'description.string' => 'Mô tả phải là chuỗi ký tự.',
 
-            'brandId.required' => 'Thương hiệu là bắt buộc.',
-            'brandId.exists' => 'Thương hiệu không tồn tại.',
+            'brand_id.required' => 'Thương hiệu là bắt buộc.',
+            'brand_id.exists' => 'Thương hiệu không tồn tại.',
 
             'price.required' => 'Giá là bắt buộc.',
             'price.numeric' => 'Giá phải là số.',
@@ -57,8 +57,8 @@ class ProductRequest extends BaseRequest
             'sku.*.attributes.required' => 'Thuộc tính là bắt buộc.',
             'sku.*.attributes.array' => 'Thuộc tính phải là mảng.',
 
-            'sku.*.attributes.*.attributeId.required' => 'Thuộc tính là bắt buộc.',
-            'sku.*.attributes.*.attributeId.exists' => 'Thuộc tính không tồn tại.',
+            'sku.*.attributes.*.attribute_id.required' => 'Thuộc tính là bắt buộc.',
+            'sku.*.attributes.*.attribute_id.exists' => 'Thuộc tính không tồn tại.',
 
             'sku.*.attributes.*.value.required' => 'Giá trị thuộc tính là bắt buộc.',
             'sku.*.attributes.*.value.string' => 'Giá trị thuộc tính phải là chuỗi ký tự.',

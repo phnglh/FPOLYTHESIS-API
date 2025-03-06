@@ -12,9 +12,9 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->foreignId('categoryId')->nullable()->constrained('categories')->nullOnDelete();
+            $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
             $table->foreignId('brandId')->nullable()->constrained('brands')->nullOnDelete();
-            $table->boolean('isPublished')->default(false);
+            $table->boolean('is_published')->default(false);
             $table->timestamps();
         });
 
@@ -22,7 +22,7 @@ return new class extends Migration {
         Schema::create('skus', function (Blueprint $table) {
             $table->id();
             $table->string('sku')->unique();
-            $table->foreignId('productId')->constrained('products')->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->decimal('price', 10, 2);
             $table->integer('stock');
             $table->timestamps();
@@ -38,16 +38,16 @@ return new class extends Migration {
         // Bảng giá trị thuộc tính (Attribute Values)
         Schema::create('attribute_values', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('attributeId')->constrained('attributes')->cascadeOnDelete();
+            $table->foreignId('attribute_id')->constrained('attributes')->cascadeOnDelete();
             $table->string('value'); // Ví dụ: XL, Red, Blue, M, S
             $table->timestamps();
         });
 
         Schema::create('attribute_skus', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('skuId')->constrained('skus')->cascadeOnDelete();
-            $table->foreignId('attributeId')->constrained('attributes')->cascadeOnDelete();
-            $table->foreignId('attributeValueId')->constrained('attribute_values')->cascadeOnDelete();
+            $table->foreignId('sku_id')->constrained('skus')->cascadeOnDelete();
+            $table->foreignId('attribute_id')->constrained('attributes')->cascadeOnDelete();
+            $table->foreignId('attributeValue_id')->constrained('attribute_values')->cascadeOnDelete();
             $table->string('value');
         });
     }
@@ -56,7 +56,7 @@ return new class extends Migration {
     {
         Schema::dropIfExists('attribute_skus', function (Blueprint $table) {
             $table->dropForeign(['skuId']);
-            $table->dropForeign(['attributeValueId']);
+            $table->dropForeign(['attributeValue_id']);
         });
         Schema::dropIfExists('attribute_values');
         Schema::dropIfExists('attributes');

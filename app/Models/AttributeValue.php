@@ -9,26 +9,16 @@ class AttributeValue extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['attributeId', 'value'];
+    protected $fillable = ['attribute_id', 'value'];
 
     public function attribute()
     {
-        return $this->belongsTo(Attribute::class, 'attributeId');
+        return $this->belongsTo(Attribute::class, 'attribute_id');
     }
-
-    // public function skus()
-    // {
-    //     return $this->belongsToMany(
-    //         Sku::class,
-    //         'attribute_skus',
-    //         'attributeValueId',
-    //         'skuId'
-    //     );
-    // }
 
     public function skus()
     {
-        return $this->belongsToMany(Sku::class, 'attribute_skus', 'attributeValueId', 'skuId')
-            ->withPivot('attributeId', 'value');
+        return $this->belongsToMany(Sku::class, 'attribute_skus', 'attribute_value_id', 'sku_id')
+            ->withPivot('attribute_id', 'value');
     }
 }

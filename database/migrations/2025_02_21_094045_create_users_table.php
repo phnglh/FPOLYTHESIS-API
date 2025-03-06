@@ -32,11 +32,11 @@ return new class extends Migration
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->foreignId('userId')->nullable()->index();
-            $table->string('IpAddress', 45)->nullable();
-            $table->text('UserAgent')->nullable();
-            $table->longText('Payload');
-            $table->integer('LastActivity')->index();
+            $table->foreignId('user_id')->nullable()->index();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+            $table->longText('payload');
+            $table->integer('last_activity')->index();
         });
     }
 

@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('wishlists', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->foreignId('userId')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('sku_id')->constrained()->onDelete('cascade');
             $table->timestamps();
 
-            $table->unique(['userId', 'sku_id']); // Để tránh trùng sản phẩm yêu thích của cùng 1 user
+            $table->unique(['user_id', 'sku_id']);
         });
     }
 
