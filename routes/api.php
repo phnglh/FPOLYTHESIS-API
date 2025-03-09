@@ -17,6 +17,7 @@ use App\Http\Controllers\API\V1\WishListController;
 use App\Http\Controllers\Api\V1\PromotionController;
 
 use App\Http\Controllers\API\V2\CategoryController as V2CategoryController;
+use App\Http\Controllers\API\V1\VoucherController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -86,6 +87,12 @@ Route::prefix('v1')->group(function () {
             Route::get('/order/{id}', [OrderController::class, 'getOrderDetails']);
             Route::get('/order/{id}/history', [OrderController::class, 'getOrderHistory']);
             Route::patch('/order/{id}/cancel', [OrderController::class, 'cancelOrder']);
+
+            Route::get('/vouchers', [VoucherController::class, 'index']);
+            Route::post('/vouchers/apply', [VoucherController::class, 'apply']);
+            Route::post('/vouchers', [VoucherController::class, 'store']);
+            Route::put('/vouchers/{voucher}', [VoucherController::class, 'update']);
+            Route::delete('/vouchers/{voucher}', [VoucherController::class, 'destroy']);
         });
     });
 

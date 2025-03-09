@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 class Voucher extends Model
 {
@@ -16,8 +17,9 @@ class Voucher extends Model
 
     public function isValid()
     {
-        return $this->is_active &&
-               ($this->usage_limit === null || $this->used_count < $this->usage_limit) &&
-               (now()->between($this->start_date, $this->end_date));
+        return $this->is_active
+            && ($this->usage_limit === null || $this->used_count < $this->usage_limit)
+            && (is_null($this->start_date) || Carbon::now()->greaterThanOrEqualTo($this->start_date))
+            && (is_null($this->end_date) || Carbon::now()->lessThanOrEqualTo($this->end_date));
     }
 }
