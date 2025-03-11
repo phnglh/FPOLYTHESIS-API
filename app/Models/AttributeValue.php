@@ -9,6 +9,8 @@ class AttributeValue extends Model
 {
     use HasFactory;
 
+    protected $table = 'attribute_values';
+
     protected $fillable = ['attribute_id', 'value'];
 
     public function attribute()

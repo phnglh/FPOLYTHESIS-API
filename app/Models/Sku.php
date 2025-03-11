@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,7 +30,7 @@ class Sku extends Model
             ->withPivot('attribute_value_id')
             ->withTimestamps();
     }
-    public function attributeValues()
+    public function attribute_values()
     {
         return $this->belongsToMany(
             AttributeValue::class,

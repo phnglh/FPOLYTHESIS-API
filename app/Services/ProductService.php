@@ -12,12 +12,12 @@ class ProductService
 {
     public function getAllProducts($perPage = 10)
     {
-        return Product::with('category', 'brand', 'skus.attributeValues')->paginate($perPage);
+        return Product::with('category', 'brand', 'skus.attribute_values')->paginate($perPage);
     }
 
     public function getProductById($id)
     {
-        return Product::with('category', 'brand', 'skus.attributeValues')->findOrFail($id);
+        return Product::with('category', 'brand', 'skus.attribute_values')->findOrFail($id);
     }
 
     public function createProduct(array $data)
@@ -52,7 +52,7 @@ class ProductService
                                 'attribute_id' => $attr['attribute_id'],
                                 'value' => $attr['value']
                             ]);
-                            $sku->attributeValues()->attach($attributeValue->id, [
+                            $sku->attribute_values()->attach($attributeValue->id, [
                                 'attribute_id' => $attr['attribute_id'],
                                 'value' => $attr['value']
                             ]);

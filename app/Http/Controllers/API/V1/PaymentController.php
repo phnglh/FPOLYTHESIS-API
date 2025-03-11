@@ -19,7 +19,7 @@ class PaymentController extends Controller
     public function createPayment(Request $request)
     {
         $request->validate([
-            'orderId' => 'required|exists:orders,id',
+            'order_id' => 'required|exists:orders,id',
             'method' => 'required|in:cod,vnpay'
         ]);
 

@@ -4,14 +4,14 @@ namespace App\Services;
 
 use App\Models\Brand;
 use Illuminate\Http\Request;
+use App\Exceptions\ApiException;
 
 class BrandService
 {
     /**
      * Lấy danh sách nhãn hàng với phân trang.
      *
-     * @param int $perPage
-     * @param int $currentPage
+     * @param Request $request
      * @return \Illuminate\Pagination\LengthAwarePaginator
      */
     public function getBrandsWithPagination(Request $request)
@@ -21,7 +21,7 @@ class BrandService
 
         $query = Brand::query();
 
-        if ($request->has('name')) {
+        if ($request->filled('name')) {
             $query->where('name', 'like', '%' . $request->query('name') . '%');
         }
 
@@ -32,18 +32,25 @@ class BrandService
      * Lấy nhãn hàng theo ID.
      *
      * @param int $id
-     * @return \App\Models\Brand
+     * @return Brand
+     * @throws ApiException
      */
     public function getBrandById(int $id)
     {
-        return Brand::with('children')->findOrFail($id);
+        $brand = Brand::with('children')->find($id);
+
+        if (!$brand) {
+            throw new ApiException('Không tìm thấy nhãn hàng', 'BRAND_NOT_FOUND', 404);
+        }
+
+        return $brand;
     }
 
     /**
      * Tạo nhãn hàng mới.
      *
      * @param array $data
-     * @return \App\Models\Brand
+     * @return Brand
      */
     public function createBrand(array $data)
     {
@@ -55,11 +62,17 @@ class BrandService
      *
      * @param int $id
      * @param array $data
-     * @return \App\Models\Brand
+     * @return Brand
+     * @throws ApiException
      */
     public function updateBrand(int $id, array $data)
     {
-        $brand = Brand::findOrFail($id);
+        $brand = Brand::find($id);
+
+        if (!$brand) {
+            throw new ApiException('Không tìm thấy nhãn hàng để cập nhật', 'BRAND_NOT_FOUND', 404);
+        }
+
         $brand->update($data);
 
         return $brand;
@@ -70,13 +83,14 @@ class BrandService
      *
      * @param int $id
      * @return bool
+     * @throws ApiException
      */
     public function deleteBrand(int $id)
     {
         $brand = Brand::find($id);
 
         if (!$brand) {
-            throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Brand not found');
+            throw new ApiException('Không tìm thấy nhãn hàng để xóa', 'BRAND_NOT_FOUND', 404);
         }
 
         $brand->delete();

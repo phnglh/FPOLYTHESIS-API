@@ -22,8 +22,8 @@ class CategoryRequest extends BaseRequest
                 Rule::unique('categories', 'name')->ignore($this->route('id')),
             ],
             'description' => 'nullable|string',
-            'parentId' => 'nullable|exists:categories,id',
-            'imageUrl' => 'nullable|string'
+            'parent_id' => 'nullable|exists:categories,id',
+            'image_url' => 'nullable|string'
         ];
     }
 

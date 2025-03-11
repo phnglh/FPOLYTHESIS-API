@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\BaseController;
 
-class ApiController extends Controller
+class ApiController extends BaseController
 {
     public function index()
     {
-        return response()->json(['message' => 'API is working!'], 200);
+        return $this->successResponse(null, 'API is working!', 200);
     }
 }

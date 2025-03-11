@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\BaseController;
 use Illuminate\Http\Request;
 use App\Services\ProductService;
 
-class ProductController extends Controller
+class ProductController extends BaseController
 {
     protected $productService;
 

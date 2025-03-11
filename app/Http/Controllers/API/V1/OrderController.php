@@ -24,7 +24,7 @@ class OrderController extends Controller
             $order = $this->orderService->createOrder(
                 Auth::id(),
                 $request['items'],
-                $request['shippingAddress'],
+                $request['shipping_address'],
                 $request['notes'] ?? null
             );
 
