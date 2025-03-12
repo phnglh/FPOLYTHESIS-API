@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\BaseController;
 use App\Http\Requests\AttributeRequest;
 use App\Http\Requests\AttributeValueRequest;
 use App\Services\AttributeService;
 
-class AttributeController extends Controller
+class AttributeController extends BaseController
 {
     protected $attributeService;
 
@@ -19,26 +19,33 @@ class AttributeController extends Controller
     // Lấy danh sách thuộc tính
     public function index()
     {
-        return response()->json($this->attributeService->getAllAttributes());
+        $attribute = $this->attributeService->getAllAttributes();
+        
+        return $this->successResponse($attribute , "Attributes fetched successfully");
     }
 
     // Tạo thuộc tính mới
     public function store(AttributeRequest $request)
     {
-        return response()->json($this->attributeService->createAttribute($request->validated()), 201);
+        $attribute = $this->attributeService->createAttribute($request->validate());
+        
+        return $this->successResponse($attribute , "Attribute created successfully");
     }
 
     // Cập nhật thuộc tính
     public function update(AttributeRequest $request, $id)
     {
-        return response()->json($this->attributeService->updateAttribute($id, $request->validated()));
+        $attribute = $this->attributeService->updateAttribute($id, $request->validated());
+        
+        return $this->successResponse($attribute, "Attribute updated successfully");
     }
 
     // Xóa thuộc tính
-    public function destroy($id)
+     public function destroy($id)
     {
         $this->attributeService->deleteAttribute($id);
-        return response()->json(['message' => 'Attribute deleted successfully']);
+        
+        return $this->successResponse(null, "Attribute deleted successfully");
     }
 
     // -------------------------------
@@ -48,25 +55,32 @@ class AttributeController extends Controller
     // Lấy danh sách giá trị của một thuộc tính
     public function getAttributeValues($attribute_id)
     {
-        return response()->json($this->attributeService->getAttributeValues($attribute_id));
+        $attributeValues = $this->attributeService->getAttributeValues($attribute_id);
+        
+        return $this->successResponse($attributeValues, "Attribute values fetched successfully");
     }
 
     // Tạo giá trị thuộc tính mới
     public function storeAttributeValue(AttributeValueRequest $request, $attribute_id)
     {
-        return response()->json($this->attributeService->createAttributeValue($attribute_id, $request->validated()), 201);
+        $attributeValue = $this->attributeService->createAttributeValue($attribute_id, $request->validated());
+        
+        return $this->successResponse($attributeValue, "Attribute value created successfully");
     }
 
     // Cập nhật giá trị thuộc tính
     public function updateAttributeValue(AttributeValueRequest $request, $id)
     {
-        return response()->json($this->attributeService->updateAttributeValue($id, $request->validated()));
+        $attributeValue = $this->attributeService->updateAttributeValue($id, $request->validated());
+        
+        return $this->successResponse($attributeValue, "Attribute value updated successfully");
     }
 
     // Xóa giá trị thuộc tính
     public function destroyAttributeValue($id)
     {
         $this->attributeService->deleteAttributeValue($id);
-        return response()->json(['message' => 'Attribute value deleted successfully']);
+        
+        return $this->successResponse(null, "Attribute value deleted successfully");
     }
 }

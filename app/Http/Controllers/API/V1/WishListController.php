@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\BaseController;
 use App\Services\WishListService;
 use Illuminate\Http\Request;
 
-class WishListController extends Controller
+class WishListController extends BaseController
 {
     protected $wishListService;
     public function __construct(WishListService $wishListService)
@@ -16,25 +16,31 @@ class WishListController extends Controller
     // lấy danh sách
     public function getWishList()
     {
-        return response()->json($this->wishListService->getAllWishLists());
+        $wishlists = $this->wishListService->getAllWishLists();
+        return $this->successResponse($wishlists, "Wishlist retrieved successfully.");
     }
     public function addWishList(Request $request)
     {
         $request->validate([
             'sku_id' => 'required|exists:skus,id',
         ]);
+
         $response = $this->wishListService->addWishList($request->sku_id);
-        return response()->json([
-            'message' => $response['message'],
-            $response['status'],
-        ]);
+
+        if (!$response['status']) {
+            return $this->errorResponse("WISHLIST_ADD_FAILED", $response['message'], 400);
+        }
+
+        return $this->successResponse(null, $response['message']);
     }
     public function deleteWishList($id)
     {
         $response = $this->wishListService->deleteWishList($id);
-        return response()->json([
-            'message' => $response['message'],
-            $response['status'],
-        ]);
+
+        if (!$response['status']) {
+            return $this->errorResponse("WISHLIST_REMOVE_FAILED", $response['message'], 400);
+        }
+
+        return $this->successResponse(null, $response['message']);
     }
 }

@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\BaseController;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 
-
-class OrderController extends Controller
+class OrderController extends BaseController
 {
     protected $orderService;
 
@@ -28,9 +27,9 @@ class OrderController extends Controller
                 $request['notes'] ?? null
             );
 
-            return response()->json(['order' => $order, 'message' => 'Đơn hàng tạo thành công'], 201);
+            return $this->successResponse($order, "Order created successfully.");
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse("ORDER_CREATION_FAILED", $e->getMessage());
         }
     }
 
@@ -38,9 +37,9 @@ class OrderController extends Controller
     {
         try {
             $order = $this->orderService->getOrderDetails($id);
-            return response()->json(['order' => $order], 200);
+            return $this->successResponse($order, "Order details retrieved successfully.");
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 404);
+            return $this->errorResponse("ORDER_NOT_FOUND", $e->getMessage(), 404);
         }
     }
 
@@ -49,9 +48,9 @@ class OrderController extends Controller
     {
         try {
             $history = $this->orderService->getOrderHistory($id);
-            return response()->json(['history' => $history], 200);
+            return $this->successResponse($history, "Order history retrieved successfully.");
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse("ORDER_HISTORY_ERROR", $e->getMessage());
         }
     }
 
@@ -60,10 +59,10 @@ class OrderController extends Controller
     public function cancelOrder($id)
     {
         try {
-            $response = $this->orderService->cancelOrder($id,  Auth::id());
-            return response()->json($response, 200);
+            $response = $this->orderService->cancelOrder($id, Auth::id());
+            return $this->successResponse($response, "Order cancelled successfully.");
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse("ORDER_CANCELLATION_FAILED", $e->getMessage());
         }
     }
     // lấy danh sách đơn hàng
@@ -71,9 +70,9 @@ class OrderController extends Controller
     {
         try {
             $orders = $this->orderService->listOrders(Auth::user(), $request->all());
-            return response()->json(['orders' => $orders], 200);
+            return $this->successResponse($orders, "Orders retrieved successfully.");
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse("ORDER_LIST_ERROR", $e->getMessage());
         }
     }
 
@@ -82,9 +81,9 @@ class OrderController extends Controller
     {
         try {
             $order = $this->orderService->updateOrderStatus($id, $request->status, Auth::id());
-            return response()->json(['order' => $order], 200);
+            return $this->successResponse($order, "Order status updated successfully.");
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse("ORDER_UPDATE_FAILED", $e->getMessage());
         }
     }
 
@@ -93,9 +92,9 @@ class OrderController extends Controller
     {
         try {
             $response = $this->orderService->deleteOrder($id);
-            return response()->json($response, 200);
+            return $this->successResponse($response, "Order deleted successfully.");
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse("ORDER_DELETION_FAILED", $e->getMessage());
         }
     }
 }

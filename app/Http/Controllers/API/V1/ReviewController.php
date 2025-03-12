@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\BaseController;
 use App\Services\ReviewService;
 use Illuminate\Http\Request;
 
-class ReviewController extends Controller
+class ReviewController extends BaseController
 {
     //
     protected $reviewService;
@@ -18,12 +18,17 @@ class ReviewController extends Controller
 
     public function index()
     {
-        return response()->json($this->reviewService->getAllReviews(), 200);
+        $reviews = $this->reviewService->getAllReviews();
+        return $this->successResponse($reviews, "Reviews retrieved successfully.");
     }
 
     public function show($id)
     {
-        return response()->json($this->reviewService->getReviewById($id), 200);
+        $review = $this->reviewService->getReviewById($id);
+        if (!$review) {
+            return $this->errorResponse("REVIEW_NOT_FOUND", "Review not found.", 404);
+        }
+        return $this->successResponse($review, "Review details retrieved successfully.");
     }
 
     public function store(Request $request)
@@ -35,7 +40,8 @@ class ReviewController extends Controller
             'comment' => 'nullable|string',
         ]);
 
-        return response()->json($this->reviewService->createReview($validated), 201);
+        $review = $this->reviewService->createReview($validated);
+        return $this->successResponse($review, "Review created successfully.");
     }
 
     public function update(Request $request, $id)
@@ -45,12 +51,21 @@ class ReviewController extends Controller
             'comment' => 'nullable|string',
         ]);
 
-        return response()->json($this->reviewService->updateReview($id, $validated), 200);
+        $updatedReview = $this->reviewService->updateReview($id, $validated);
+        if (!$updatedReview) {
+            return $this->errorResponse("REVIEW_NOT_FOUND", "Review not found.", 404);
+        }
+
+        return $this->successResponse($updatedReview, "Review updated successfully.");
     }
 
     public function destroy($id)
     {
-        $this->reviewService->deleteReview($id);
-        return response()->json(['message' => 'Review deleted'], 200);
+        $deleted = $this->reviewService->deleteReview($id);
+        if (!$deleted) {
+            return $this->errorResponse("REVIEW_NOT_FOUND", "Review not found.", 404);
+        }
+
+        return $this->successResponse(null, "Review deleted successfully.");
     }
 }

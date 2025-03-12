@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\BaseController;
 use App\Http\Requests\CartRequest;
 use App\Services\CartService;
 use Illuminate\Http\Request;
 
-
-class CartController extends Controller
+class CartController extends BaseController
 {
     protected $cartService;
 
@@ -21,7 +20,7 @@ class CartController extends Controller
     public function index(Request $request)
     {
         $cart = $this->cartService->getUserCart($request->user()->id);
-        return response()->json($cart);
+        return $this->successResponse($cart, "Cart retrieved successfully.");
     }
 
     // Thêm sản phẩm vào giỏ hàng
@@ -33,7 +32,7 @@ class CartController extends Controller
             $request->quantity
         );
 
-        return response()->json(['message' => 'Thêm vào giỏ hàng thành công', 'cart' => $cartItem]);
+        return $this->successResponse($cartItem, "Product added to cart successfully.");
     }
 
     // Cập nhật số lượng sản phẩm
@@ -42,10 +41,10 @@ class CartController extends Controller
         $cartItem = $this->cartService->updateCartItem($request->user()->id, $id, $request->quantity);
 
         if (!$cartItem) {
-            return response()->json(['message' => 'Không tìm thấy sản phẩm trong giỏ hàng'], 404);
+            return $this->errorResponse("CART_ITEM_NOT_FOUND", "Cart item not found.", 404);
         }
 
-        return response()->json(['message' => 'Cập nhật thành công', 'cart' => $cartItem]);
+        return $this->successResponse($cartItem, "Cart item updated successfully.");
     }
 
     // Xóa sản phẩm khỏi giỏ hàng
@@ -54,9 +53,9 @@ class CartController extends Controller
         $deleted = $this->cartService->removeCartItem($request->user()->id, $id);
 
         if (!$deleted) {
-            return response()->json(['message' => 'Không tìm thấy sản phẩm trong giỏ hàng'], 404);
+            return $this->errorResponse("CART_ITEM_NOT_FOUND", "Cart item not found.", 404);
         }
 
-        return response()->json(['message' => 'Xóa thành công']);
+        return $this->successResponse(null, "Cart item removed successfully.");
     }
 }

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\BaseController;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Exception;
 
-class PaymentController extends Controller
+class PaymentController extends BaseController
 {
     protected $paymentService;
 
@@ -16,6 +16,7 @@ class PaymentController extends Controller
         $this->paymentService = $paymentService;
     }
 
+        // Create a payment
     public function createPayment(Request $request)
     {
         $request->validate([
@@ -24,14 +25,22 @@ class PaymentController extends Controller
         ]);
 
         try {
-            return response()->json($this->paymentService->createPayment($request->order_id, $request->method));
+            $payment = $this->paymentService->createPayment($request->order_id, $request->method);
+            return $this->successResponse($payment, "Payment created successfully.");
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse("PAYMENT_CREATION_FAILED", $e->getMessage());
         }
     }
 
+    
+        // Handle VNPay callback
     public function handleVNPayCallback(Request $request)
     {
-        return response()->json($this->paymentService->processVNPayCallback($request));
+        try {
+            $paymentResponse = $this->paymentService->processVNPayCallback($request);
+            return $this->successResponse($paymentResponse, "VNPay payment processed successfully.");
+        } catch (Exception $e) {
+            return $this->errorResponse("VNPAY_PROCESSING_FAILED", $e->getMessage());
+        }
     }
 }

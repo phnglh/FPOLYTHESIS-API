@@ -48,6 +48,6 @@ class BrandController extends BaseController
     {
             $this->brandService->deleteBrand($id);
 
-         return $this->successResponse("Brand deleted successfully");
+         return $this->successResponse(null,"Brand deleted successfully");
     }
 }

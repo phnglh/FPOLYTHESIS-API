@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Requests\VoucherRequest;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\BaseController;
 use App\Models\Voucher;
 use App\Services\VoucherService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class VoucherController extends Controller
+class VoucherController extends BaseController
 
 {
     protected $voucherService;
@@ -19,74 +19,68 @@ class VoucherController extends Controller
         $this->voucherService = $voucherService;
     }
 
-    // ✅ Danh sách voucher (Admin thấy tất cả, Customer chỉ thấy voucher còn hiệu lực)
+    // danh sách voucher (Admin thấy tất cả, Customer chỉ thấy voucher còn hiệu lực)
 public function index(Request $request)
 {
-    if (!$request->user()) {
-        return response()->json(['message' => 'Token không hợp lệ hoặc user chưa đăng nhập!'], 401);
+        if (!$request->user()) {
+            return $this->errorResponse("UNAUTHORIZED", "Invalid token or user not logged in.", 401);
+        }
+
+        $isAdmin = $request->user()->hasRole('admin');
+        $vouchers = $this->voucherService->list($isAdmin);
+
+        return $this->successResponse($vouchers, "Vouchers retrieved successfully.");
     }
-
-    // Admin thấy tất cả, Customer chỉ thấy voucher còn hiệu lực
-    $isAdmin = $request->user()->hasRole('admin');
-
-    return response()->json($this->voucherService->list($isAdmin));
-}
 
 
     // tạo voucher (Admin)
  public function store(VoucherRequest $request)
 {
-    Log::info("User từ request:", ['user' => $request->user()]);
-    
-    if (!$request->user()) {
-        return response()->json(['message' => 'Token không hợp lệ hoặc user chưa đăng nhập!'], 401);
+        Log::info("User from request:", ['user' => $request->user()]);
+
+        if (!$request->user()) {
+            return $this->errorResponse("UNAUTHORIZED", "Invalid token or user not logged in.", 401);
+        }
+
+        if (!$request->user()->hasRole('admin')) {
+            return $this->errorResponse("FORBIDDEN", "You do not have permission to perform this action.", 403);
+        }
+
+        $voucher = $this->voucherService->create($request->validated());
+
+        return $this->successResponse($voucher, "Voucher created successfully.");
     }
-
-    if (!$request->user()->hasRole('admin')) {
-        return response()->json(['message' => 'Bạn không có quyền thực hiện thao tác này!'], 403);
-    }
-
-    $voucher = $this->voucherService->create($request->validated());
-
-    return response()->json([
-        'message' => 'Voucher đã được tạo thành công!',
-        'voucher' => $voucher
-    ], 201);
-}
 
     // cập nhật voucher (Admin)
     public function update(VoucherRequest $request, Voucher $voucher)
     {
         if (!$request->user()) {
-        return response()->json(['message' => 'Token không hợp lệ hoặc user chưa đăng nhập!'], 401);
-    }
+            return $this->errorResponse("UNAUTHORIZED", "Invalid token or user not logged in.", 401);
+        }
 
-    if (!$request->user()->hasRole('admin')) {
-        return response()->json(['message' => 'Bạn không có quyền thực hiện thao tác này!'], 403);
-    }
+        if (!$request->user()->hasRole('admin')) {
+            return $this->errorResponse("FORBIDDEN", "You do not have permission to perform this action.", 403);
+        }
 
         $updatedVoucher = $this->voucherService->update($voucher, $request->validated());
 
-        return response()->json([
-            'message' => 'Voucher đã được cập nhật thành công!',
-            'voucher' => $updatedVoucher
-        ]);
+        return $this->successResponse($updatedVoucher, "Voucher updated successfully.");
     }
 
     // xóa voucher (Admin)
     public function destroy(Request $request, Voucher $voucher)
     {
-      if (!$request->user()) {
-        return response()->json(['message' => 'Token không hợp lệ hoặc user chưa đăng nhập!'], 401);
-    }
+        if (!$request->user()) {
+            return $this->errorResponse("UNAUTHORIZED", "Invalid token or user not logged in.", 401);
+        }
 
-    if (!$request->user()->hasRole('admin')) {
-        return response()->json(['message' => 'Bạn không có quyền thực hiện thao tác này!'], 403);
-    }
+        if (!$request->user()->hasRole('admin')) {
+            return $this->errorResponse("FORBIDDEN", "You do not have permission to perform this action.", 403);
+        }
 
         $this->voucherService->delete($voucher);
 
-        return response()->json(['message' => 'Voucher đã được xóa thành công!']);
+        return $this->successResponse(null, "Voucher deleted successfully.");
     }
 
     // áp dụng voucher (Customer)
@@ -99,6 +93,10 @@ public function index(Request $request)
 
         $result = $this->voucherService->apply($request->code, $request->order_total);
 
-        return response()->json($result);
+        if (!$result) {
+            return $this->errorResponse("INVALID_VOUCHER", "The voucher code is invalid or expired.", 400);
+        }
+
+        return $this->successResponse($result, "Voucher applied successfully.");
     }
 }

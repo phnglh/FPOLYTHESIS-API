@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\BaseController;
 use App\Services\PromotionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
-class PromotionController extends Controller
+class PromotionController extends BaseController
 {
     private $promotionService;
 
@@ -20,7 +20,7 @@ class PromotionController extends Controller
     public function index()
     {
         $promotions = $this->promotionService->getAllPromotions();
-        return response()->json($promotions);
+        return $this->successResponse($promotions, "Promotions retrieved successfully.");
     }
 
     // Tạo khuyến mãi mới
@@ -34,11 +34,11 @@ class PromotionController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+            return $this->errorResponse("VALIDATION_ERROR", "Validation failed.", 400, $validator->errors());
         }
 
         $promotion = $this->promotionService->createPromotion($request->all());
-        return response()->json($promotion, 201);
+        return $this->successResponse($promotion, "Promotion created successfully.");
     }
 
     // Lấy thông tin khuyến mãi theo id
@@ -46,9 +46,9 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
         if (!$promotion) {
-            return response()->json(['message' => 'Promotion not found'], 404);
+            return $this->errorResponse("PROMOTION_NOT_FOUND", "Promotion not found.", 404);
         }
-        return response()->json($promotion);
+        return $this->successResponse($promotion, "Promotion details retrieved successfully.");
     }
 
     // Cập nhật thông tin khuyến mãi
@@ -56,7 +56,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
         if (!$promotion) {
-            return response()->json(['message' => 'Promotion not found'], 404);
+            return $this->errorResponse("PROMOTION_NOT_FOUND", "Promotion not found.", 404);
         }
 
         $validator = Validator::make($request->all(), [
@@ -67,11 +67,11 @@ class PromotionController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+            return $this->errorResponse("VALIDATION_ERROR", "Validation failed.", 400, $validator->errors());
         }
 
-        $promotion = $this->promotionService->updatePromotion($promotion, $request->all());
-        return response()->json($promotion);
+        $updatedPromotion = $this->promotionService->updatePromotion($promotion, $request->all());
+        return $this->successResponse($updatedPromotion, "Promotion updated successfully.");
     }
 
     // Xóa khuyến mãi
@@ -79,10 +79,10 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
         if (!$promotion) {
-            return response()->json(['message' => 'Promotion not found'], 404);
+            return $this->errorResponse("PROMOTION_NOT_FOUND", "Promotion not found.", 404);
         }
 
         $this->promotionService->deletePromotion($promotion);
-        return response()->json(['message' => 'Promotion deleted successfully']);
+        return $this->successResponse(null, "Promotion deleted successfully.");
     }
 }
