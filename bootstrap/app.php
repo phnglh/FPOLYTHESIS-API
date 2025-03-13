@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\AuthenticationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -88,14 +89,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 return response()->json([
                     'status' => 'error',
-                    'status_code' => method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500,
+                    'status_code' => $e instanceof HttpException ? $e->getStatusCode() : 500,
                     'message' => $e->getMessage() ?: 'Server Error',
                     'error_code' => 'SERVER_ERROR',
                     'data' => null,
                     'errors' => [],
                     'meta' => null,
                     'timestamp' => now()->timestamp,
-                ], method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500);
+                ], $e instanceof HttpException ? $e->getStatusCode() : 500);
             }
 
             return null;

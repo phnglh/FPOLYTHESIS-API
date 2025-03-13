@@ -48,7 +48,11 @@ class CategoryService
      */
     public function createCategory(array $data)
     {
-        return Category::create($data);
+        try {
+            return Category::create($data);
+        } catch (\Exception $e) {
+            return $e;
+        }
     }
 
     /**

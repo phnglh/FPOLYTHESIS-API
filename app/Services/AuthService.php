@@ -7,7 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 
-class AuthService{
+class AuthService
+{
 
     public function register(array $data)
     {
@@ -46,10 +47,8 @@ class AuthService{
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return [
-            'success' => true,
-            'access_token' => $token,
-            'token_type' => 'Bearer',
             'user' => $user,
+            'token' => $token
         ];
     }
 
@@ -57,7 +56,6 @@ class AuthService{
     public function logout(Request $request, $logoutAll = false)
     {
         $user = $request->user();
-
         if ($logoutAll) {
             $user->tokens()->delete();
         } else {
@@ -70,7 +68,7 @@ class AuthService{
     // đổi mật khẩu
     public function changePassword($user, $oldPassword, $newPassword)
     {
-        if(!Hash::check($oldPassword, $user->password)){
+        if (!Hash::check($oldPassword, $user->password)) {
             return [
                 'success' => false,
                 'message' => 'Mật khẩu cũ không đúng!',
