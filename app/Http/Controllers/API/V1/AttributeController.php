@@ -27,7 +27,7 @@ class AttributeController extends BaseController
     // Tạo thuộc tính mới
     public function store(AttributeRequest $request)
     {
-        $attribute = $this->attributeService->createAttribute($request->validate());
+        $attribute = $this->attributeService->createAttribute($request->validated());
         
         return $this->successResponse($attribute , "Attribute created successfully");
     }

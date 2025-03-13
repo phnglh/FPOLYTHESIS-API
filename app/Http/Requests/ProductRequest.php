@@ -14,7 +14,7 @@ class ProductRequest extends BaseRequest
         return [
             'name' => 'required|string',
             'description' => 'required|string',
-            'brand_id' => 'required|exists:brands,id',
+            'brandId' => 'required|exists:brands,id',
             'price' => 'required|numeric',
             'sku' => 'required|array',
             'sku.*.sku' => 'required|string',

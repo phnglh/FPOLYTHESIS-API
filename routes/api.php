@@ -66,6 +66,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/check-user', fn(Request $request) => response()->json($request->user()));
         Route::post('/change-password', [AuthController::class, 'changePassword']);
 
+        
+
         // -------------------------
         // Role-based API (Admin Only)
         // -------------------------
@@ -116,6 +118,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/attributes/{attributeId}/values', [AttributeController::class, 'storeAttributeValue']);
             Route::put('/attributes/values/{id}', [AttributeController::class, 'updateAttributeValue']);
             Route::delete('/attributes/values/{id}', [AttributeController::class, 'destroyAttributeValue']);
+
+            
         });
     });
 });
