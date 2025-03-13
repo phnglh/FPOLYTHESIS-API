@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
-use App\Exceptions\ApiException;
+use App\Exceptions\ApiException; // them moi
 
 class CategoryService
 {
@@ -38,7 +38,7 @@ class CategoryService
                 'CATEGORY_NOT_FOUND',
                 404
             );
-        }
+        } // ko tồn tại 
 
         return $category;
     }

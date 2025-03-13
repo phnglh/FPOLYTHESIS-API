@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\WishList;
 use Illuminate\Support\Facades\Auth;
+use App\Exceptions\ApiException; // them moi
 
 class WishListService
 {
@@ -11,6 +12,12 @@ class WishListService
     public function getAllWishLists()
     {
         $userId = Auth::id();
+        if (!$userId) {
+            throw new ApiException(
+                'Không lấy được dữ liệu',
+                404
+            );
+        }
         return WishList::where('userId',$userId)->with('sku')->get();
     }
 
@@ -18,9 +25,20 @@ class WishListService
     public function addWishList($skuId)
     {
         $userId = Auth::id();
+        if (!$userId) {
+            throw new ApiException(
+                'Không lấy được dữ liệu',
+                404
+            );
+        }
         $exists = WishList::where('userId',$userId)->where('sku_id',$skuId)->exists();
-        if($exists)
-        {
+        if (!$exists) {
+            throw new ApiException(
+                'Không lấy được dữ liệu',
+                404
+            );
+        }
+        else{
             return['message'=>'sản phẩm đã có trong danh sách yêu thích' , 'status'=>400];
         }
         WishList::create([
@@ -34,6 +52,12 @@ class WishListService
     public function deleteWishList($skuId)
     {
         $userId = Auth::id();
+        if (!$userId) {
+            throw new ApiException(
+                'Không lấy được dữ liệu',
+                404
+            );
+        }
         $listExists = WishList::where('userId',$userId)->where('sku_id',$skuId)->first();
         if($listExists)
         {

@@ -8,6 +8,7 @@ use App\Models\Sku;
 use App\Models\OrderStatusHistory;
 use App\Models\OrderLog;
 use Illuminate\Support\Facades\DB;
+use App\Exceptions\ApiException; // them moi
 use Exception;
 
 class OrderService
@@ -85,14 +86,34 @@ class OrderService
     // lấy đơn hàng chi tiết
     public function getOrderDetails($orderId)
     {
-        return Order::with(['orderDetail.sku', 'orderStatusHistories', 'orderLogs'])->findOrFail($orderId);
+        $OrderDetail = Order::with(['orderDetail.sku', 'orderStatusHistories', 'orderLogs'])->findOrFail($orderId);
+
+        if (!$OrderDetail) {
+            throw new ApiException(
+                'không tìm thấy sản phẩm',
+                404
+            );
+        }
+
+        return $OrderDetail;
+
     }
 
 
     // lấy lịch sử trạng thái đơn hàng
     public function getOrderHistory($orderId)
     {
-        return OrderStatusHistory::where('order_id', $orderId)->orderBy('created_at', 'asc')->get();
+        $OrderHistory = OrderStatusHistory::where('order_id', $orderId)->orderBy('created_at', 'asc')->get();
+
+        if (!$OrderHistory) {
+            throw new ApiException(
+                'không tìm thấy sản phẩm',
+                404
+            );
+        }
+
+        return $OrderHistory;
+
     }
 
 

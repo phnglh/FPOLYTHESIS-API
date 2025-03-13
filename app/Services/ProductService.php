@@ -7,17 +7,35 @@ use App\Models\Product;
 use App\Models\Sku;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\UploadedFile;
+use App\Exceptions\ApiException; // them moi
+
 
 class ProductService
 {
     public function getAllProducts($perPage = 10)
     {
-        return Product::with('category', 'brand', 'skus.attribute_values')->paginate($perPage);
+        $AllProduct = Product::with('category', 'brand', 'skus.attribute_values')->paginate($perPage);
+
+        if (!$AllProduct) {
+            throw new ApiException(
+                'Không lấy được dữ liệu',
+                404
+            );
+        }
+        return $AllProduct;
     }
 
     public function getProductById($id)
     {
-        return Product::with('category', 'brand', 'skus.attribute_values')->findOrFail($id);
+        $ProductById = Product::with('category', 'brand', 'skus.attribute_values')->findOrFail($id);
+
+        if (!$ProductById) {
+            throw new ApiException(
+                'Không lấy được dữ liệu',
+                404
+            );
+        }
+        return $ProductById;
     }
 
     public function createProduct(array $data)

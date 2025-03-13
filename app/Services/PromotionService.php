@@ -2,12 +2,22 @@
 namespace App\Services;
 
 use App\Models\Promotion;
+use App\Exceptions\ApiException; // them moi
+
 
 class PromotionService
 {
     public function getAllPromotions()
     {
-        return Promotion::all();
+        $AllPromotions = Promotion::all();
+
+        if (!$AllPromotions) {
+            throw new ApiException(
+                'Không lấy được dữ liệu',
+                404
+            );
+        }
+        return $AllPromotions;
     }
 
     public function createPromotion($data)
@@ -17,7 +27,16 @@ class PromotionService
 
     public function getPromotionById($id)
     {
-        return Promotion::find($id);
+        $PromotionById = Promotion::find($id);
+
+        if (!$PromotionById) {
+            throw new ApiException(
+                'Không lấy được dữ liệu',
+                404
+            );
+        }
+        return $PromotionById;
+
     }
 
     public function updatePromotion($promotion, $data)

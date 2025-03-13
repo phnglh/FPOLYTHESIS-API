@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use App\Models\Image;
+use App\Exceptions\ApiException; // them moi
+
 
 class ImageUploadService
 {
@@ -22,6 +24,11 @@ class ImageUploadService
             $filename = Str::uuid() . '.' . $image->getClientOriginalExtension();
             $path = "products/" . class_basename($model) . "/{$model->id}/{$filename}";
 
+            // Kiểm tra và đảm bảo tệp hợp lệ trước khi upload
+            if (!$image->isValid()) {
+                throw new ApiException('File upload không hợp lệ.');
+            }
+
             // Upload lên S3
             Storage::disk('s3')->put($path, file_get_contents($image), 'public');
             // Storage::disk('s3')->put($path, fopen($image->getPathname(), 'r+'), 'public');
@@ -32,7 +39,8 @@ class ImageUploadService
             ]);
         } catch (\Exception $e) {
             // \Log::error('Upload failed: ' . $e->getMessage());
-            return null;
+            // Ném ngoại lệ có thể xử lý được thay vì trả về null
+            throw new ApiException('Lỗi trong quá trình upload hình ảnh.', 500);
         }
     }
 }

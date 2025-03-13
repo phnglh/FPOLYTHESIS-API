@@ -70,7 +70,11 @@ class BrandService
         $brand = Brand::find($id);
 
         if (!$brand) {
-            throw new ApiException('Không tìm thấy nhãn hàng để cập nhật', 'BRAND_NOT_FOUND', 404);
+            throw new ApiException(
+                'Không tìm thấy nhãn hàng để cập nhật',
+                'BRAND_NOT_FOUND',
+                404
+            );
         }
 
         $brand->update($data);
@@ -90,7 +94,11 @@ class BrandService
         $brand = Brand::find($id);
 
         if (!$brand) {
-            throw new ApiException('Không tìm thấy nhãn hàng để xóa', 'BRAND_NOT_FOUND', 404);
+            throw new ApiException(
+                'Không tìm thấy nhãn hàng để xóa',
+                'BRAND_NOT_FOUND',
+                404
+            );
         }
 
         $brand->delete();
