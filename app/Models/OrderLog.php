@@ -14,7 +14,7 @@ class OrderLog extends Model
         'user_id',
         'action',
         'descripsion',
-        'logged_at'
+        'logged_at',
     ];
 
     public function order()

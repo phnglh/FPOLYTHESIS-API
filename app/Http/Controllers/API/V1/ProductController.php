@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Api\BaseController;
-use Illuminate\Http\Request;
 use App\Services\ProductService;
+use Illuminate\Http\Request;
 
 class ProductController extends BaseController
 {
@@ -32,7 +32,7 @@ class ProductController extends BaseController
                     'per_page' => $products->perPage(),
                     'current_page' => $products->currentPage(),
                     'last_page' => $products->lastPage(),
-                ]
+                ],
             ],
             'errors' => null,
         ]);
@@ -66,6 +66,7 @@ class ProductController extends BaseController
     public function update(Request $request, $id)
     {
         $product = $this->productService->updateProduct($id, $request->all());
+
         return response()->json([
             'success' => true,
             'message' => 'Product updated successfully',

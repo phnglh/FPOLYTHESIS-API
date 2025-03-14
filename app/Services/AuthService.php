@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Password;
 
 class AuthService
 {
-
     public function register(array $data)
     {
 
@@ -22,6 +21,7 @@ class AuthService
             ]);
 
             $token = $user->createToken('auth_token')->plainTextToken;
+
             return [
                 'access_token' => $token,
                 'token_type' => 'Bearer',
@@ -37,7 +37,7 @@ class AuthService
     {
         $user = User::where('email', $data['email'])->first();
 
-        if (!$user || !Hash::check($data['password'], $user->password)) {
+        if (! $user || ! Hash::check($data['password'], $user->password)) {
             return [
                 'success' => false,
                 'message' => 'Email hoặc mật khẩu không đúng.',
@@ -48,7 +48,7 @@ class AuthService
 
         return [
             'user' => $user,
-            'token' => $token
+            'token' => $token,
         ];
     }
 
@@ -68,7 +68,7 @@ class AuthService
     // đổi mật khẩu
     public function changePassword($user, $oldPassword, $newPassword)
     {
-        if (!Hash::check($oldPassword, $user->password)) {
+        if (! Hash::check($oldPassword, $user->password)) {
             return [
                 'success' => false,
                 'message' => 'Mật khẩu cũ không đúng!',
@@ -76,6 +76,7 @@ class AuthService
         }
 
         $user->update(['password' => Hash::make($newPassword)]);
+
         return [
             'success' => true,
             'message' => 'Đối mật khẩu thành công!',

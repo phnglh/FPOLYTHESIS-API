@@ -2,8 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\BaseRequest;
-
 class BrandRequest extends BaseRequest
 {
     public function authorize()

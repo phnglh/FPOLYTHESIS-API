@@ -3,9 +3,8 @@
 namespace App\Services;
 
 use App\Models\Voucher;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
-
+use Illuminate\Support\Facades\DB;
 
 class VoucherService
 {
@@ -27,7 +26,7 @@ class VoucherService
         });
     }
 
-    //cập nhật voucher (Admin)
+    // cập nhật voucher (Admin)
     public function update(Voucher $voucher, array $data)
     {
         return DB::transaction(function () use ($voucher, $data) {
@@ -57,14 +56,14 @@ class VoucherService
     // danh sách voucher (Admin & Customer)
     public function list($isAdmin = false)
     {
-        return Voucher::when(!$isAdmin, function ($query) {
+        return Voucher::when(! $isAdmin, function ($query) {
             $query->where('is_active', true)
-                  ->where(function ($q) {
-                      $q->whereNull('start_date')->orWhere('start_date', '<=', Carbon::now());
-                  })
-                  ->where(function ($q) {
-                      $q->whereNull('end_date')->orWhere('end_date', '>=', Carbon::now());
-                  });
+                ->where(function ($q) {
+                    $q->whereNull('start_date')->orWhere('start_date', '<=', Carbon::now());
+                })
+                ->where(function ($q) {
+                    $q->whereNull('end_date')->orWhere('end_date', '>=', Carbon::now());
+                });
         })->get();
     }
 
@@ -73,11 +72,11 @@ class VoucherService
     {
         $voucher = Voucher::where('code', strtoupper($code))->first();
 
-        if (!$voucher) {
+        if (! $voucher) {
             return ['success' => false, 'message' => 'Mã giảm giá không tồn tại!'];
         }
 
-        if (!$voucher->isValid()) {
+        if (! $voucher->isValid()) {
             return ['success' => false, 'message' => 'Mã giảm giá không hợp lệ hoặc đã hết hạn!'];
         }
 
@@ -92,7 +91,7 @@ class VoucherService
         return [
             'success' => true,
             'discount' => min($discount, $orderTotal), // Giảm giá không được vượt quá tổng đơn hàng
-            'message' => 'Mã giảm giá được áp dụng thành công!'
+            'message' => 'Mã giảm giá được áp dụng thành công!',
         ];
     }
 }

@@ -2,8 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\BaseRequest;
-
 class LoginRequest extends BaseRequest
 {
     public function authorize()
@@ -31,5 +29,4 @@ class LoginRequest extends BaseRequest
             'password.min' => 'Mật khẩu phải có ít nhất 8 ký tự.',
         ];
     }
-
 }

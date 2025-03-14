@@ -15,10 +15,12 @@ class WishList extends Model
         'user_id',
         'sku_id',
     ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
+
     public function sku()
     {
         return $this->belongsTo(Sku::class);

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\Order;
@@ -19,7 +20,7 @@ class PaymentService
         $order = Order::findOrFail($orderId);
 
         if ($order->status !== 'pending') {
-            throw new Exception("Đơn hàng không thể thanh toán.");
+            throw new Exception('Đơn hàng không thể thanh toán.');
         }
 
         if ($method === 'cod') {
@@ -27,7 +28,7 @@ class PaymentService
         } elseif ($method === 'vnpay') {
             return $this->vnPayService->createPaymentUrl($order);
         } else {
-            throw new Exception("Phương thức thanh toán không hợp lệ.");
+            throw new Exception('Phương thức thanh toán không hợp lệ.');
         }
     }
 
@@ -42,7 +43,7 @@ class PaymentService
 
         return [
             'message' => "Đơn hàng {$order->order_number} sẽ được thanh toán khi nhận hàng.",
-            'payment_status' => $payment->status
+            'payment_status' => $payment->status,
         ];
     }
 
@@ -61,6 +62,7 @@ class PaymentService
                 'status' => 'paid',
                 'paidAt' => now(),
             ]);
+
             return ['message' => 'Thanh toán VNPay thành công!'];
         } else {
             return ['error' => 'Thanh toán thất bại!'];

@@ -59,8 +59,8 @@ class BaseController extends Controller
                     'current_page' => $data->currentPage(),
                     'last_page' => $data->lastPage(),
                     'from' => $data->firstItem(),
-                    'to' => $data->lastItem()
-                ]
+                    'to' => $data->lastItem(),
+                ],
             ],
             'timestamp' => now()->timestamp,
         ]);

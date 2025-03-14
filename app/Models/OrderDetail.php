@@ -16,7 +16,7 @@ class OrderDetail extends Model
         'quantity',
         'price',
         'total_price',
-        'product_attributes'
+        'product_attributes',
     ];
 
     public function order()

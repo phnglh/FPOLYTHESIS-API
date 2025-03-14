@@ -17,7 +17,7 @@ class ProductFactory extends Factory
             'stock' => $this->faker->numberBetween(0, 100),
             'currency' => 'USD',
             'image_url' => $this->faker->imageUrl(),
-            'category_id' => null, 
+            'category_id' => null,
         ];
     }
 }

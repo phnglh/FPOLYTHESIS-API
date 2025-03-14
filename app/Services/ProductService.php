@@ -2,13 +2,12 @@
 
 namespace App\Services;
 
+use App\Exceptions\ApiException;
 use App\Models\AttributeValue;
 use App\Models\Product;
 use App\Models\Sku;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\UploadedFile;
-use App\Exceptions\ApiException; // them moi
-
+use Illuminate\Support\Facades\DB; // them moi
 
 class ProductService
 {
@@ -16,12 +15,13 @@ class ProductService
     {
         $AllProduct = Product::with('category', 'brand', 'skus.attribute_values')->paginate($perPage);
 
-        if (!$AllProduct) {
+        if (! $AllProduct) {
             throw new ApiException(
                 'Không lấy được dữ liệu',
                 404
             );
         }
+
         return $AllProduct;
     }
 
@@ -29,12 +29,13 @@ class ProductService
     {
         $ProductById = Product::with('category', 'brand', 'skus.attribute_values')->findOrFail($id);
 
-        if (!$ProductById) {
+        if (! $ProductById) {
             throw new ApiException(
                 'Không lấy được dữ liệu',
                 404
             );
         }
+
         return $ProductById;
     }
 
@@ -46,25 +47,25 @@ class ProductService
                 'description' => $data['description'],
                 'category_id' => $data['category_id'] ?? null,
                 'brand_id' => $data['brand_id'] ?? null,
-                'is_published' => $data['is_published'] ?? false
+                'is_published' => $data['is_published'] ?? false,
             ]);
 
-            if (!empty($data['skus'])) {
+            if (! empty($data['skus'])) {
                 foreach ($data['skus'] as $skuData) {
-                    if (!empty($skuData['id'])) {
+                    if (! empty($skuData['id'])) {
                         $sku = Sku::find($skuData['id']);
                         if ($sku) {
                             $sku->update([
                                 'sku' => $skuData['sku'],
                                 'price' => $skuData['price'],
-                                'stock' => $skuData['stock']
+                                'stock' => $skuData['stock'],
                             ]);
                         } else {
                             $sku = Sku::create([
                                 'sku' => $skuData['sku'],
                                 'product_id' => $product->id,
                                 'price' => $skuData['price'],
-                                'stock' => $skuData['stock']
+                                'stock' => $skuData['stock'],
                             ]);
                         }
                     } else {
@@ -72,37 +73,35 @@ class ProductService
                             'sku' => $skuData['sku'],
                             'product_id' => $product->id,
                             'price' => $skuData['price'],
-                            'stock' => $skuData['stock']
+                            'stock' => $skuData['stock'],
                         ]);
                     }
 
                     // Xử lý ảnh SKU
-                    if (!empty($skuData['image']) && $skuData['image'] instanceof UploadedFile) {
+                    if (! empty($skuData['image']) && $skuData['image'] instanceof UploadedFile) {
                         ImageUploadService::upload($skuData['image'], $sku);
                     }
 
                     // Cập nhật attribute_values
                     $sku->attribute_values()->detach();
-                    if (!empty($skuData['attributes'])) {
+                    if (! empty($skuData['attributes'])) {
                         foreach ($skuData['attributes'] as $attr) {
                             $attributeValue = AttributeValue::firstOrCreate([
                                 'attribute_id' => $attr['attribute_id'],
-                                'value' => $attr['value']
+                                'value' => $attr['value'],
                             ]);
                             $sku->attribute_values()->attach($attributeValue->id, [
                                 'attribute_id' => $attr['attribute_id'],
-                                'value' => $attr['value']
+                                'value' => $attr['value'],
                             ]);
                         }
                     }
                 }
             }
 
-
             return $product->load('skus.attribute_values');
         });
     }
-
 
     public function updateProduct($id, array $data)
     {
@@ -113,10 +112,10 @@ class ProductService
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
                 'category_id' => $data['category_id'] ?? null,
-                'is_published' => $data['is_published'] ?? false
+                'is_published' => $data['is_published'] ?? false,
             ]);
 
-            if (!empty($data['productImage']) && $data['productImage'] instanceof UploadedFile) {
+            if (! empty($data['productImage']) && $data['productImage'] instanceof UploadedFile) {
                 ImageUploadService::upload($data['productImage'], $product);
             }
 
@@ -125,7 +124,7 @@ class ProductService
                 ->filter()
                 ->toArray();
 
-            if (!empty($incomingSkuIds)) {
+            if (! empty($incomingSkuIds)) {
                 $product->skus()
                     ->whereNotIn('id', $incomingSkuIds)
                     ->each(function ($sku) {
@@ -134,11 +133,11 @@ class ProductService
                     });
             }
 
-            if (!empty($data['sku'])) {
+            if (! empty($data['sku'])) {
                 foreach ($data['sku'] as $skuData) {
                     $sku = null;
 
-                    if (!empty($skuData['id'])) {
+                    if (! empty($skuData['id'])) {
                         $sku = Sku::find($skuData['id']);
                     }
 
@@ -146,31 +145,31 @@ class ProductService
                         $sku->update([
                             'sku' => $skuData['sku'],
                             'price' => $skuData['price'],
-                            'stock' => $skuData['stock']
+                            'stock' => $skuData['stock'],
                         ]);
                     } else {
                         $sku = Sku::create([
                             'sku' => $skuData['sku'],
                             'product_id' => $product->id,
                             'price' => $skuData['price'],
-                            'stock' => $skuData['stock']
+                            'stock' => $skuData['stock'],
                         ]);
                     }
 
-                    if (!empty($skuData['image']) && $skuData['image'] instanceof UploadedFile) {
+                    if (! empty($skuData['image']) && $skuData['image'] instanceof UploadedFile) {
                         ImageUploadService::upload($skuData['image'], $sku);
                     }
 
                     $sku->attribute_values()->detach();
-                    if (!empty($skuData['attributes'])) {
+                    if (! empty($skuData['attributes'])) {
                         foreach ($skuData['attributes'] as $attr) {
                             $attributeValue = AttributeValue::firstOrCreate([
                                 'attribute_id' => $attr['attribute_id'],
-                                'value' => $attr['value']
+                                'value' => $attr['value'],
                             ]);
                             $sku->attribute_values()->attach($attributeValue->id, [
                                 'attribute_id' => $attr['attribute_id'],
-                                'value' => $attr['value']
+                                'value' => $attr['value'],
                             ]);
                         }
                     }
@@ -181,7 +180,6 @@ class ProductService
         });
     }
 
-
     public function deleteProduct($id)
     {
         $product = Product::findOrFail($id);
@@ -191,8 +189,9 @@ class ProductService
     public function togglePublish($id)
     {
         $product = Product::findOrFail($id);
-        $product->is_published = !$product->is_published;
+        $product->is_published = ! $product->is_published;
         $product->save();
+
         return $product;
     }
 }

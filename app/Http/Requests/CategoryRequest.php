@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\BaseRequest;
 use Illuminate\Validation\Rule;
 
 class CategoryRequest extends BaseRequest
@@ -23,7 +22,7 @@ class CategoryRequest extends BaseRequest
             ],
             'description' => 'nullable|string',
             'parent_id' => 'nullable|exists:categories,id',
-            'image_url' => 'nullable|string'
+            'image_url' => 'nullable|string',
         ];
     }
 

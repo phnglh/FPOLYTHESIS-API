@@ -19,7 +19,7 @@ class Order extends Model
         'notes',
         'ordered_at',
         'shipped_at',
-        'delivered_at'
+        'delivered_at',
     ];
 
     public function user()

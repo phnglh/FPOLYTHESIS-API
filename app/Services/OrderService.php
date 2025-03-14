@@ -2,18 +2,17 @@
 
 namespace App\Services;
 
+use App\Exceptions\ApiException;
 use App\Models\Order;
 use App\Models\OrderDetail;
-use App\Models\Sku;
-use App\Models\OrderStatusHistory;
 use App\Models\OrderLog;
+use App\Models\OrderStatusHistory;
+use App\Models\Sku;
+use Exception; // them moi
 use Illuminate\Support\Facades\DB;
-use App\Exceptions\ApiException; // them moi
-use Exception;
 
 class OrderService
 {
-
     public function createOrder($userID, $items, $shippingAddress, $notes = null)
     {
         return
@@ -26,7 +25,7 @@ class OrderService
 
                     $sku = Sku::find($item['skuId']);
 
-                    if (!$sku || $sku->stock < $item['quantity']) {
+                    if (! $sku || $sku->stock < $item['quantity']) {
                         throw new Exception("Sản phẩm '{$sku->product->name}' (SKU: {$item['skuId']}) không đủ hàng");
                     }
 
@@ -35,7 +34,7 @@ class OrderService
 
                 $order = Order::create([
                     'userId' => $userID,
-                    'orderNumber' => 'ORD' . time(),
+                    'orderNumber' => 'ORD'.time(),
                     'total' => $total,
                     'finalTotal' => $total,
                     'shippingAddress' => $shippingAddress,
@@ -55,7 +54,7 @@ class OrderService
                         'productName' => $sku->product->name ?? 'không tìm thấy sản phẩm',
                         'productAttributes' => json_encode([
                             'color' => $sku->color ?? 'N/A',
-                            'size' => $sku->size ?? 'N/A'
+                            'size' => $sku->size ?? 'N/A',
                         ]),
                     ]);
 
@@ -82,13 +81,12 @@ class OrderService
             });
     }
 
-
     // lấy đơn hàng chi tiết
     public function getOrderDetails($orderId)
     {
         $OrderDetail = Order::with(['orderDetail.sku', 'orderStatusHistories', 'orderLogs'])->findOrFail($orderId);
 
-        if (!$OrderDetail) {
+        if (! $OrderDetail) {
             throw new ApiException(
                 'không tìm thấy sản phẩm',
                 404
@@ -99,13 +97,12 @@ class OrderService
 
     }
 
-
     // lấy lịch sử trạng thái đơn hàng
     public function getOrderHistory($orderId)
     {
         $OrderHistory = OrderStatusHistory::where('order_id', $orderId)->orderBy('created_at', 'asc')->get();
 
-        if (!$OrderHistory) {
+        if (! $OrderHistory) {
             throw new ApiException(
                 'không tìm thấy sản phẩm',
                 404
@@ -116,19 +113,18 @@ class OrderService
 
     }
 
-
-    //Khách hàng hủy đơn hàng
+    // Khách hàng hủy đơn hàng
     public function cancelOrder($orderID, $userID)
     {
         return DB::transaction(function () use ($orderID, $userID) {
             $order = Order::where('id', $orderID)->where('user_id', $userID)->firstOrFail();
 
             if ($order->status === 'shipped' || $order->status === 'delivered') {
-                throw new Exception("Không thể hủy đơn hàng đã giao.");
+                throw new Exception('Không thể hủy đơn hàng đã giao.');
             }
 
             if ($order->status === 'cancelled') {
-                throw new Exception("Đơn hàng này đã bị hủy trước đó.QƯ");
+                throw new Exception('Đơn hàng này đã bị hủy trước đó.QƯ');
             }
 
             $order->update(['status' => 'cancelled']);
@@ -145,7 +141,7 @@ class OrderService
                 'old_status' => $order->status,
                 'new_status' => 'cancelled',
                 'changed_by' => $userID,
-                'reason' => 'Khách hàng đã hủy đơn hàng.'
+                'reason' => 'Khách hàng đã hủy đơn hàng.',
             ]);
 
             OrderLog::create([
@@ -159,7 +155,6 @@ class OrderService
         });
     }
 
-
     // lấy danh sách đơn hàng
     public function listOrders($user, $filters)
     {
@@ -169,7 +164,7 @@ class OrderService
             $query->where('user_id', $user->id);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
@@ -184,7 +179,7 @@ class OrderService
             $oldStatus = $order->status;
 
             if ($oldStatus === 'delivered' || $oldStatus === 'cancelled') {
-                throw new Exception("Không thể cập nhật trạng thái đơn hàng đã hoàn thành hoặc bị hủy.");
+                throw new Exception('Không thể cập nhật trạng thái đơn hàng đã hoàn thành hoặc bị hủy.');
             }
 
             $order->update(['status' => $newStatus]);
@@ -194,7 +189,7 @@ class OrderService
                 'old_status' => $oldStatus,
                 'new_status' => $newStatus,
                 'changed_by' => $adminId,
-                'reason' => "Admin cập nhật trạng thái.",
+                'reason' => 'Admin cập nhật trạng thái.',
             ]);
 
             return $order;
@@ -208,7 +203,7 @@ class OrderService
             $order = Order::findOrFail($orderId);
 
             if ($order->status === 'shipped' || $order->status === 'delivered') {
-                throw new Exception("Không thể xóa đơn hàng đã giao.");
+                throw new Exception('Không thể xóa đơn hàng đã giao.');
             }
 
             $order->delete();

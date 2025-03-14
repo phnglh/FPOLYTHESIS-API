@@ -42,6 +42,7 @@ class Category extends Model
             $category->slug = Str::slug($category->name);
         });
     }
+
     public function getRouteKeyName()
     {
         return 'slug';

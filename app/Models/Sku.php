@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,13 +24,13 @@ class Sku extends Model
         return $this->belongsTo(Product::class, 'product_id');
     }
 
-
     public function attributes()
     {
         return $this->belongsToMany(Attribute::class, 'attribute_skus')
             ->withPivot('attribute_value_id')
             ->withTimestamps();
     }
+
     public function attribute_values()
     {
         return $this->belongsToMany(

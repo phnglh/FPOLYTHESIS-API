@@ -2,30 +2,27 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Str;
+use App\Exceptions\ApiException;
 use App\Models\Image;
-use App\Exceptions\ApiException; // them moi
-
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str; // them moi
 
 class ImageUploadService
 {
     /**
      * Upload image and save to database
      *
-     * @param UploadedFile $image
-     * @param Model $model (Product or Sku)
-     * @return Image|null
+     * @param  Model  $model  (Product or Sku)
      */
     public static function upload(UploadedFile $image, $model): ?Image
     {
         try {
-            $filename = Str::uuid() . '.' . $image->getClientOriginalExtension();
-            $path = "products/" . class_basename($model) . "/{$model->id}/{$filename}";
+            $filename = Str::uuid().'.'.$image->getClientOriginalExtension();
+            $path = 'products/'.class_basename($model)."/{$model->id}/{$filename}";
 
             // Kiểm tra và đảm bảo tệp hợp lệ trước khi upload
-            if (!$image->isValid()) {
+            if (! $image->isValid()) {
                 throw new ApiException('File upload không hợp lệ.');
             }
 

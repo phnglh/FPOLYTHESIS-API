@@ -20,32 +20,32 @@ class AttributeController extends BaseController
     public function index()
     {
         $attribute = $this->attributeService->getAllAttributes();
-        
-        return $this->successResponse($attribute , "Attributes fetched successfully");
+
+        return $this->successResponse($attribute, 'Attributes fetched successfully');
     }
 
     // Tạo thuộc tính mới
     public function store(AttributeRequest $request)
     {
         $attribute = $this->attributeService->createAttribute($request->validated());
-        
-        return $this->successResponse($attribute , "Attribute created successfully");
+
+        return $this->successResponse($attribute, 'Attribute created successfully');
     }
 
     // Cập nhật thuộc tính
     public function update(AttributeRequest $request, $id)
     {
         $attribute = $this->attributeService->updateAttribute($id, $request->validated());
-        
-        return $this->successResponse($attribute, "Attribute updated successfully");
+
+        return $this->successResponse($attribute, 'Attribute updated successfully');
     }
 
     // Xóa thuộc tính
-     public function destroy($id)
+    public function destroy($id)
     {
         $this->attributeService->deleteAttribute($id);
-        
-        return $this->successResponse(null, "Attribute deleted successfully");
+
+        return $this->successResponse(null, 'Attribute deleted successfully');
     }
 
     // -------------------------------
@@ -56,31 +56,31 @@ class AttributeController extends BaseController
     public function getAttributeValues($attribute_id)
     {
         $attributeValues = $this->attributeService->getAttributeValues($attribute_id);
-        
-        return $this->successResponse($attributeValues, "Attribute values fetched successfully");
+
+        return $this->successResponse($attributeValues, 'Attribute values fetched successfully');
     }
 
     // Tạo giá trị thuộc tính mới
     public function storeAttributeValue(AttributeValueRequest $request, $attribute_id)
     {
         $attributeValue = $this->attributeService->createAttributeValue($attribute_id, $request->validated());
-        
-        return $this->successResponse($attributeValue, "Attribute value created successfully");
+
+        return $this->successResponse($attributeValue, 'Attribute value created successfully');
     }
 
     // Cập nhật giá trị thuộc tính
     public function updateAttributeValue(AttributeValueRequest $request, $id)
     {
         $attributeValue = $this->attributeService->updateAttributeValue($id, $request->validated());
-        
-        return $this->successResponse($attributeValue, "Attribute value updated successfully");
+
+        return $this->successResponse($attributeValue, 'Attribute value updated successfully');
     }
 
     // Xóa giá trị thuộc tính
     public function destroyAttributeValue($id)
     {
         $this->attributeService->deleteAttributeValue($id);
-        
-        return $this->successResponse(null, "Attribute value deleted successfully");
+
+        return $this->successResponse(null, 'Attribute value deleted successfully');
     }
 }

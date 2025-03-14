@@ -13,7 +13,7 @@ class Review extends Model
         'user_id',
         'product_id',
         'rating',
-        'comment'
+        'comment',
     ];
 
     // Liên kết với bảng Users

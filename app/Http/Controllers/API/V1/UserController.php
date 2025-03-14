@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-
     public function updateRole(Request $request, $id)
     {
         if ($request->user()->role != 'admin') {
@@ -16,7 +15,7 @@ class UserController extends Controller
                 'success' => false,
                 'message' => 'Bạn không có quyền thực hiện thao tác này!',
                 'data' => null,
-                'errors' => null
+                'errors' => null,
             ], 403);
         }
 
@@ -27,7 +26,7 @@ class UserController extends Controller
                 'success' => false,
                 'message' => 'Bạn không thể tự thay đổi quyền của chính mình',
                 'data' => null,
-                'errors' => null
+                'errors' => null,
             ], 400);
         }
 
@@ -38,7 +37,7 @@ class UserController extends Controller
             'success' => true,
             'message' => 'Nhân sự đã được cập nhật quyền!',
             'data' => $user,
-            'errors' => null
+            'errors' => null,
         ], 200);
     }
 }

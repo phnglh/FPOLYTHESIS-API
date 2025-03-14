@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use App\Exceptions\ApiException;
 use App\Models\Category;
-use Illuminate\Http\Request;
-use App\Exceptions\ApiException; // them moi
+use Illuminate\Http\Request; // them moi
 
 class CategoryService
 {
@@ -19,7 +19,7 @@ class CategoryService
         $query = Category::with('children')->whereNull('parent_id');
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->query('name') . '%');
+            $query->where('name', 'like', '%'.$request->query('name').'%');
         }
 
         return $query->paginate($perPage, ['*'], 'page', $currentPage);
@@ -32,13 +32,13 @@ class CategoryService
     {
         $category = Category::with('children')->find($id);
 
-        if (!$category) {
+        if (! $category) {
             throw new ApiException(
                 'Category not found',
                 'CATEGORY_NOT_FOUND',
                 404
             );
-        } // ko tồn tại 
+        } // ko tồn tại
 
         return $category;
     }
@@ -62,7 +62,7 @@ class CategoryService
     {
         $category = Category::find($id);
 
-        if (!$category) {
+        if (! $category) {
             throw new ApiException(
                 'Category not found',
                 'CATEGORY_NOT_FOUND',
@@ -82,7 +82,7 @@ class CategoryService
     {
         $category = Category::find($id);
 
-        if (!$category) {
+        if (! $category) {
             throw new ApiException(
                 'Category not found',
                 'CATEGORY_NOT_FOUND',

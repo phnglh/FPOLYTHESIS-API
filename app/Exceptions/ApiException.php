@@ -2,18 +2,20 @@
 
 namespace App\Exceptions;
 
-use Illuminate\Http\JsonResponse;
 use Exception;
+use Illuminate\Http\JsonResponse;
 
 class ApiException extends Exception
 {
     public $errorCode;
+
     public $statusCode;
+
     public $errors;
 
     public function __construct(
-        string $message = "Error",
-        string $errorCode = "UNKNOWN_ERROR",
+        string $message = 'Error',
+        string $errorCode = 'UNKNOWN_ERROR',
         int $statusCode = 400,
         array $errors = []
     ) {

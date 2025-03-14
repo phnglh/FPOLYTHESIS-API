@@ -12,7 +12,7 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, string $role): Response
     {
         try {
-            if (!Auth::check()) {
+            if (! Auth::check()) {
                 return response()->json(['message' => 'User not authenticated'], 401);
             }
 

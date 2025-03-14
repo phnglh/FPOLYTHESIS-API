@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Api\BaseController;
 use App\Http\Requests\CategoryRequest;
-use App\Http\Resources\Categories\CategoryCollection;
 use App\Http\Resources\Categories\CategoryResource;
 use App\Services\CategoryService;
 use Illuminate\Http\Request;

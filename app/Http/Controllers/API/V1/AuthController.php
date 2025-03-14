@@ -24,31 +24,33 @@ class AuthController extends BaseController
         $result = $this->authService->register($validated);
 
         if (isset($result['errors'])) {
-            return $this->errorResponse("VALIDATION_FAILED", "Validation failed.", 422, $result['errors']);
+            return $this->errorResponse('VALIDATION_FAILED', 'Validation failed.', 422, $result['errors']);
         }
 
         return $this->successResponse([
             'access_token' => $result['access_token'],
             'token_type' => $result['token_type'],
             'user' => $result['user'],
-        ], "User registered successfully.");
+        ], 'User registered successfully.');
     }
 
     public function login(LoginRequest $request)
     {
         $credentials = $request->only('email', 'password');
         $result = $this->authService->login($credentials);
-        if (!$result) {
-            return $this->errorResponse("VALIDATION_FAILED", 'Email hoặc mật khẩu không đúng.', 401);
-        };
+        if (! $result) {
+            return $this->errorResponse('VALIDATION_FAILED', 'Email hoặc mật khẩu không đúng.', 401);
+        }
+
         return $this->successResponse($result);
     }
+
     public function logout(Request $request)
     {
         $result = $this->authService->logout($request);
-        return $this->successResponse($result, "Logout successful.");
-    }
 
+        return $this->successResponse($result, 'Logout successful.');
+    }
 
     public function sendResetLinkEmail(Request $request)
     {
@@ -57,15 +59,15 @@ class AuthController extends BaseController
         ]);
 
         if ($validator->fails()) {
-            return $this->errorResponse("VALIDATION_FAILED", "Invalid email address.", 422, $validator->errors());
+            return $this->errorResponse('VALIDATION_FAILED', 'Invalid email address.', 422, $validator->errors());
         }
 
         $result = $this->authService->sendResetLink($request->input('email'));
 
         if ($result['success']) {
-            return $this->successResponse(null, "Password reset link sent successfully.");
+            return $this->successResponse(null, 'Password reset link sent successfully.');
         }
 
-        return $this->errorResponse("RESET_LINK_FAILED", "Failed to send password reset link.", 500);
+        return $this->errorResponse('RESET_LINK_FAILED', 'Failed to send password reset link.', 500);
     }
 }

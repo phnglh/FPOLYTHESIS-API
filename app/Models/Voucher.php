@@ -12,7 +12,7 @@ class Voucher extends Model
 
     protected $fillable = [
         'code', 'type', 'discount_value', 'min_order_value',
-        'usage_limit', 'used_count', 'start_date', 'end_date', 'is_active'
+        'usage_limit', 'used_count', 'start_date', 'end_date', 'is_active',
     ];
 
     public function isValid()

@@ -1,22 +1,21 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-
-use LaravelJsonApi\Laravel\Facades\JsonApiRoute;
-use App\Http\Controllers\API\V1\AuthController;
 use App\Http\Controllers\API\V1\ApiController;
 use App\Http\Controllers\API\V1\AttributeController;
+use App\Http\Controllers\API\V1\AuthController;
+use App\Http\Controllers\API\V1\BrandController;
+use App\Http\Controllers\API\V1\CartController;
 use App\Http\Controllers\API\V1\CategoryController;
 use App\Http\Controllers\API\V1\OrderController;
 use App\Http\Controllers\API\V1\ProductController;
-use App\Http\Controllers\API\V1\BrandController;
-use App\Http\Controllers\API\V1\CartController;
-use App\Http\Controllers\API\V1\ReviewController;
-use App\Http\Controllers\API\V1\WishListController;
 use App\Http\Controllers\Api\V1\PromotionController;
-use App\Http\Controllers\API\V2\CategoryController as V2CategoryController;
+use App\Http\Controllers\API\V1\ReviewController;
 use App\Http\Controllers\API\V1\VoucherController;
+use App\Http\Controllers\API\V1\WishListController;
+use App\Http\Controllers\API\V2\CategoryController as V2CategoryController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use LaravelJsonApi\Laravel\Facades\JsonApiRoute;
 
 // -------------------------
 // Public API (Không cần đăng nhập)
@@ -63,10 +62,8 @@ Route::prefix('v1')->group(function () {
         // User
         Route::get('/user', [AuthController::class, 'user']);
         Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/check-user', fn(Request $request) => response()->json($request->user()));
+        Route::get('/check-user', fn (Request $request) => response()->json($request->user()));
         Route::post('/change-password', [AuthController::class, 'changePassword']);
-
-        
 
         // -------------------------
         // Role-based API (Admin Only)
@@ -119,7 +116,6 @@ Route::prefix('v1')->group(function () {
             Route::put('/attributes/values/{id}', [AttributeController::class, 'updateAttributeValue']);
             Route::delete('/attributes/values/{id}', [AttributeController::class, 'destroyAttributeValue']);
 
-            
         });
     });
 });

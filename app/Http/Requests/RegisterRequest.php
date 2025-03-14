@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\BaseRequest;
 class RegisterRequest extends BaseRequest
 {
     public function authorize()
@@ -45,5 +44,4 @@ class RegisterRequest extends BaseRequest
             'address.max' => 'Địa chỉ không được vượt quá 500 ký tự.',
         ];
     }
-
 }

@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Review;
-use App\Exceptions\ApiException; // them moi
+use App\Exceptions\ApiException;
+use App\Models\Review; // them moi
 
 class ReviewService
 {
@@ -16,7 +16,7 @@ class ReviewService
     {
         $ReviewById = Review::findOrFail($id);
 
-        if (!$ReviewById) {
+        if (! $ReviewById) {
             throw new ApiException(
                 'Không lấy được dữ liệu',
                 404
@@ -35,7 +35,7 @@ class ReviewService
     {
         $review = Review::findOrFail($id);
 
-        if (!$review) {
+        if (! $review) {
             throw new ApiException(
                 'Không lấy được dữ liệu',
                 404
@@ -43,19 +43,21 @@ class ReviewService
         } // ko tồn tại
 
         $review->update($data);
+
         return $review;
     }
 
     public function deleteReview($id)
     {
         $review = Review::findOrFail($id);
-        if (!$review) {
+        if (! $review) {
             throw new ApiException(
                 'Không lấy được dữ liệu',
                 404
             );
         }
         $review->delete();
+
         return true;
     }
 }

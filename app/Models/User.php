@@ -11,9 +11,13 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens,HasFactory, Notifiable;
+    use HasApiTokens;
+
+    use HasFactory;
+    use Notifiable;
 
     protected $table = 'users';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -52,10 +56,8 @@ class User extends Authenticatable
         ];
     }
 
-public function hasRole($role)
-{
-    return strtolower($this->role) === strtolower($role);
-}
-
-
+    public function hasRole($role)
+    {
+        return strtolower($this->role) === strtolower($role);
+    }
 }
