@@ -43,9 +43,9 @@ class ProductService
         return DB::transaction(function () use ($data) {
             $product = Product::create([
                 'name' => $data['name'],
-                'description' => $data['description'] ?? null,
+                'description' => $data['description'],
                 'category_id' => $data['category_id'] ?? null,
-                'brandId' => $data['brandId'],
+                'brand_id' => $data['brand_id'] ?? null,
                 'is_published' => $data['is_published'] ?? false
             ]);
 

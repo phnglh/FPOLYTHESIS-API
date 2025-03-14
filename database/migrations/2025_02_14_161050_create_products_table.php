@@ -13,7 +13,7 @@ return new class extends Migration {
             $table->string('name');
             $table->text('description')->nullable();
             $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
-            $table->foreignId('brandId')->nullable()->constrained('brands')->nullOnDelete();
+            $table->foreignId('brand_id')->nullable()->constrained('brands')->nullOnDelete();
             $table->boolean('is_published')->default(false);
             $table->timestamps();
         });
