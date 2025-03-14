@@ -21,7 +21,7 @@ class CategoryController extends BaseController
     {
         $categories = $this->categoryService->getCategoriesWithPagination($request);
 
-        return $this->paginatedResponse(new CategoryResource($categories), 'Categories fetched successfully');
+        return $this->paginatedResponse(CategoryResource::collection($categories), 'Categories fetched successfully');
     }
 
     public function show($id)
