@@ -11,18 +11,18 @@ use Illuminate\Support\Facades\DB; // them moi
 
 class ProductService
 {
-    public function getAllProducts($perPage = 10)
+    public function getAllProduct($perPage = 10)
     {
-        $AllProduct = Product::with('category', 'brand', 'skus.attribute_values')->paginate($perPage);
+        $products = Product::with('category', 'brand', 'skus.attribute_values')->paginate($perPage);
 
-        if (! $AllProduct) {
+        if (! $products) {
             throw new ApiException(
                 'Không lấy được dữ liệu',
                 404
             );
         }
 
-        return $AllProduct;
+        return $products;
     }
 
     public function getProductById($id)
