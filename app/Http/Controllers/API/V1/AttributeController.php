@@ -53,9 +53,9 @@ class AttributeController extends BaseController
     // -------------------------------
 
     // Lấy danh sách giá trị của một thuộc tính
-    public function getAttributeValues($attribute_id)
+    public function getAttributeValues($attributeId)
     {
-        $attributeValues = $this->attributeService->getAttributeValues($attribute_id);
+        $attributeValues = $this->attributeService->getAttributeValues($attributeId);
 
         return $this->successResponse($attributeValues, 'Attribute values fetched successfully');
     }

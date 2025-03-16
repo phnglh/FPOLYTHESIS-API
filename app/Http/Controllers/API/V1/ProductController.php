@@ -23,7 +23,6 @@ class ProductController extends BaseController
 
         $products = $this->productService->getAllProduct($perPage, $currentPage);
 
-        // return ProductResource::collection($products);
         return $this->paginatedResponse(ProductResource::collection($products), 'Lấy danh sách sản phẩm thành công');
     }
 
@@ -39,12 +38,7 @@ class ProductController extends BaseController
 
         $product = $this->productService->createProduct($request->all());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product created successfully',
-            'data' => $product,
-            'errors' => null,
-        ], 201);
+        return $this->successResponse(new ProductResource($product), 'Them san pham thanh cong');
     }
 
     public function update(Request $request, $id)

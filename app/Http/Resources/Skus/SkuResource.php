@@ -16,14 +16,16 @@ class SkuResource extends JsonResource
             'stock' => $this->stock,
             'image_url' => $this->image_url,
 
+            // Attributes with null-safe access
             'attributes' => $this->attribute_values->map(function ($attrValue) {
                 return [
-                    'attribute_id' => $attrValue->pivot->attribute_id,
-                    'attribute_name' => $attrValue->attribute->name ?? null,
-                    'value' => $attrValue->pivot->value,
+                    'id' => optional($attrValue->pivot)->attribute_id,
+                    'name' => optional($attrValue->attribute)->name,
+                    'value' => optional($attrValue->pivot)->value,
                 ];
             }),
 
+            // Images mapping
             'images' => $this->images->map(function ($image) {
                 return [
                     'id' => $image->id,

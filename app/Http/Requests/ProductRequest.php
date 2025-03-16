@@ -12,9 +12,10 @@ class ProductRequest extends BaseRequest
     public function rules()
     {
         return [
-            'name' => 'required|string',
+            'name' => 'required|unique:products,name',
             'description' => 'required|string',
-            'brandId' => 'required|exists:brands,id',
+            'category_id' => 'required|exists:brands,id',
+            'brand_id' => 'required|exists:brands,id',
             'price' => 'required|numeric',
             'sku' => 'required|array',
             'sku.*.sku' => 'required|string',
