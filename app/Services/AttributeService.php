@@ -42,7 +42,7 @@ class AttributeService
     // Lấy danh sách giá trị của một thuộc tính
     public function getAttributeValues($attributeId)
     {
-        return AttributeValue::where('attributeId', $attributeId)->get();
+        return AttributeValue::where('attribute_id', $attributeId)->get();
     }
 
     // Tạo giá trị thuộc tính

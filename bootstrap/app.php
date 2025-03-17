@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\RoleMiddleware;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -48,6 +49,19 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
 
                 if ($e instanceof NotFoundHttpException) {
+                    if ($e->getPrevious() instanceof ModelNotFoundException) {
+                        return response()->json([
+                            'status' => 'error',
+                            'status_code' => 404,
+                            'message' => 'Data not found',
+                            'error_code' => 'DATA_NOT_FOUND',
+                            'data' => null,
+                            'errors' => [],
+                            'meta' => null,
+                            'timestamp' => now()->timestamp,
+                        ], 404);
+                    }
+
                     return response()->json([
                         'status' => 'error',
                         'status_code' => 404,

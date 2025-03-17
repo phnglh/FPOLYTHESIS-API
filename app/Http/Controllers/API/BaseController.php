@@ -9,16 +9,15 @@ class BaseController extends Controller
     /**
      * Success response
      */
-    public function successResponse($data = null, $message = 'Success', $statusCode = 200, $meta = null)
+    public function successResponse($data = null, $message = 'Success', $statusCode = 200)
     {
         return response()->json([
             'status' => 'success',
             'status_code' => $statusCode,
             'message' => $message,
-            'error_code' => null,
             'data' => $data,
             'errors' => null,
-            'meta' => $meta,
+            'error_code' => null,
             'timestamp' => now()->timestamp,
         ], $statusCode);
     }
@@ -32,10 +31,9 @@ class BaseController extends Controller
             'status' => 'error',
             'status_code' => $statusCode,
             'message' => $message,
-            'error_code' => $errorCode,
             'data' => null,
             'errors' => $errors,
-            'meta' => null,
+            'error_code' => $errorCode,
             'timestamp' => now()->timestamp,
         ], $statusCode);
     }
@@ -43,25 +41,19 @@ class BaseController extends Controller
     /**
      * Paginated response
      */
-    public function paginatedResponse($data, $message = 'Success')
+    public function paginatedResponse($resourceCollection, $message = 'Success')
     {
+        $resourceResponse = $resourceCollection->response()->getData(true);
+
         return response()->json([
             'status' => 'success',
             'status_code' => 200,
             'message' => $message,
-            'error_code' => null,
-            'data' => $data->items(),
+            'data' => $resourceResponse['data'],
+            'links' => $resourceResponse['links'],
+            'meta' => $resourceResponse['meta'],
             'errors' => null,
-            'meta' => [
-                'pagination' => [
-                    'total' => $data->total(),
-                    'per_page' => $data->perPage(),
-                    'current_page' => $data->currentPage(),
-                    'last_page' => $data->lastPage(),
-                    'from' => $data->firstItem(),
-                    'to' => $data->lastItem(),
-                ],
-            ],
+            'error_code' => null,
             'timestamp' => now()->timestamp,
         ]);
     }

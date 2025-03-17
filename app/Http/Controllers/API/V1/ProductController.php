@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Api\BaseController;
+use App\Http\Resources\Products\ProductResource;
 use App\Services\ProductService;
 use Illuminate\Http\Request;
 
@@ -20,34 +21,16 @@ class ProductController extends BaseController
         $perPage = $request->query('per_page', 10);
         $currentPage = $request->query('current_page', 1);
 
-        $products = $this->productService->getAllProducts($perPage, $currentPage);
+        $products = $this->productService->getAllProduct($perPage, $currentPage);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product list fetched successfully',
-            'data' => [
-                'products' => $products->items(),
-                'meta' => [
-                    'total' => $products->total(),
-                    'per_page' => $products->perPage(),
-                    'current_page' => $products->currentPage(),
-                    'last_page' => $products->lastPage(),
-                ],
-            ],
-            'errors' => null,
-        ]);
+        return $this->paginatedResponse(ProductResource::collection($products), 'Lấy danh sách sản phẩm thành công');
     }
 
     public function show($id)
     {
         $product = $this->productService->getProductById($id);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product details fetched successfully',
-            'data' => $product,
-            'errors' => null,
-        ]);
+        return $this->successResponse(new ProductResource($product), 'Lấy sản phẩm thành công');
     }
 
     public function store(Request $request)
@@ -55,12 +38,7 @@ class ProductController extends BaseController
 
         $product = $this->productService->createProduct($request->all());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product created successfully',
-            'data' => $product,
-            'errors' => null,
-        ], 201);
+        return $this->successResponse(new ProductResource($product), 'Them san pham thanh cong');
     }
 
     public function update(Request $request, $id)

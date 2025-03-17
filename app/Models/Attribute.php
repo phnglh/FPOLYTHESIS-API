@@ -17,6 +17,6 @@ class Attribute extends Model
 
     public function values()
     {
-        return $this->hasMany(AttributeSku::class, 'attribute_id');
+        return $this->hasMany(AttributeValue::class, 'attribute_id');
     }
 }

@@ -2,26 +2,28 @@
 
 namespace App\Http\Resources\Products;
 
-use Illuminate\Http\Request;
+use App\Http\Resources\Skus\SkuResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
-    public function toArray(Request $request): array
+    public function toArray($request)
     {
+        $options = [];
+
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'price' => $this->price,
             'description' => $this->description,
+            'is_published' => $this->is_published,
+            'stock' => $this->skus_sum_stock,
             'image_url' => $this->image_url,
-            'category_id' => $this->category_id,
             'brand_id' => $this->brand_id,
+            'brand_name' => $this->brand->name ?? null,
+            'category_id' => $this->category_id,
+            'category_name' => $this->category->name ?? null,
+            'skus' => SkuResource::collection($this->whenLoaded('skus')),
+            'options' => new ProductOptionResource($this->resource),
         ];
     }
 }
