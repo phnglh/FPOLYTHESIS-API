@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 
 class AuthService
 {
@@ -32,7 +31,6 @@ class AuthService
         }
     }
 
-    // đăng nhập
     public function login(array $data)
     {
         $user = User::where('email', $data['email'])->first();
@@ -52,7 +50,6 @@ class AuthService
         ];
     }
 
-    // đăng xuất
     public function logout(Request $request, $logoutAll = false)
     {
         $user = $request->user();
@@ -65,31 +62,14 @@ class AuthService
         return ['message' => 'Logged out successfully!'];
     }
 
-    // đổi mật khẩu
-    public function changePassword($user, $oldPassword, $newPassword)
+    public function changePassword(User $user, string $currentPassword, string $newPassword)
     {
-        if (! Hash::check($oldPassword, $user->password)) {
-            return [
-                'success' => false,
-                'message' => 'Mật khẩu cũ không đúng!',
-            ];
+        if (! Hash::check($currentPassword, $user->password)) {
+            throw new \Exception('Current password is incorrect.');
         }
 
-        $user->update(['password' => Hash::make($newPassword)]);
-
-        return [
-            'success' => true,
-            'message' => 'Đối mật khẩu thành công!',
-        ];
-    }
-
-    // quên mật khẩu (gửi email reset)
-    public function sendResetLink(string $email): array
-    {
-        $status = Password::sendResetLink(['email' => $email]);
-
-        return $status === Password::RESET_LINK_SENT
-            ? ['success' => true, 'message' => 'Đã gửi thông tin về Email!']
-            : ['success' => false, 'message' => 'Không thể gửi email!'];
+        $user->update([
+            'password' => Hash::make($newPassword),
+        ]);
     }
 }
