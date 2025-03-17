@@ -7,7 +7,6 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Services\AuthService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class AuthController extends BaseController
 {
@@ -52,22 +51,13 @@ class AuthController extends BaseController
         return $this->successResponse($result, 'Logout successful.');
     }
 
-    public function sendResetLinkEmail(Request $request)
+    public function changePassword(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
+        $data = $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|confirmed',
         ]);
-
-        if ($validator->fails()) {
-            return $this->errorResponse('VALIDATION_FAILED', 'Invalid email address.', 422, $validator->errors());
-        }
-
-        $result = $this->authService->sendResetLink($request->input('email'));
-
-        if ($result['success']) {
-            return $this->successResponse(null, 'Password reset link sent successfully.');
-        }
-
-        return $this->errorResponse('RESET_LINK_FAILED', 'Failed to send password reset link.', 500);
+        $this->authService->changePassword($request->user(), $data['current_password'], $data['new_password']);
+        return response()->json(['message' => 'Password changed successfully']);
     }
 }

@@ -4,40 +4,57 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\UserService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function updateRole(Request $request, $id)
+    protected $userService;
+
+    public function __construct(UserService $userService)
     {
-        if ($request->user()->role != 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Bạn không có quyền thực hiện thao tác này!',
-                'data' => null,
-                'errors' => null,
-            ], 403);
-        }
+        $this->userService = $userService;
+    }
 
-        $user = User::findOrFail($id);
+    public function me(Request $request)
+    {
+        return response()->json($this->userService->getCurrentUser($request->user()));
+    }
 
-        if ($user->id === $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Bạn không thể tự thay đổi quyền của chính mình',
-                'data' => null,
-                'errors' => null,
-            ], 400);
-        }
+    public function index()
+    {
+        return response()->json($this->userService->getAllUsers());
+    }
 
-        $newRole = $user->role === 'admin' ? 'customer' : 'admin';
-        $user->update(['role' => $newRole]);
+    public function show($id)
+    {
+        return response()->json($this->userService->getUserById($id));
+    }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Nhân sự đã được cập nhật quyền!',
-            'data' => $user,
-            'errors' => null,
-        ], 200);
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|string|min:6',
+        ]);
+        return response()->json($this->userService->createUser($data));
+    }
+
+    public function update($id, Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'email' => 'nullable|email|unique:users,email,' . $id,
+            'password' => 'nullable|string|min:6',
+        ]);
+        return response()->json($this->userService->updateUser($id, $data));
+    }
+
+    public function destroy($id)
+    {
+        $this->userService->deleteUser($id);
+        return response()->json(['message' => 'User deleted successfully']);
     }
 }
