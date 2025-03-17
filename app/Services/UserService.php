@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Hash;
 
 class UserService
 {
@@ -64,6 +64,7 @@ class UserService
         }
 
         $user->update($data);
+
         return $user;
     }
 
@@ -73,6 +74,7 @@ class UserService
     public function deleteUser(int $id): bool
     {
         $user = $this->getUserById($id);
+
         return $user->delete();
     }
 

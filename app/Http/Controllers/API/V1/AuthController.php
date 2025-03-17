@@ -58,6 +58,7 @@ class AuthController extends BaseController
             'new_password' => 'required|string|confirmed',
         ]);
         $this->authService->changePassword($request->user(), $data['current_password'], $data['new_password']);
+
         return response()->json(['message' => 'Password changed successfully']);
     }
 }

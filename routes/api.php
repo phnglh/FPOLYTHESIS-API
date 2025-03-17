@@ -65,7 +65,7 @@ Route::prefix('v1')->group(function () {
         // User có thể cập nhật thông tin cá nhân
         Route::put('/users/profile', [UserController::class, 'updateProfile']);
         Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/check-user', fn(Request $request) => response()->json($request->user()));
+        Route::get('/check-user', fn (Request $request) => response()->json($request->user()));
         Route::post('/change-password', [AuthController::class, 'changePassword']);
 
         // -------------------------

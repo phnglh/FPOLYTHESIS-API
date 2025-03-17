@@ -64,7 +64,7 @@ class AuthService
 
     public function changePassword(User $user, string $currentPassword, string $newPassword)
     {
-        if (!Hash::check($currentPassword, $user->password)) {
+        if (! Hash::check($currentPassword, $user->password)) {
             throw new \Exception('Current password is incorrect.');
         }
 

@@ -3,9 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Services\UserService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -39,6 +37,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:6',
         ]);
+
         return response()->json($this->userService->createUser($data));
     }
 
@@ -46,15 +45,17 @@ class UserController extends Controller
     {
         $data = $request->validate([
             'name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|unique:users,email,' . $id,
+            'email' => 'nullable|email|unique:users,email,'.$id,
             'password' => 'nullable|string|min:6',
         ]);
+
         return response()->json($this->userService->updateUser($id, $data));
     }
 
     public function destroy($id)
     {
         $this->userService->deleteUser($id);
+
         return response()->json(['message' => 'User deleted successfully']);
     }
 }
