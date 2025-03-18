@@ -4,85 +4,111 @@ namespace App\Services;
 
 use App\Exceptions\ApiException;
 use App\Models\Order;
-use App\Models\OrderDetail;
+use App\Models\OrderItem;
 use App\Models\OrderLog;
 use App\Models\OrderStatusHistory;
 use App\Models\Sku;
+use App\Models\ShippingMethod;
 use Exception; // them moi
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    public function createOrder($userID, $items, $shippingAddress, $notes = null)
+    public function createOrder($userID, $items, $shippingAddress, $shippingMethodId, $notes = null, $couponCode = null)
     {
-        return
-            DB::transaction(function () use ($userID, $items, $shippingAddress, $notes) {
-                $total = 0;
+        return DB::transaction(function () use ($userID, $items, $shippingAddress, $shippingMethodId, $notes, $couponCode) {
+            $subtotal = 0;
 
-                $sku = Sku::with('product')->whereIn('id', collect($items)->pluck('skuId'))->get()->keyBy('id');
+            // Lấy thông tin SKU và kiểm tra tồn kho
+            $skuIds = collect($items)->pluck('skuId');
+            $skus = Sku::whereIn('id', $skuIds)->get()->keyBy('id');
 
-                foreach ($items as $item) {
-
-                    $sku = Sku::find($item['skuId']);
-
-                    if (! $sku || $sku->stock < $item['quantity']) {
-                        throw new Exception("Sản phẩm '{$sku->product->name}' (SKU: {$item['skuId']}) không đủ hàng");
-                    }
-
-                    $total += $sku->price * $item['quantity'];
+            foreach ($items as $item) {
+                if (!isset($skus[$item['skuId']]) || $skus[$item['skuId']]->stock < $item['quantity']) {
+                    throw new Exception("Sản phẩm '{$item['skuId']}' không đủ hàng");
                 }
+                $subtotal += $skus[$item['skuId']]->price * $item['quantity'];
+            }
+
+            // Lấy thông tin phương thức vận chuyển
+
+            $shippingMethod = ShippingMethod::where('id', $shippingMethodId)->first();
+            dd($shippingMethodId);
+
+            if (!$shippingMethod) {
+                throw new Exception("Phương thức vận chuyển không tồn tại.");
+            }
 
 
-                $order = Order::create([
-                    'user_id' => $userID,
-                    'order_number' => 'FLAMES' . time(),
-                    'total' => $total,
-                    'finalTotal' => $total,
-                    'shipping_address' => $shippingAddress,
-                    'notes' => $notes,
-                    'status' => 'pending',
-                ]);
+            // Kiểm tra & áp dụng mã giảm giá
+            $discount = 0;
+            if ($couponCode) {
+                $voucherService = new VoucherService();
+                $voucherResult = $voucherService->apply($couponCode, $subtotal);
 
-                // dd($shippingAddress);
-
-                foreach ($items as $item) {
-                    $sku = Sku::with('attributeSkus')->find($item['skuId']);
-
-                    OrderDetail::create([
-                        'order_id' => $order->id,
-                        'sku_id' => $item['skuId'],
-                        'quantity' => $item['quantity'],
-                        'price' => $sku->price,
-                        'total_price' => $sku->price * $item['quantity'],
-                        'product_name' => $sku->product->name ?? 'không tìm thấy sản phẩm',
-                        'product_attributes' => json_encode([
-                            'color' => $sku->attributeSkus->where('attribute_id', 2)->first()?->value ?? null,
-                            'size' => $sku->attributeSkus->where('attribute_id', 1)->first()?->value ?? null,
-                        ]),
-                    ]);
-
-                    $sku->decrement('stock', $item['quantity']);
+                if ($voucherResult['success']) {
+                    $discount = $voucherResult['discount'];
+                } else {
+                    throw new Exception($voucherResult['message']);
                 }
+            }
 
-                OrderStatusHistory::create([
-                    'order_id' => $order->id,
-                    'old_status' => 'pending',
-                    'new_status' => 'pending',
-                    'changed_by' => $userID,
-                    'reason' => 'Đơn hàng mới được tạo.',
+            // Tính tổng tiền đơn hàng
+            $finalTotal = max(0, $subtotal - $discount + $shippingMethod->price);
+
+            // Tạo đơn hàng
+            $order = Order::create([
+                'user_id'           => $userID,
+                'order_number'      => 'FLAMES' . time(),
+                'subtotal'          => $subtotal,
+                'discount'          => $discount,
+                'final_total'       => $finalTotal,
+                'shipping_address'  => $shippingAddress,
+                'shipping_method'   => $shippingMethod->name,
+                'shipping_fee'      => $shippingMethod->price,
+                'status'            => 'pending',
+                'notes'             => $notes,
+                'coupon_code'       => $couponCode,
+            ]);
+
+            // Thêm sản phẩm vào đơn hàng
+            foreach ($items as $item) {
+                $sku = $skus[$item['skuId']];
+                OrderItem::create([
+                    'order_id'     => $order->id,
+                    'sku_id'       => $sku->id,
+                    'quantity'     => $item['quantity'],
+                    'unit_price'   => $sku->price,
+                    'total_price'  => $sku->price * $item['quantity'],
+                    'product_name' => $sku->product->name ?? 'Sản phẩm không xác định',
+                    'sku_code'     => $sku->code,
                 ]);
+                $sku->decrement('stock', $item['quantity']);
+            }
 
-                OrderLog::create([
-                    'order_id' => $order->id,
-                    'user_id' => $userID,
-                    'action' => 'create_order',
-                    'description' => 'Khách hàng tạo đơn hàng mới',
-                    'logged_at' => now()
-                ]);
+            // Ghi lại lịch sử trạng thái đơn hàng
+            OrderStatusHistory::create([
+                'order_id'   => $order->id,
+                'old_status' => 'pending',
+                'new_status' => 'pending',
+                'changed_by' => $userID,
+                'reason'     => 'Đơn hàng mới được tạo.',
+            ]);
 
-                return $order;
-            });
+            // Ghi log đơn hàng
+            OrderLog::create([
+                'order_id'    => $order->id,
+                'user_id'     => $userID,
+                'action'      => 'create_order',
+                'description' => 'Khách hàng tạo đơn hàng mới',
+            ]);
+
+            return $order;
+        });
     }
+
+
+
 
     // lấy đơn hàng chi tiết
     public function getOrderDetails($orderId)
@@ -119,24 +145,16 @@ class OrderService
     {
         return DB::transaction(function () use ($orderID, $userID) {
             $order = Order::where('id', $orderID)->where('user_id', $userID)->firstOrFail();
-
-            if ($order->status === 'shipped' || $order->status === 'delivered') {
-                throw new Exception('Không thể hủy đơn hàng đã giao.');
+            if (in_array($order->status, ['shipped', 'delivered', 'cancelled'])) {
+                throw new Exception('Không thể hủy đơn hàng đã giao hoặc đã bị hủy.');
             }
-
-            if ($order->status === 'cancelled') {
-                throw new Exception('Đơn hàng này đã bị hủy trước đó.QƯ');
-            }
-
             $order->update(['status' => 'cancelled']);
-
-            foreach ($order->orderDetails as $detail) {
-                $sku = Sku::find($detail->skuId);
+            foreach ($order->orderItems as $item) {
+                $sku = Sku::find($item->sku_id);
                 if ($sku) {
-                    $sku->increment('stock', $detail->quantity);
+                    $sku->increment('stock', $item->quantity);
                 }
             }
-
             OrderStatusHistory::create([
                 'order_id' => $order->id,
                 'old_status' => $order->status,
@@ -144,14 +162,12 @@ class OrderService
                 'changed_by' => $userID,
                 'reason' => 'Khách hàng đã hủy đơn hàng.',
             ]);
-
             OrderLog::create([
                 'order_id' => $order->id,
                 'user_id' => $userID,
                 'action' => 'order_cancelled',
                 'description' => "Khách hàng đã hủy đơn hàng {$order->order_number}",
             ]);
-
             return ['message' => 'Đơn hàng đã được hủy thành công.'];
         });
     }

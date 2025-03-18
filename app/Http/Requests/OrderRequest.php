@@ -27,7 +27,10 @@ class OrderRequest extends FormRequest
             'items.*.sku_id' => 'required|integer|exists:skus,id',
             'items.*.quantity' => 'required|integer|min:1',
             'shipping_address' => 'required|string|max:255',
+            'shipping_method' => 'required|string|in:Standard Shipping,Express Shipping', 
+            'payment_status' => 'required|string|in:unpaid,paid,refunded,failed', 
             'notes' => 'nullable|string|max:500',
+            'coupon_code' => 'nullable|string|exists:vouchers,code', 
         ];
     }
 }
