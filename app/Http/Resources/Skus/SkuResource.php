@@ -19,7 +19,7 @@ class SkuResource extends JsonResource
             // Attributes with null-safe access
             'attributes' => $this->attribute_values->map(function ($attrValue) {
                 return [
-                    'id' => optional($attrValue->pivot)->attribute_id,
+                    'id' => optional($attrValue->pivot)->attribute_value_id,
                     'name' => optional($attrValue->attribute)->name,
                     'value' => optional($attrValue->pivot)->value,
                 ];

@@ -15,7 +15,6 @@ class WishListController extends BaseController
         $this->wishListService = $wishListService;
     }
 
-    // lấy danh sách
     public function getWishList()
     {
         $wishlists = $this->wishListService->getAllWishLists();
@@ -31,20 +30,12 @@ class WishListController extends BaseController
 
         $response = $this->wishListService->addWishList($request->sku_id);
 
-        if (! $response['status']) {
-            return $this->errorResponse('WISHLIST_ADD_FAILED', $response['message'], 400);
-        }
-
         return $this->successResponse(null, $response['message']);
     }
 
     public function deleteWishList($id)
     {
         $response = $this->wishListService->deleteWishList($id);
-
-        if (! $response['status']) {
-            return $this->errorResponse('WISHLIST_REMOVE_FAILED', $response['message'], 400);
-        }
 
         return $this->successResponse(null, $response['message']);
     }

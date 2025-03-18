@@ -3,61 +3,61 @@
 namespace App\Services;
 
 use App\Exceptions\ApiException;
-use App\Models\Review; // them moi
+use App\Models\Review;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 
 class ReviewService
 {
-    public function getAllReviews()
+    public function getAllReviews(): Collection
     {
         return Review::all();
     }
 
-    public function getReviewById($id)
+    public function getReviewById(int $id): Review
     {
-        $ReviewById = Review::findOrFail($id);
-
-        if (! $ReviewById) {
-            throw new ApiException(
-                'Không lấy được dữ liệu',
-                404
-            );
-        } // ko tồn tại
-
-        return $ReviewById;
-    }
-
-    public function createReview($data)
-    {
-        return Review::create($data);
-    }
-
-    public function updateReview($id, $data)
-    {
-        $review = Review::findOrFail($id);
-
-        if (! $review) {
-            throw new ApiException(
-                'Không lấy được dữ liệu',
-                404
-            );
-        } // ko tồn tại
-
-        $review->update($data);
-
-        return $review;
-    }
-
-    public function deleteReview($id)
-    {
-        $review = Review::findOrFail($id);
-        if (! $review) {
-            throw new ApiException(
-                'Không lấy được dữ liệu',
-                404
-            );
+        try {
+            return Review::findOrFail($id);
+        } catch (ModelNotFoundException $e) {
+            throw new ApiException('Không tìm thấy review', 404);
         }
-        $review->delete();
+    }
 
-        return true;
+
+    public function createReview(array $data): Review
+    {
+        try {
+            return DB::transaction(fn () => Review::create($data));
+        } catch (\Exception $e) {
+            throw new ApiException('Lỗi khi tạo review: ' . $e->getMessage(), 500);
+        }
+    }
+
+
+    public function updateReview(int $id, array $data): Review
+    {
+        try {
+            $review = Review::findOrFail($id);
+            DB::transaction(fn () => $review->update($data));
+            return $review;
+        } catch (ModelNotFoundException $e) {
+            throw new ApiException('Không tìm thấy review để cập nhật', 404);
+        } catch (\Exception $e) {
+            throw new ApiException('Lỗi khi cập nhật review: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function deleteReview(int $id): bool
+    {
+        try {
+            $review = Review::findOrFail($id);
+            DB::transaction(fn () => $review->delete());
+            return true;
+        } catch (ModelNotFoundException $e) {
+            throw new ApiException('Không tìm thấy review để xóa', 404);
+        } catch (\Exception $e) {
+            throw new ApiException('Lỗi khi xóa review: ' . $e->getMessage(), 500);
+        }
     }
 }
