@@ -32,50 +32,53 @@ class OrderService
                     $total += $sku->price * $item['quantity'];
                 }
 
+
                 $order = Order::create([
-                    'userId' => $userID,
-                    'orderNumber' => 'ORD'.time(),
+                    'user_id' => $userID,
+                    'order_number' => 'FLAMES' . time(),
                     'total' => $total,
                     'finalTotal' => $total,
-                    'shippingAddress' => $shippingAddress,
+                    'shipping_address' => $shippingAddress,
                     'notes' => $notes,
                     'status' => 'pending',
                 ]);
 
+                // dd($shippingAddress);
+
                 foreach ($items as $item) {
-                    $sku = Sku::find($item['skuId']);
+                    $sku = Sku::with('attributeSkus')->find($item['skuId']);
 
                     OrderDetail::create([
-                        'orderId' => $order->id,
-                        'skuId' => $item['skuId'],
+                        'order_id' => $order->id,
+                        'sku_id' => $item['skuId'],
                         'quantity' => $item['quantity'],
                         'price' => $sku->price,
-                        'totalPrice' => $sku->price * $item['quantity'],
-                        'productName' => $sku->product->name ?? 'không tìm thấy sản phẩm',
-                        'productAttributes' => json_encode([
-                            'color' => $sku->color ?? 'N/A',
-                            'size' => $sku->size ?? 'N/A',
+                        'total_price' => $sku->price * $item['quantity'],
+                        'product_name' => $sku->product->name ?? 'không tìm thấy sản phẩm',
+                        'product_attributes' => json_encode([
+                            'color' => $sku->attributeSkus->where('attribute_id', 2)->first()?->value ?? null,
+                            'size' => $sku->attributeSkus->where('attribute_id', 1)->first()?->value ?? null,
                         ]),
                     ]);
 
                     $sku->decrement('stock', $item['quantity']);
                 }
 
-                // OrderStatusHistory::create([
-                //     'orderId' => $order->id,
-                //     'oldStatus' => null,
-                //     'newStatus' => 'pending',
-                //     'changedBy' => $userID,
-                //     'reason' => 'Đơn hàng mới được tạo.'
-                // ]);
+                OrderStatusHistory::create([
+                    'order_id' => $order->id,
+                    'old_status' => 'pending',
+                    'new_status' => 'pending',
+                    'changed_by' => $userID,
+                    'reason' => 'Đơn hàng mới được tạo.',
+                ]);
 
-                // OrderLog::create([
-                //     'orderId' => $order->id,
-                //     'userId' => $userID,
-                //     'action' => 'create_order',
-                //     'description' => 'Khách hàng tạo đơn hàng mới',
-                //     'logged_at' => now()
-                // ]);
+                OrderLog::create([
+                    'order_id' => $order->id,
+                    'user_id' => $userID,
+                    'action' => 'create_order',
+                    'description' => 'Khách hàng tạo đơn hàng mới',
+                    'logged_at' => now()
+                ]);
 
                 return $order;
             });
@@ -94,7 +97,6 @@ class OrderService
         }
 
         return $OrderDetail;
-
     }
 
     // lấy lịch sử trạng thái đơn hàng
@@ -110,7 +112,6 @@ class OrderService
         }
 
         return $OrderHistory;
-
     }
 
     // Khách hàng hủy đơn hàng
