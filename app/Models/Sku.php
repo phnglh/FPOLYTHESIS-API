@@ -27,8 +27,7 @@ class Sku extends Model
     public function attributes()
     {
         return $this->belongsToMany(Attribute::class, 'attribute_skus')
-            ->withPivot('attribute_value_id')
-            ->withTimestamps();
+            ->withPivot('attribute_value_id');
     }
 
     public function attribute_values()

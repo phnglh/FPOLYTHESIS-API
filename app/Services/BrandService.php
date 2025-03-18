@@ -21,7 +21,7 @@ class BrandService
         $query = Brand::query();
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%'.$request->query('name').'%');
+            $query->where('name', 'like', '%' . $request->query('name') . '%');
         }
 
         return $query->paginate($perPage, ['*'], 'page', $currentPage);

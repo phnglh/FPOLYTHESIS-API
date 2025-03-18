@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Api\BaseController;
 use App\Services\OrderService;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,88 +18,55 @@ class OrderController extends BaseController
 
     public function store(Request $request)
     {
-        try {
-            $order = $this->orderService->createOrder(
-                Auth::id(),
-                $request['items'],
-                $request['shipping_address'],
-                $request['notes'] ?? null
-            );
+        $order = $this->orderService->createOrder(
+            Auth::id(),
+            $request['items'],
+            $request['shipping_address'],
+            $request['notes'] ?? null
+        );
 
-            return $this->successResponse($order, 'Order created successfully.');
-        } catch (Exception $e) {
-            return $this->errorResponse('ORDER_CREATION_FAILED', $e->getMessage());
-        }
+        return $this->successResponse($order, 'Order created successfully.');
     }
 
     public function getOrderDetails($id)
     {
-        try {
-            $order = $this->orderService->getOrderDetails($id);
+        $order = $this->orderService->getOrderDetails($id);
 
-            return $this->successResponse($order, 'Order details retrieved successfully.');
-        } catch (Exception $e) {
-            return $this->errorResponse('ORDER_NOT_FOUND', $e->getMessage(), 404);
-        }
+        return $this->successResponse($order, 'Order details retrieved successfully.');
     }
 
-    // xem lịch sử trạng thái đơn hàng
     public function getOrderHistory($id)
     {
-        try {
-            $history = $this->orderService->getOrderHistory($id);
-
-            return $this->successResponse($history, 'Order history retrieved successfully.');
-        } catch (Exception $e) {
-            return $this->errorResponse('ORDER_HISTORY_ERROR', $e->getMessage());
-        }
+        $history = $this->orderService->getOrderHistory($id);
+        return $this->successResponse($history, 'Order history retrieved successfully.');
     }
 
     // Khách hàng hủy đơn hàng
     public function cancelOrder($id)
     {
-        try {
-            $response = $this->orderService->cancelOrder($id, Auth::id());
+        $response = $this->orderService->cancelOrder($id, Auth::id());
 
-            return $this->successResponse($response, 'Order cancelled successfully.');
-        } catch (Exception $e) {
-            return $this->errorResponse('ORDER_CANCELLATION_FAILED', $e->getMessage());
-        }
+        return $this->successResponse($response, 'Order cancelled successfully.');
     }
 
-    // lấy danh sách đơn hàng
     public function listOrders(Request $request)
     {
-        try {
-            $orders = $this->orderService->listOrders(Auth::user(), $request->all());
+        $orders = $this->orderService->listOrders(Auth::user(), $request->all());
 
-            return $this->successResponse($orders, 'Orders retrieved successfully.');
-        } catch (Exception $e) {
-            return $this->errorResponse('ORDER_LIST_ERROR', $e->getMessage());
-        }
+        return $this->successResponse($orders, 'Orders retrieved successfully.');
     }
 
-    // Admin cập nhật đơn hàng
     public function updateStatus(Request $request, $id)
     {
-        try {
-            $order = $this->orderService->updateOrderStatus($id, $request->status, Auth::id());
+        $order = $this->orderService->updateOrderStatus($id, $request->status, Auth::id());
 
-            return $this->successResponse($order, 'Order status updated successfully.');
-        } catch (Exception $e) {
-            return $this->errorResponse('ORDER_UPDATE_FAILED', $e->getMessage());
-        }
+        return $this->successResponse($order, 'Order status updated successfully.');
     }
 
-    // Admin xóa đơn hàng
     public function deleteOrder($id)
     {
-        try {
-            $response = $this->orderService->deleteOrder($id);
+        $response = $this->orderService->deleteOrder($id);
 
-            return $this->successResponse($response, 'Order deleted successfully.');
-        } catch (Exception $e) {
-            return $this->errorResponse('ORDER_DELETION_FAILED', $e->getMessage());
-        }
+        return $this->successResponse($response, 'Order deleted successfully.');
     }
 }

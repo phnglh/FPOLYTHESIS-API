@@ -19,7 +19,7 @@ class CategoryService
         $query = Category::with('children')->whereNull('parent_id');
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%'.$request->query('name').'%');
+            $query->where('name', 'like', '%' . $request->query('name') . '%');
         }
 
         return $query->paginate($perPage, ['*'], 'page', $currentPage);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Api\BaseController;
 use App\Http\Requests\BrandRequest;
+use App\Http\Resources\Brands\BrandResource;
 use App\Services\BrandService;
 use Illuminate\Http\Request;
 
@@ -20,14 +21,14 @@ class BrandController extends BaseController
     {
         $brands = $this->brandService->getBrandsWithPagination($request);
 
-        return $this->paginatedResponse($brands);
+        return $this->paginatedResponse(BrandResource::collection($brands));
     }
 
     public function show($id)
     {
         $brand = $this->brandService->getBrandById($id);
 
-        return $this->successResponse($brand, 'Brand details fetched successfully');
+        return $this->successResponse(new BrandResource($brand), 'Brand details fetched successfully');
     }
 
     public function store(BrandRequest $request)

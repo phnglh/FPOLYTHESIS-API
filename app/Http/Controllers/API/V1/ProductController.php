@@ -38,30 +38,20 @@ class ProductController extends BaseController
 
         $product = $this->productService->createProduct($request->all());
 
-        return $this->successResponse(new ProductResource($product), 'Them san pham thanh cong');
+        return $this->successResponse(new ProductResource($product), 'Product created successfully');
     }
 
     public function update(Request $request, $id)
     {
         $product = $this->productService->updateProduct($id, $request->all());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product updated successfully',
-            'data' => $product,
-            'errors' => null,
-        ]);
+        return $this->successResponse($product, 'Product updated successfully');
     }
 
     public function destroy($id)
     {
         $this->productService->deleteProduct($id);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product deleted successfully',
-            'data' => null,
-            'errors' => null,
-        ], 200);
+        return $this->successResponse('Product deleted successfully');
     }
 }
