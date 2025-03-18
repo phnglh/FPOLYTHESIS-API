@@ -68,7 +68,7 @@ class VoucherService
     }
 
     // kiểm tra & áp dụng voucher (Customer)
-    public function apply($code, $orderTotal)
+    public function apply($code, $order_total)
     {
         $voucher = Voucher::where('code', strtoupper($code))->first();
 
@@ -80,17 +80,25 @@ class VoucherService
             return ['success' => false, 'message' => 'Mã giảm giá không hợp lệ hoặc đã hết hạn!'];
         }
 
-        if ($voucher->min_order_value && $orderTotal < $voucher->min_order_value) {
+        if ($voucher->min_order_value && $order_total < $voucher->min_order_value) {
             return ['success' => false, 'message' => 'Đơn hàng không đủ điều kiện áp dụng mã giảm giá!'];
         }
 
+        // Kiểm tra giới hạn số lần sử dụng
+        if ($voucher->usage_limit !== null && $voucher->used_count >= $voucher->usage_limit) {
+            return ['success' => false, 'message' => 'Mã giảm giá đã đạt giới hạn sử dụng!'];
+        }
+
         $discount = $voucher->type === 'percentage'
-            ? ($orderTotal * $voucher->discount_value / 100)
+            ? ($order_total * $voucher->discount_value / 100)
             : $voucher->discount_value;
+
+        // Cập nhật số lần sử dụng
+        $voucher->increment('used_count');
 
         return [
             'success' => true,
-            'discount' => min($discount, $orderTotal), // Giảm giá không được vượt quá tổng đơn hàng
+            'discount' => min($discount, $order_total), // Giảm giá không vượt quá tổng đơn hàng
             'message' => 'Mã giảm giá được áp dụng thành công!',
         ];
     }

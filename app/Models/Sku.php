@@ -44,4 +44,9 @@ class Sku extends Model
     {
         return $this->morphMany(Image::class, 'imageable');
     }
+
+    public function attributeSkus()
+    {
+        return $this->hasMany(AttributeSku::class, 'sku_id');
+    }
 }
