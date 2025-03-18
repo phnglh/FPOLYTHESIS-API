@@ -6,7 +6,7 @@ use App\Exceptions\ApiException;
 use App\Models\Image;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str; // them moi
+use Illuminate\Support\Str;
 
 class ImageUploadService
 {
@@ -18,8 +18,8 @@ class ImageUploadService
     public static function upload(UploadedFile $image, $model): ?Image
     {
         try {
-            $filename = Str::uuid().'.'.$image->getClientOriginalExtension();
-            $path = 'products/'.class_basename($model)."/{$model->id}/{$filename}";
+            $filename = Str::uuid() . '.' . $image->getClientOriginalExtension();
+            $path = 'products/' . class_basename($model) . "/{$model->id}/{$filename}";
 
             // Kiểm tra và đảm bảo tệp hợp lệ trước khi upload
             if (! $image->isValid()) {
@@ -32,7 +32,7 @@ class ImageUploadService
 
             // Lưu vào DB
             return $model->images()->create([
-                'image_url' => Storage::url($path),
+                'image_url' => Storage::disk('s3')->url($path),
             ]);
         } catch (\Exception $e) {
             // \Log::error('Upload failed: ' . $e->getMessage());

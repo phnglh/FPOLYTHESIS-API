@@ -20,6 +20,13 @@ class ProductService
     {
         return DB::transaction(function () use ($data) {
             $product = Product::create($this->getProductData($data));
+            if (!empty($data['image_url']) && $data['image_url'] instanceof UploadedFile) {
+                $uploadedImage = ImageUploadService::upload($data['image_url'], $product);
+
+                if ($uploadedImage) {
+                    $product->update(['image_url' => $uploadedImage->image_url]);
+                }
+            }
             $this->processSkus($product, $data['skus'] ?? []);
 
             return $product->load('skus.attribute_values');
@@ -100,6 +107,7 @@ class ProductService
             'category_id' => $data['category_id'] ?? null,
             'brand_id' => $data['brand_id'] ?? null,
             'is_published' => $data['is_published'] ?? false,
+            'image_url' => $data['image_url'] ?? null
         ];
     }
 
@@ -145,6 +153,7 @@ class ProductService
             'product_id' => $productId,
             'price' => $skuData['price'],
             'stock' => $skuData['stock'],
+            'image_url' => $skuData['image_url'] ?? null
         ];
     }
 
@@ -153,10 +162,15 @@ class ProductService
      */
     private function processSkuRelations(Sku $sku, array $skuData)
     {
-        // Xử lý hình ảnh (nếu có)
-        if (! empty($skuData['image']) && $skuData['image'] instanceof UploadedFile) {
-            ImageUploadService::upload($skuData['image'], $sku);
+
+        if (!empty($skuData['image_url']) && $skuData['image_url'] instanceof UploadedFile) {
+            $uploadedImage = ImageUploadService::upload($skuData['image_url'], $sku);
+
+            if ($uploadedImage) {
+                $sku->update(['image_url' => $uploadedImage->image_url]);
+            }
         }
+
 
         // Xử lý thuộc tính
         $sku->attribute_values()->detach(); // Xóa hết trước khi thêm lại

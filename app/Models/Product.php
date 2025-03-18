@@ -18,6 +18,7 @@ class Product extends Model
         'is_published',
         'slug',
         'description',
+        'image_url'
     ];
 
     public function skus()
