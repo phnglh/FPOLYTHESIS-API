@@ -28,7 +28,7 @@ class ReviewService
     public function createReview(array $data): Review
     {
         try {
-            return DB::transaction(fn() => Review::create($data));
+            return DB::transaction(fn () => Review::create($data));
         } catch (\Exception $e) {
             throw new ApiException('Lỗi khi tạo review: ' . $e->getMessage(), 500);
         }
@@ -39,7 +39,7 @@ class ReviewService
     {
         try {
             $review = Review::findOrFail($id);
-            DB::transaction(fn() => $review->update($data));
+            DB::transaction(fn () => $review->update($data));
             return $review;
         } catch (ModelNotFoundException $e) {
             throw new ApiException('Không tìm thấy review để cập nhật', 404);
@@ -52,7 +52,7 @@ class ReviewService
     {
         try {
             $review = Review::findOrFail($id);
-            DB::transaction(fn() => $review->delete());
+            DB::transaction(fn () => $review->delete());
             return true;
         } catch (ModelNotFoundException $e) {
             throw new ApiException('Không tìm thấy review để xóa', 404);

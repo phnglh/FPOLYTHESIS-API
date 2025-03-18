@@ -13,49 +13,67 @@ return new class () extends Migration {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
+
             $table->string('order_number')->unique();
 
-            $table->enum('status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'])->default('pending');
-            $table->decimal('total', 10, 2)->default(0);
+            $table->enum('status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'])
+                ->default('pending');
+
+            $table->enum('payment_status', ['unpaid', 'paid', 'refunded', 'failed'])
+                ->default('unpaid');
+
+            $table->decimal('subtotal', 10, 2)->default(0);
+            $table->decimal('discount', 10, 2)->default(0);
             $table->decimal('final_total', 10, 2)->default(0);
+
             $table->string('shipping_address');
+            $table->string('shipping_method')->nullable();
+            $table->enum('shipping_status', ['pending', 'shipped', 'delivered', 'failed'])->default('pending');
+
+            $table->string('coupon_code')->nullable();
+
             $table->text('notes')->nullable();
+
             $table->timestamp('ordered_at')->useCurrent();
             $table->timestamp('shipped_at')->nullable();
             $table->timestamp('delivered_at')->nullable();
+            $table->timestamp('cancelled_at')->nullable();
+
             $table->timestamps();
         });
 
-        Schema::create('order_details', function (Blueprint $table) {
+
+        Schema::create('order_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
-            $table->foreignId('sku_id')->constrained('skus')->cascadeOnDelete();
+            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+            $table->foreignId('sku_id')->constrained('product_skus')->onDelete('cascade');
+
             $table->string('product_name');
-            $table->integer('quantity');
-            $table->decimal('price', 10, 2);
+            $table->string('sku_code');
+            $table->decimal('unit_price', 10, 2);
+            $table->integer('quantity')->unsigned();
             $table->decimal('total_price', 10, 2);
-            $table->text('product_attributes')->nullable();
+
             $table->timestamps();
         });
 
         Schema::create('order_status_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
-            $table->enum('old_status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled']);
-            $table->enum('new_status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled']);
+            $table->enum('old_status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned']);
+            $table->enum('new_status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned']);
             $table->foreignId('changed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('reason')->nullable();
             $table->timestamp('changed_at')->useCurrent();
             $table->timestamps();
         });
-
         Schema::create('order_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('action');
             $table->text('description')->nullable();
-            $table->timestamp('logged_at');
+            $table->timestamp('logged_at')->useCurrent();
             $table->timestamps();
         });
     }

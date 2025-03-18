@@ -6,7 +6,6 @@ use App\Http\Controllers\API\BaseController;
 use App\Http\Requests\ReviewRequest;
 use App\Services\ReviewService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class ReviewController extends BaseController
 {

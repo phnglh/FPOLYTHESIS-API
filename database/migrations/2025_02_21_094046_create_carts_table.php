@@ -21,7 +21,6 @@ return new class () extends Migration {
             $table->foreignId('cart_id')->constrained('carts')->cascadeOnDelete();
             $table->foreignId('sku_id')->constrained('skus')->cascadeOnDelete();
             $table->integer('quantity');
-            $table->decimal('price', 10, 2);
             $table->timestamps();
         });
     }
