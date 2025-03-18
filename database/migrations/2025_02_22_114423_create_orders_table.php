@@ -42,11 +42,12 @@ return new class extends Migration
         Schema::create('order_status_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
-            $table->enum('oldStatus', ['pending', 'processing', 'shipped', 'delivered', 'cancelled']);
-            $table->enum('newStatus', ['pending', 'processing', 'shipped', 'delivered', 'cancelled']);
-            $table->foreignId('changedBy')->nullable()->constrained('users')->nullOnDelete();
+            $table->enum('old_status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled']);
+            $table->enum('new_status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled']);
+            $table->foreignId('changed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('reason')->nullable();
             $table->timestamp('changed_at')->useCurrent();
+            $table->timestamps();
         });
 
         Schema::create('order_logs', function (Blueprint $table) {
@@ -56,6 +57,7 @@ return new class extends Migration
             $table->string('action');
             $table->text('description')->nullable();
             $table->timestamp('logged_at');
+            $table->timestamps();
         });
     }
 

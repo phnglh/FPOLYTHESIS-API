@@ -13,7 +13,7 @@ class OrderStatusHistory extends Model
         'order_id',
         'old_status',
         'new_status',
-        'changedBy',
+        'changed_by',
         'reason',
         'changed_at',
     ];
