@@ -4,16 +4,16 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class () extends Migration {
     public function up()
     {
         // Tạo bảng shipping_methods
         Schema::create('shipping_methods', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->integer('price'); // Giá cố định
-            $table->string('estimated_time'); // Thời gian giao hàng dự kiến
-            $table->boolean('is_express')->default(0); // 1: Giao nhanh, 0: Giao thường
+            $table->integer('price');
+            $table->string('estimated_time');
+            $table->boolean('is_express')->default(0);
             $table->timestamps();
         });
 

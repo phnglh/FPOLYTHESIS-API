@@ -9,105 +9,104 @@ use App\Models\OrderLog;
 use App\Models\OrderStatusHistory;
 use App\Models\Sku;
 use App\Models\ShippingMethod;
-use Exception; // them moi
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    public function createOrder($userID, $items, $shippingAddress, $shippingMethodId, $notes = null, $couponCode = null)
+    public function createOrder($request)
     {
-        return DB::transaction(function () use ($userID, $items, $shippingAddress, $shippingMethodId, $notes, $couponCode) {
-            $subtotal = 0;
+        // Kiểm tra và lấy thông tin items
+        $items = is_array($request->items) ? $request->items : json_decode($request->items, true);
+        if (!is_array($items) || empty($items)) {
+            throw new Exception("Danh sách sản phẩm không hợp lệ.");
+        }
 
-            // Lấy thông tin SKU và kiểm tra tồn kho
-            $skuIds = collect($items)->pluck('skuId');
-            $skus = Sku::whereIn('id', $skuIds)->get()->keyBy('id');
+        $userID = auth()->id();
+        $subtotal = 0;
 
-            foreach ($items as $item) {
-                if (!isset($skus[$item['skuId']]) || $skus[$item['skuId']]->stock < $item['quantity']) {
-                    throw new Exception("Sản phẩm '{$item['skuId']}' không đủ hàng");
-                }
-                $subtotal += $skus[$item['skuId']]->price * $item['quantity'];
+        // Lấy danh sách SKU từ DB
+        $skuIds = collect($items)->pluck('sku_id')->toArray();
+        $skus = Sku::whereIn('id', $skuIds)->get()->keyBy('id');
+
+        // Kiểm tra tồn kho và tính tổng giá trị đơn hàng
+        foreach ($items as $item) {
+            if (!isset($skus[$item['sku_id']]) || $skus[$item['sku_id']]->stock < $item['quantity']) {
+                throw new Exception("Sản phẩm '{$item['sku_id']}' không đủ hàng.");
             }
+            $subtotal += $skus[$item['sku_id']]->price * $item['quantity'];
+        }
 
-            // Lấy thông tin phương thức vận chuyển
+        $shippingMethod = ShippingMethod::where('is_express', $request->is_express)->first();
 
-            $shippingMethod = ShippingMethod::where('id', $shippingMethodId)->first();
-            dd($shippingMethodId);
+        if (!$shippingMethod) {
+            throw new Exception("Phương thức vận chuyển không tồn tại.");
+        }
 
-            if (!$shippingMethod) {
-                throw new Exception("Phương thức vận chuyển không tồn tại.");
+        // Kiểm tra & áp dụng mã giảm giá
+        $discount = 0;
+        if ($request->coupon_code) {
+            $voucherService = new VoucherService();
+            $voucherResult = $voucherService->apply($request->coupon_code, $subtotal);
+
+            if ($voucherResult['success']) {
+                $discount = $voucherResult['discount'];
+            } else {
+                throw new Exception($voucherResult['message']);
             }
+        }
+        // Tính tổng tiền đơn hàng
+        $finalTotal = max(0, $subtotal - $discount + $shippingMethod->price);
 
-
-            // Kiểm tra & áp dụng mã giảm giá
-            $discount = 0;
-            if ($couponCode) {
-                $voucherService = new VoucherService();
-                $voucherResult = $voucherService->apply($couponCode, $subtotal);
-
-                if ($voucherResult['success']) {
-                    $discount = $voucherResult['discount'];
-                } else {
-                    throw new Exception($voucherResult['message']);
-                }
-            }
-
-            // Tính tổng tiền đơn hàng
-            $finalTotal = max(0, $subtotal - $discount + $shippingMethod->price);
-
-            // Tạo đơn hàng
-            $order = Order::create([
-                'user_id'           => $userID,
-                'order_number'      => 'FLAMES' . time(),
-                'subtotal'          => $subtotal,
-                'discount'          => $discount,
-                'final_total'       => $finalTotal,
-                'shipping_address'  => $shippingAddress,
-                'shipping_method'   => $shippingMethod->name,
-                'shipping_fee'      => $shippingMethod->price,
-                'status'            => 'pending',
-                'notes'             => $notes,
-                'coupon_code'       => $couponCode,
+        // Tạo đơn hàng
+        $order = Order::create([
+            'user_id'           => $userID,
+            'order_number'      => 'FLAMES' . time(),
+            'subtotal'          => $subtotal,
+            'discount'          => $discount,
+            'final_total'       => $finalTotal,
+            'shipping_address'  => $request->shipping_address,
+            'shipping_method_id' => $shippingMethod->id,
+            'shipping_fee'      => $shippingMethod->price,
+            'status'            => 'pending',
+            'notes'             => $request->notes ?? null,
+            'coupon_code'       => $request->coupon_code ?? null,
+        ]);
+        // Thêm sản phẩm vào đơn hàng và cập nhật tồn kho
+        foreach ($items as $item) {
+            $sku = $skus[$item['sku_id']];
+            OrderItem::create([
+                'order_id'     => $order->id,
+                'sku_id'       => $sku->id,
+                'quantity'     => $item['quantity'],
+                'unit_price'   => $sku->price,
+                'total_price'  => $sku->price * $item['quantity'],
+                'product_name' => $sku->product->name ?? 'Sản phẩm không xác định',
+                'sku_code'     => $sku->sku,
             ]);
 
-            // Thêm sản phẩm vào đơn hàng
-            foreach ($items as $item) {
-                $sku = $skus[$item['skuId']];
-                OrderItem::create([
-                    'order_id'     => $order->id,
-                    'sku_id'       => $sku->id,
-                    'quantity'     => $item['quantity'],
-                    'unit_price'   => $sku->price,
-                    'total_price'  => $sku->price * $item['quantity'],
-                    'product_name' => $sku->product->name ?? 'Sản phẩm không xác định',
-                    'sku_code'     => $sku->code,
-                ]);
-                $sku->decrement('stock', $item['quantity']);
-            }
+            $sku->decrement('stock', $item['quantity']);
+        }
 
-            // Ghi lại lịch sử trạng thái đơn hàng
-            OrderStatusHistory::create([
-                'order_id'   => $order->id,
-                'old_status' => 'pending',
-                'new_status' => 'pending',
-                'changed_by' => $userID,
-                'reason'     => 'Đơn hàng mới được tạo.',
-            ]);
+        // Ghi lại lịch sử trạng thái đơn hàng
+        OrderStatusHistory::create([
+            'order_id'   => $order->id,
+            'old_status' => 'pending',
+            'new_status' => 'pending',
+            'changed_by' => $userID,
+            'reason'     => 'Đơn hàng mới được tạo.',
+        ]);
 
-            // Ghi log đơn hàng
-            OrderLog::create([
-                'order_id'    => $order->id,
-                'user_id'     => $userID,
-                'action'      => 'create_order',
-                'description' => 'Khách hàng tạo đơn hàng mới',
-            ]);
+        // Ghi log đơn hàng
+        OrderLog::create([
+            'order_id'    => $order->id,
+            'user_id'     => $userID,
+            'action'      => 'create_order',
+            'description' => 'Khách hàng tạo đơn hàng mới.',
+        ]);
 
-            return $order;
-        });
+        return $order;
     }
-
-
 
 
     // lấy đơn hàng chi tiết

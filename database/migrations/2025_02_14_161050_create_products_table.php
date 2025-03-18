@@ -13,7 +13,7 @@ return new class () extends Migration {
             $table->text('description')->nullable();
             $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
             $table->foreignId('brand_id')->nullable()->constrained('brands')->nullOnDelete();
-            $table->string('image_url')->nullable(); 
+            $table->string('image_url')->nullable();
             $table->boolean('is_published')->default(false);
             $table->timestamps();
         });

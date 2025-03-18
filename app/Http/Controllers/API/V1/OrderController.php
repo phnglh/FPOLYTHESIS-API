@@ -18,20 +18,13 @@ class OrderController extends BaseController
 
     public function store(Request $request)
     {
-        // dd('createOrder called');
-        // dd($request->all());
+
 
         $order = $this->orderService->createOrder(
-            Auth::id(),
-            $request->items,
-            $request->shipping_address,
-            $request->payment_status, 
-            $request->shipping_method, 
-            $request->notes ?? null,
-            $request->coupon_code ?? null
+            $request
         );
 
-        
+
 
         return $this->successResponse($order, 'Order created successfully.');
     }

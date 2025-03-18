@@ -18,7 +18,7 @@ class Order extends Model
         'discount',
         'final_total',
         'shipping_address',
-        'shipping_method',
+        'shipping_method_id',
         'shipping_status',
         'coupon_code',
         'notes',
