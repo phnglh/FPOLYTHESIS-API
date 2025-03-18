@@ -2,63 +2,54 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Http\Controllers\Api\BaseController;
+use App\Http\Controllers\API\BaseController;
+use App\Http\Requests\ReviewRequest;
 use App\Services\ReviewService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ReviewController extends BaseController
 {
-    //
-    protected $reviewService;
+    protected ReviewService $reviewService;
 
     public function __construct(ReviewService $reviewService)
     {
         $this->reviewService = $reviewService;
     }
 
-    public function index()
+
+    public function index(): JsonResponse
     {
         $reviews = $this->reviewService->getAllReviews();
-
-        return $this->successResponse($reviews, 'Reviews retrieved successfully.');
+        return response()->json(['status' => 'success', 'data' => $reviews], 200);
     }
 
-    public function show($id)
+
+    public function show(int $id): JsonResponse
     {
         $review = $this->reviewService->getReviewById($id);
-
-        return $this->successResponse($review, 'Review details retrieved successfully.');
+        return response()->json(['status' => 'success', 'data' => $review], 200);
     }
 
-    public function store(Request $request)
+
+    public function store(ReviewRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'product_id' => 'required|exists:products,id',
-            'rating' => 'required|integer|between:1,5',
-            'comment' => 'nullable|string',
-        ]);
-
-        $review = $this->reviewService->createReview($validated);
-
-        return $this->successResponse($review, 'Review created successfully.');
+        $data = array_merge($request->validated(), ['user_id' => auth()->id()]);
+        $review = $this->reviewService->createReview($data);
+        return response()->json(['status' => 'success', 'data' => $review], 201);
     }
 
-    public function update(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'rating' => 'sometimes|integer|between:1,5',
-            'comment' => 'nullable|string',
-        ]);
 
-        $updatedReview = $this->reviewService->updateReview($id, $validated);
-        return $this->successResponse($updatedReview, 'Review updated successfully.');
+    public function update(ReviewRequest $request, int $id): JsonResponse
+    {
+        $data = array_merge($request->validated(), ['user_id' => auth()->id()]);
+        $review = $this->reviewService->updateReview($id, $data);
+        return response()->json(['status' => 'success', 'data' => $review], 200);
     }
 
-    public function destroy($id)
+    public function destroy(int $id): JsonResponse
     {
-        $deleted = $this->reviewService->deleteReview($id);
-
-        return $this->successResponse($deleted, 'Review deleted successfully.');
+        $this->reviewService->deleteReview($id);
+        return response()->json(['status' => 'success', 'message' => 'Review đã được xóa'], 200);
     }
 }

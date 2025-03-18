@@ -6,27 +6,32 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class ReviewRequest extends FormRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
 
-    public function rules()
+
+    public function rules(): array
     {
         return [
+            'product_id' => 'required|exists:products,id',
             'rating' => 'required|integer|min:1|max:5',
-            'review' => 'nullable|string',
+            'review' => 'nullable|string|max:500',
         ];
     }
 
-    public function messages()
+
+    public function messages(): array
     {
         return [
-            'rating.required' => 'Vui lòng chọn số sao.',
-            'rating.integer' => 'Số sao phải là một số nguyên.',
-            'rating.min' => 'Số sao phải từ 1 đến 5.',
-            'rating.max' => 'Số sao phải từ 1 đến 5.',
-            'review.string' => 'Nội dung đánh giá phải là một chuỗi ký tự.',
+            'product_id.required' => 'Sản phẩm không được để trống.',
+            'product_id.exists' => 'Sản phẩm không hợp lệ.',
+            'rating.required' => 'Vui lòng nhập đánh giá.',
+            'rating.integer' => 'Đánh giá phải là số nguyên.',
+            'rating.min' => 'Đánh giá tối thiểu là 1.',
+            'rating.max' => 'Đánh giá tối đa là 5.',
+            'review.max' => 'Nội dung đánh giá không được vượt quá 500 ký tự.',
         ];
     }
 }

@@ -45,7 +45,6 @@ Route::prefix('v1')->group(function () {
     Route::get('/products/{id}', [ProductController::class, 'show']);
 
     // Review, Promotion, Wishlist (Public access)
-    Route::apiResource('reviews', ReviewController::class);
     Route::apiResource('promotions', PromotionController::class);
     Route::apiResource('wishlist', WishListController::class);
 
@@ -59,14 +58,20 @@ Route::prefix('v1')->group(function () {
     // Private API (Cần đăng nhập)
     // -------------------------
     Route::middleware('auth:sanctum')->group(function () {
-
         // User
         Route::get('/users/me', [UserController::class, 'me']);
         // User có thể cập nhật thông tin cá nhân
         Route::put('/users/profile', [UserController::class, 'updateProfile']);
         Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/check-user', fn (Request $request) => response()->json($request->user()));
+        Route::get('/check-user', fn(Request $request) => response()->json($request->user()));
         Route::post('/change-password', [AuthController::class, 'changePassword']);
+
+
+        Route::get('/reviews', [ReviewController::class, 'index']);
+        Route::get('/reviews/{id}', [ReviewController::class, 'show']);
+        Route::post('/reviews', [ReviewController::class, 'store']);
+        Route::put('/reviews/{id}', [ReviewController::class, 'update']);
+        Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
 
         // -------------------------
         // Role-based API (Admin Only)
