@@ -2,42 +2,39 @@
 
 namespace App\Services;
 
-use App\Exceptions\ApiException;
-use App\Models\Image;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 
 class ImageUploadService
 {
     /**
-     * Upload image and save to database
+     * Upload một hoặc nhiều hình ảnh lên S3.
      *
-     * @param  Model  $model  (Product or Sku)
+     * @param UploadedFile|array $images
+     * @param mixed $model
+     * @return array|null
      */
-    public static function upload(UploadedFile $image, $model): ?Image
+    public static function upload($images, $model)
     {
-        try {
-            $filename = Str::uuid() . '.' . $image->getClientOriginalExtension();
-            $path = 'products/' . class_basename($model) . "/{$model->id}/{$filename}";
+        Log::info('Images received:', ['images' => $images]);
+        $uploadedUrls = [];
 
-            // Kiểm tra và đảm bảo tệp hợp lệ trước khi upload
-            if (! $image->isValid()) {
-                throw new ApiException('File upload không hợp lệ.');
+        if (is_array($images)) {
+            foreach ($images as $image) {
+                if ($image instanceof UploadedFile) {
+                    $path = $image->store("uploads/{$model->getTable()}/{$model->id}", 's3');
+                    Storage::disk('s3')->setVisibility($path, 'public');
+                    $uploadedUrls[] = Storage::disk('s3')->url($path);
+                }
             }
-
-            // Upload lên S3
-            Storage::disk('s3')->put($path, file_get_contents($image), 'public');
-            // Storage::disk('s3')->put($path, fopen($image->getPathname(), 'r+'), 'public');
-
-            // Lưu vào DB
-            return $model->images()->create([
-                'image_url' => Storage::disk('s3')->url($path),
-            ]);
-        } catch (\Exception $e) {
-            // \Log::error('Upload failed: ' . $e->getMessage());
-            // Ném ngoại lệ có thể xử lý được thay vì trả về null
-            throw new ApiException('Lỗi trong quá trình upload hình ảnh.', 500);
+        } elseif ($images instanceof UploadedFile) {
+            $path = $images->store("uploads/{$model->getTable()}/{$model->id}", 's3');
+            Storage::disk('s3')->setVisibility($path, 'public');
+            $uploadedUrls[] = Storage::disk('s3')->url($path);
         }
+
+        Log::info('Uploaded URLs:', $uploadedUrls);
+        return $uploadedUrls;
     }
 }

@@ -12,12 +12,10 @@ class ProductSkuAttributeSeeder extends Seeder
 {
     public function run()
     {
-        $products = Product::factory()->count(5)->create();
-
-        $products->each(function ($product) {
+        $products = Product::factory()->count(50)->create();
+        $attributes = Attribute::factory()->count(2)->create();
+        $products->each(function ($product) use ($attributes) {
             $skus = Sku::factory()->count(3)->create(['product_id' => $product->id]);
-
-            $attributes = Attribute::factory()->count(2)->create();
 
             $skus->each(function ($sku) use ($attributes) {
                 $attributes->each(function ($attribute) use ($sku) {

@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Sku;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB; // them moi
+use Illuminate\Support\Facades\Log;
 
 class ProductService
 {
@@ -24,7 +25,7 @@ class ProductService
                 $uploadedImage = ImageUploadService::upload($data['image_url'], $product);
 
                 if ($uploadedImage) {
-                    $product->update(['image_url' => $uploadedImage->image_url]);
+                    $product->update(['image_url' => $uploadedImage]);
                 }
             }
             $this->processSkus($product, $data['skus'] ?? []);
@@ -153,28 +154,91 @@ class ProductService
             'product_id' => $productId,
             'price' => $skuData['price'],
             'stock' => $skuData['stock'],
-            'image_url' => $skuData['image_url'] ?? null
+            'image_url' => json_encode($skuData['image_url'] ?? []),
         ];
     }
 
     /**
      * Xử lý các quan hệ của SKU: Image, Attributes.
      */
+    // private function processSkuRelations(Sku $sku, array $skuData)
+    // {
+
+    //     $uploadedImages = [];
+
+    //     if (!empty($skuData['image_url'])) {
+    //         if (is_array($skuData['image_url'])) {
+    //             foreach ($skuData['image_url'] as $image) {
+    //                 if ($image instanceof UploadedFile) {
+    //                     $uploadedImage = ImageUploadService::upload($image, $sku);
+    //                     if ($uploadedImage) {
+    //                         $uploadedImages[] = $uploadedImage;
+    //                     }
+    //                 } else {
+    //                     $uploadedImages[] = $image;
+    //                 }
+    //             }
+    //         } elseif ($skuData['image_url'] instanceof UploadedFile) {
+    //             $uploadedImage = ImageUploadService::upload($skuData['image_url'], $sku);
+    //             if ($uploadedImage) {
+    //                 $uploadedImages[] = $uploadedImage;
+    //             }
+    //         }
+    //     }
+
+    //     if (!empty($uploadedImages)) {
+    //         $sku->update(['image_url' => json_encode($uploadedImages)]);
+    //     }
+
+
+    //     if (!empty($uploadedImages)) {
+    //         $sku->update(['image_url' => json_encode($uploadedImages)]);
+    //     }
+
+    //     $sku->attribute_values()->detach();
+    //     if (!empty($skuData['attributes']) && is_array($skuData['attributes'])) {
+    //         foreach ($skuData['attributes'] as $attr) {
+    //             $attributeValue = AttributeValue::firstOrCreate([
+    //                 'attribute_id' => $attr['attribute_id'],
+    //                 'value' => $attr['value'],
+    //             ]);
+    //             $sku->attribute_values()->attach($attributeValue->id, [
+    //                 'attribute_id' => $attr['attribute_id'],
+    //                 'value' => $attr['value'],
+    //             ]);
+    //         }
+    //     }
+    // }
     private function processSkuRelations(Sku $sku, array $skuData)
     {
+        Log::info('SKU Data:', $skuData);
+        $uploadedImages = [];
 
-        if (!empty($skuData['image_url']) && $skuData['image_url'] instanceof UploadedFile) {
-            $uploadedImage = ImageUploadService::upload($skuData['image_url'], $sku);
-
-            if ($uploadedImage) {
-                $sku->update(['image_url' => $uploadedImage->image_url]);
+        if (!empty($skuData['image_url'])) {
+            if (is_array($skuData['image_url'])) {
+                foreach ($skuData['image_url'] as $image) {
+                    if ($image instanceof UploadedFile) {
+                        $uploadedImage = ImageUploadService::upload($image, $sku);
+                        if ($uploadedImage) {
+                            $uploadedImages[] = $uploadedImage;
+                        }
+                    } else {
+                        $uploadedImages[] = $image;
+                    }
+                }
+            } elseif ($skuData['image_url'] instanceof UploadedFile) {
+                $uploadedImage = ImageUploadService::upload($skuData['image_url'], $sku);
+                if ($uploadedImage) {
+                    $uploadedImages[] = $uploadedImage;
+                }
             }
         }
+        if (!empty($uploadedImages)) {
+            $sku->update(['image_url' => $uploadedImages]);
+        }
 
-
-        // Xử lý thuộc tính
-        $sku->attribute_values()->detach(); // Xóa hết trước khi thêm lại
-        if (! empty($skuData['attributes']) && is_array($skuData['attributes'])) {
+        $sku->attribute_values()->detach();
+        if (!empty($skuData['attributes']) && is_array($skuData['attributes'])) {
             foreach ($skuData['attributes'] as $attr) {
                 $attributeValue = AttributeValue::firstOrCreate([
                     'attribute_id' => $attr['attribute_id'],

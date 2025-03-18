@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class () extends Migration {
+return new class() extends Migration {
     public function up()
     {
         Schema::create('products', function (Blueprint $table) {
@@ -22,7 +22,7 @@ return new class () extends Migration {
             $table->id();
             $table->string('sku')->unique();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
-            $table->string('image_url');
+            $table->json('image_url');
             $table->decimal('price', 10, 2);
             $table->integer('stock');
             $table->timestamps();

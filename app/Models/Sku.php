@@ -10,7 +10,9 @@ class Sku extends Model
     use HasFactory;
 
     protected $table = 'skus';
-
+    protected $casts = [
+        'image_urls' => 'array',
+    ];
     protected $fillable = [
         'product_id',
         'sku',
