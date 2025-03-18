@@ -46,7 +46,7 @@ return new class () extends Migration {
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
-            $table->foreignId('sku_id')->constrained('product_skus')->onDelete('cascade');
+            $table->foreignId('sku_id')->constrained('skus')->onDelete('cascade');
 
             $table->string('product_name');
             $table->string('sku_code');
@@ -85,7 +85,7 @@ return new class () extends Migration {
     {
         Schema::dropIfExists('order_logs');
         Schema::dropIfExists('order_status_histories');
-        Schema::dropIfExists('order_details');
+        Schema::dropIfExists('order_items');
         Schema::dropIfExists('orders');
     }
 };
