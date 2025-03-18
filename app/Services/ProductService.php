@@ -7,52 +7,22 @@ use App\Models\AttributeValue;
 use App\Models\Product;
 use App\Models\Sku;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB; // them moi
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class ProductService
 {
+    private $imageUploadService;
+
+    public function __construct(ImageUploadService $imageUploadService)
+    {
+        $this->imageUploadService = $imageUploadService;
+    }
+
     // ------------------------- PUBLIC -------------------------
 
     /**
      * Tạo mới Product và các mối quan hệ.
      */
-    public function createProduct(array $data)
-    {
-        return DB::transaction(function () use ($data) {
-            $product = Product::create($this->getProductData($data));
-            if (!empty($data['image_url']) && $data['image_url'] instanceof UploadedFile) {
-                $uploadedImage = ImageUploadService::upload($data['image_url'], $product);
-
-                if ($uploadedImage) {
-                    $product->update(['image_url' => $uploadedImage]);
-                }
-            }
-            $this->processSkus($product, $data['skus'] ?? []);
-
-            return $product->load('skus.attribute_values');
-        });
-    }
-
-    /**
-     * Cập nhật Product và các mối quan hệ.
-     */
-    public function updateProduct(int|string $id, array $data)
-    {
-        $product = Product::findOrFail($id);
-
-        return DB::transaction(function () use ($product, $data) {
-            $product->update($this->getProductData($data));
-
-            if (! empty($data['image']) && $data['image'] instanceof UploadedFile) {
-                ImageUploadService::upload($data['image'], $product);
-            }
-            $this->syncSkus($product, $data['skus'] ?? []);
-
-            return $product->load('skus.attribute_values');
-        });
-    }
-
     public function getAllProduct($perPage = 10)
     {
         $products = Product::with('category', 'brand', 'skus.attribute_values')->withSum('skus', 'stock')->paginate($perPage);
@@ -68,7 +38,7 @@ class ProductService
 
     public function getProductById($id)
     {
-        $product = Product::with('category', 'brand', 'skus.attribute_values')->findOrFail($id);
+        $product = Product::with('category', 'brand', 'skus.attribute_values')->withSum('skus', 'stock')->findOrFail($id);
 
         if (! $product) {
             throw new ApiException(
@@ -95,21 +65,48 @@ class ProductService
         return $product;
     }
 
-    // ------------------------- PRIVATE -------------------------
+    public function createProduct(array $data)
+    {
+        return DB::transaction(function () use ($data) {
+            $product = Product::create($this->getProductData($data));
+
+            // Upload ảnh cho product (nếu có)
+            if (!empty($data['image_url']) && $data['image_url'] instanceof UploadedFile) {
+                $uploadedImage = $this->imageUploadService->uploadSingle($data['image_url'], true, $product);
+
+                if ($uploadedImage) {
+                    $product->update(['image_url' => $uploadedImage]);
+                }
+            }
+
+            $this->processSkus($product, $data['skus'] ?? []);
+            $product->loadSum('skus', 'stock');
+            return $product->load('skus.attribute_values');
+        });
+    }
 
     /**
-     * Chuẩn hóa dữ liệu Product.
+     * Cập nhật Product và các mối quan hệ.
      */
-    private function getProductData(array $data): array
+    public function updateProduct(int|string $id, array $data)
     {
-        return [
-            'name' => $data['name'],
-            'description' => $data['description'],
-            'category_id' => $data['category_id'] ?? null,
-            'brand_id' => $data['brand_id'] ?? null,
-            'is_published' => $data['is_published'] ?? false,
-            'image_url' => $data['image_url'] ?? null
-        ];
+        $product = Product::findOrFail($id);
+
+        return DB::transaction(function () use ($product, $data) {
+            $product->update($this->getProductData($data));
+
+            if (!empty($data['image']) && $data['image'] instanceof UploadedFile) {
+                $uploadedImage = $this->imageUploadService->uploadSingle($data['image'], false);
+
+                if ($uploadedImage) {
+                    $product->update(['image_url' => $uploadedImage]);
+                }
+            }
+
+            $this->syncSkus($product, $data['skus'] ?? []);
+
+            return $product->load('skus.attribute_values');
+        });
     }
 
     /**
@@ -132,7 +129,7 @@ class ProductService
         $product->skus()->whereNotIn('id', $inputSkuIds)->delete();
 
         foreach ($skus as $skuData) {
-            if (! empty($skuData['id'])) {
+            if (!empty($skuData['id'])) {
                 $sku = Sku::find($skuData['id']);
                 if ($sku) {
                     $sku->update($this->getSkuData($skuData, $product->id));
@@ -145,94 +142,28 @@ class ProductService
     }
 
     /**
-     * Chuẩn hóa dữ liệu SKU.
-     */
-    private function getSkuData(array $skuData, int $productId): array
-    {
-        return [
-            'sku' => CodeService::generateCode('SKU', $productId),
-            'product_id' => $productId,
-            'price' => $skuData['price'],
-            'stock' => $skuData['stock'],
-            'image_url' => json_encode($skuData['image_url'] ?? []),
-        ];
-    }
-
-    /**
      * Xử lý các quan hệ của SKU: Image, Attributes.
      */
-    // private function processSkuRelations(Sku $sku, array $skuData)
-    // {
-
-    //     $uploadedImages = [];
-
-    //     if (!empty($skuData['image_url'])) {
-    //         if (is_array($skuData['image_url'])) {
-    //             foreach ($skuData['image_url'] as $image) {
-    //                 if ($image instanceof UploadedFile) {
-    //                     $uploadedImage = ImageUploadService::upload($image, $sku);
-    //                     if ($uploadedImage) {
-    //                         $uploadedImages[] = $uploadedImage;
-    //                     }
-    //                 } else {
-    //                     $uploadedImages[] = $image;
-    //                 }
-    //             }
-    //         } elseif ($skuData['image_url'] instanceof UploadedFile) {
-    //             $uploadedImage = ImageUploadService::upload($skuData['image_url'], $sku);
-    //             if ($uploadedImage) {
-    //                 $uploadedImages[] = $uploadedImage;
-    //             }
-    //         }
-    //     }
-
-    //     if (!empty($uploadedImages)) {
-    //         $sku->update(['image_url' => json_encode($uploadedImages)]);
-    //     }
-
-
-    //     if (!empty($uploadedImages)) {
-    //         $sku->update(['image_url' => json_encode($uploadedImages)]);
-    //     }
-
-    //     $sku->attribute_values()->detach();
-    //     if (!empty($skuData['attributes']) && is_array($skuData['attributes'])) {
-    //         foreach ($skuData['attributes'] as $attr) {
-    //             $attributeValue = AttributeValue::firstOrCreate([
-    //                 'attribute_id' => $attr['attribute_id'],
-    //                 'value' => $attr['value'],
-    //             ]);
-    //             $sku->attribute_values()->attach($attributeValue->id, [
-    //                 'attribute_id' => $attr['attribute_id'],
-    //                 'value' => $attr['value'],
-    //             ]);
-    //         }
-    //     }
-    // }
     private function processSkuRelations(Sku $sku, array $skuData)
     {
-        Log::info('SKU Data:', $skuData);
         $uploadedImages = [];
 
-        if (!empty($skuData['image_url'])) {
-            if (is_array($skuData['image_url'])) {
-                foreach ($skuData['image_url'] as $image) {
-                    if ($image instanceof UploadedFile) {
-                        $uploadedImage = ImageUploadService::upload($image, $sku);
-                        if ($uploadedImage) {
-                            $uploadedImages[] = $uploadedImage;
-                        }
-                    } else {
-                        $uploadedImages[] = $image;
-                    }
-                }
-            } elseif ($skuData['image_url'] instanceof UploadedFile) {
-                $uploadedImage = ImageUploadService::upload($skuData['image_url'], $sku);
-                if ($uploadedImage) {
-                    $uploadedImages[] = $uploadedImage;
+        if (is_array($skuData['image_url'])) {
+            $filesToUpload = [];
+
+            foreach ($skuData['image_url'] as $image) {
+                if ($image instanceof UploadedFile) {
+                    $filesToUpload[] = $image;
+                } else {
+                    $uploadedImages[] = $image;
                 }
             }
+
+            if (!empty($filesToUpload)) {
+                $uploadedImages = array_merge($uploadedImages, $this->imageUploadService->uploadMultiple($filesToUpload, true, $sku));
+            }
         }
+
         if (!empty($uploadedImages)) {
             $sku->update(['image_url' => $uploadedImages]);
         }
@@ -250,5 +181,36 @@ class ProductService
                 ]);
             }
         }
+    }
+
+    // ------------------------- PRIVATE -------------------------
+
+    /**
+     * Chuẩn hóa dữ liệu Product.
+     */
+    private function getProductData(array $data): array
+    {
+        return [
+            'name' => $data['name'],
+            'description' => $data['description'],
+            'category_id' => $data['category_id'] ?? null,
+            'brand_id' => $data['brand_id'] ?? null,
+            'is_published' => $data['is_published'] ?? false,
+            'image_url' => is_string($data['image_url'] ?? null) ? $data['image_url'] : null,
+        ];
+    }
+
+    /**
+     * Chuẩn hóa dữ liệu SKU.
+     */
+    private function getSkuData(array $skuData, int $productId): array
+    {
+        return [
+            'sku' => CodeService::generateCode('SKU', $productId),
+            'product_id' => $productId,
+            'price' => $skuData['price'],
+            'stock' => $skuData['stock'],
+            'image_url' => json_encode($skuData['image_url'] ?? []),
+        ];
     }
 }

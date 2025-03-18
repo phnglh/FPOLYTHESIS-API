@@ -2,39 +2,36 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ImageUploadService
 {
-    /**
-     * Upload một hoặc nhiều hình ảnh lên S3.
-     *
-     * @param UploadedFile|array $images
-     * @param mixed $model
-     * @return array|null
-     */
-    public static function upload($images, $model)
+    public function uploadSingle(UploadedFile $file, bool $isPublic = true, $model = null)
     {
-        Log::info('Images received:', ['images' => $images]);
-        $uploadedUrls = [];
+        if ($file->isValid()) {
+            $extension = $file->getClientOriginalExtension();
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $fileName = $originalName . '-' . uniqid() . '.' . $extension;
+            $path = Storage::disk('s3')->put($fileName, file_get_contents($file), $isPublic ? 'public' : 'private');
 
-        if (is_array($images)) {
-            foreach ($images as $image) {
-                if ($image instanceof UploadedFile) {
-                    $path = $image->store("uploads/{$model->getTable()}/{$model->id}", 's3');
-                    Storage::disk('s3')->setVisibility($path, 'public');
-                    $uploadedUrls[] = Storage::disk('s3')->url($path);
-                }
-            }
-        } elseif ($images instanceof UploadedFile) {
-            $path = $images->store("uploads/{$model->getTable()}/{$model->id}", 's3');
-            Storage::disk('s3')->setVisibility($path, 'public');
-            $uploadedUrls[] = Storage::disk('s3')->url($path);
+            return Storage::disk('s3')->url($fileName);
         }
+        return null;
+    }
 
-        Log::info('Uploaded URLs:', $uploadedUrls);
-        return $uploadedUrls;
+    public function uploadMultiple(array $files, bool $isPublic = true, $model = null)
+    {
+        $uploadedFiles = [];
+        foreach ($files as $file) {
+            if ($file->isValid()) {
+                $extension = $file->getClientOriginalExtension();
+                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $fileName = $originalName . '-' . uniqid() . '.' . $extension;
+                $path = Storage::disk('s3')->put($fileName, file_get_contents($file), $isPublic ? 'public' : 'private');
+                $uploadedFiles[] = Storage::disk('s3')->url($fileName);
+            }
+        }
+        return $uploadedFiles;
     }
 }
