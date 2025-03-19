@@ -7,6 +7,7 @@ use App\Http\Controllers\API\V1\BrandController;
 use App\Http\Controllers\API\V1\CartController;
 use App\Http\Controllers\API\V1\CategoryController;
 use App\Http\Controllers\API\V1\OrderController;
+use App\Http\Controllers\API\V1\PaymentController;
 use App\Http\Controllers\API\V1\ProductController;
 use App\Http\Controllers\Api\V1\PromotionController;
 use App\Http\Controllers\API\V1\ReviewController;
@@ -131,5 +132,8 @@ Route::prefix('v1')->group(function () {
         Route::put('/attributes/values/{id}', [AttributeController::class, 'updateAttributeValue']);
         Route::delete('/attributes/values/{id}', [AttributeController::class, 'destroyAttributeValue']);
         // });
+
+        Route::post('/payment', [PaymentController::class, 'createPayment']);
+        Route::get('/payment/vnpay/callback', [PaymentController::class, 'handleVNPayCallback']);
     });
 });
