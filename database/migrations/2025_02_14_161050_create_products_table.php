@@ -22,7 +22,6 @@ return new class () extends Migration {
             $table->id();
             $table->string('sku')->unique();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
-            // $table->string('image_url')->nullable();
             $table->json('image_url')->nullable();
             $table->decimal('price', 10, 2);
             $table->integer('stock');

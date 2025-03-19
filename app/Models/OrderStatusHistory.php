@@ -15,15 +15,17 @@ class OrderStatusHistory extends Model
         'new_status',
         'changed_by',
         'reason',
-        'changed_at',
+        'changed_at'
     ];
+
+    protected $dates = ['changed_at'];
 
     public function order()
     {
         return $this->belongsTo(Order::class);
     }
 
-    public function changedBy()
+    public function user()
     {
         return $this->belongsTo(User::class, 'changed_by');
     }

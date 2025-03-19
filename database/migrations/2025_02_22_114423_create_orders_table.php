@@ -5,20 +5,27 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class () extends Migration {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
+        // Tạo bảng shipping_methods
+        Schema::create('shipping_methods', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->integer('price');
+            $table->string('estimated_time');
+            $table->boolean('is_express')->default(0);
+            $table->timestamps();
+        });
+
+        // Tạo bảng orders
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignId('shipping_method_id')->nullable()->constrained('shipping_methods')->onDelete('set null');
 
             $table->string('order_number')->unique();
-
             $table->enum('status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'])
                 ->default('pending');
-
             $table->enum('payment_status', ['unpaid', 'paid', 'refunded', 'failed'])
                 ->default('unpaid');
 
@@ -27,11 +34,8 @@ return new class () extends Migration {
             $table->decimal('final_total', 10, 2)->default(0);
 
             $table->string('shipping_address');
-            $table->string('shipping_method')->nullable();
             $table->enum('shipping_status', ['pending', 'shipped', 'delivered', 'failed'])->default('pending');
-
             $table->string('coupon_code')->nullable();
-
             $table->text('notes')->nullable();
 
             $table->timestamp('ordered_at')->useCurrent();
@@ -42,21 +46,20 @@ return new class () extends Migration {
             $table->timestamps();
         });
 
-
+        // Tạo bảng order_items
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
             $table->foreignId('sku_id')->constrained('skus')->onDelete('cascade');
-
             $table->string('product_name');
             $table->string('sku_code');
             $table->decimal('unit_price', 10, 2);
             $table->integer('quantity')->unsigned();
             $table->decimal('total_price', 10, 2);
-
             $table->timestamps();
         });
 
+        // Tạo bảng order_status_histories
         Schema::create('order_status_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
@@ -67,6 +70,8 @@ return new class () extends Migration {
             $table->timestamp('changed_at')->useCurrent();
             $table->timestamps();
         });
+
+        // Tạo bảng order_logs
         Schema::create('order_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
@@ -78,14 +83,12 @@ return new class () extends Migration {
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('order_logs');
         Schema::dropIfExists('order_status_histories');
         Schema::dropIfExists('order_items');
         Schema::dropIfExists('orders');
+        Schema::dropIfExists('shipping_methods');
     }
 };

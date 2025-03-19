@@ -13,9 +13,11 @@ class OrderLog extends Model
         'order_id',
         'user_id',
         'action',
-        'descripsion',
-        'logged_at',
+        'description',
+        'logged_at'
     ];
+
+    protected $dates = ['logged_at'];
 
     public function order()
     {
