@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Api\BaseController;
+use App\Http\Requests\ProductRequest;
 use App\Http\Resources\Products\ProductResource;
 use App\Services\ProductService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ProductController extends BaseController
 {
@@ -41,12 +43,22 @@ class ProductController extends BaseController
         return $this->successResponse(new ProductResource($product), 'Product created successfully');
     }
 
-    public function update(Request $request, $id)
+    public function update(ProductRequest $request, $id)
     {
-        $product = $this->productService->updateProduct($id, $request->all());
+        try {
 
-        return $this->successResponse($product, 'Product updated successfully');
+            $product = $this->productService->updateProduct($id, $request->validated());
+            return response()->json([
+                'message' => 'Product updated successfully',
+                'product' => $product
+            ], 200);
+        } catch (ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
+
 
     public function destroy($id)
     {

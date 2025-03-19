@@ -14,18 +14,16 @@ class ProductRequest extends BaseRequest
         return [
             'name' => 'required|unique:products,name',
             'description' => 'required|string',
-            'category_id' => 'required|exists:brands,id',
-            'brand_id' => 'required|exists:brands,id',
+            'category_id' => 'nullable|exists:categories,id',
+            'brand_id' => 'nullable|exists:brands,id',
             'image_url' => 'nullable|url',
-            'price' => 'required|numeric',
-            'sku' => 'required|array',
-            'sku.*.sku' => 'required|string',
-            'sku.*.stock' => 'required|numeric',
-            'sku.*.price' => 'required|numeric',
-            'sku.*.image_url' => 'nullable|url',
-            'sku.*.attributes' => 'required|array',
-            'sku.*.attributes.*.attribute_id' => 'required|exists:attributes,id',
-            'sku.*.attributes.*.value' => 'required|string',
+            'skus*.sku' => 'required|string',
+            'skus.*.stock' => 'required|numeric',
+            'skus.*.price' => 'required|numeric',
+            'skus.*.image_url' => 'nullable|url',
+            'skus.*.attributes' => 'required|array',
+            'skus.*.attributes.*.attribute_id' => 'required|exists:attributes,id',
+            'skus.*.attributes.*.value' => 'required|string',
             // 'sku.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }
@@ -45,26 +43,26 @@ class ProductRequest extends BaseRequest
             'price.required' => 'Giá là bắt buộc.',
             'price.numeric' => 'Giá phải là số.',
 
-            'sku.required' => 'SKU là bắt buộc.',
-            'sku.array' => 'SKU phải là mảng.',
+            'skus.required' => 'SKU là bắt buộc.',
+            'skus.array' => 'SKU phải là mảng.',
 
-            'sku.*.sku.required' => 'SKU là bắt buộc.',
-            'sku.*.sku.string' => 'SKU phải là chuỗi ký tự.',
+            'skus.*.sku.required' => 'SKU là bắt buộc.',
+            'skus.*.sku.string' => 'SKU phải là chuỗi ký tự.',
 
-            'sku.*.stock.required' => 'Số lượng là bắt buộc.',
-            'sku.*.stock.numeric' => 'Số lượng phải là số.',
+            'skus.*.stock.required' => 'Số lượng là bắt buộc.',
+            'skus.*.stock.numeric' => 'Số lượng phải là số.',
 
-            'sku.*.price.required' => 'Giá là bắt buộc.',
-            'sku.*.price.numeric' => 'Giá phải là số.',
+            'skus.*.price.required' => 'Giá là bắt buộc.',
+            'skus.*.price.numeric' => 'Giá phải là số.',
 
-            'sku.*.attributes.required' => 'Thuộc tính là bắt buộc.',
-            'sku.*.attributes.array' => 'Thuộc tính phải là mảng.',
+            'skus.*.attributes.required' => 'Thuộc tính là bắt buộc.',
+            'skus.*.attributes.array' => 'Thuộc tính phải là mảng.',
 
-            'sku.*.attributes.*.attribute_id.required' => 'Thuộc tính là bắt buộc.',
-            'sku.*.attributes.*.attribute_id.exists' => 'Thuộc tính không tồn tại.',
+            'skus.*.attributes.*.attribute_id.required' => 'Thuộc tính là bắt buộc.',
+            'skus.*.attributes.*.attribute_id.exists' => 'Thuộc tính không tồn tại.',
 
-            'sku.*.attributes.*.value.required' => 'Giá trị thuộc tính là bắt buộc.',
-            'sku.*.attributes.*.value.string' => 'Giá trị thuộc tính phải là chuỗi ký tự.',
+            'skus.*.attributes.*.value.required' => 'Giá trị thuộc tính là bắt buộc.',
+            'skus.*.attributes.*.value.string' => 'Giá trị thuộc tính phải là chuỗi ký tự.',
         ];
     }
 }
