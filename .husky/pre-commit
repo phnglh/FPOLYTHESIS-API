@@ -1,0 +1,5 @@
+#!/bin/sh
+# Run Laravel Pint to auto-fix code before commit
+./vendor/bin/pint --preset psr12
+
+git add .
