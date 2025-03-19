@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Sku;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ProductService
 {
@@ -52,9 +53,28 @@ class ProductService
 
     public function deleteProduct($id)
     {
-        $product = Product::findOrFail($id);
-        $product->delete();
+        return DB::transaction(function () use ($id) {
+            $product = Product::findOrFail($id);
+
+            if ($product->image_url) {
+                Storage::disk('s3')->delete($product->image_url);
+            }
+
+            $skus = $product->skus;
+            foreach ($skus as $sku) {
+                if ($sku->image_url) {
+                    Storage::disk('s3')->delete($sku->image_url);
+                }
+
+                $sku->attributes()->detach();
+            }
+
+            $product->skus()->delete();
+
+            $product->delete();
+        });
     }
+
 
     public function togglePublish($id)
     {
