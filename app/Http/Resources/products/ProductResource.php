@@ -16,7 +16,7 @@ class ProductResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'is_published' => $this->is_published,
-            'stock' => $this->skus_sum_stock,
+            'stock' => (int) $this->skus_sum_stock,
             'image_url' => $this->image_url,
             'brand_id' => $this->brand_id,
             'brand_name' => $this->brand->name ?? null,

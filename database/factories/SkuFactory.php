@@ -22,7 +22,11 @@ class SkuFactory extends Factory
             'product_id' => Product::factory(),
             'price' => $this->faker->randomFloat(2, 10, 1000),
             'stock' => $this->faker->numberBetween(0, 100),
-            'image_url' => $this->faker->imageUrl(),
+            'image_url' => json_encode([
+                $this->faker->imageUrl(),
+                $this->faker->imageUrl(),
+                $this->faker->imageUrl(),
+            ]),
         ];
     }
 }

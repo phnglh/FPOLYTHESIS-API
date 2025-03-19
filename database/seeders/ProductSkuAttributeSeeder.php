@@ -12,18 +12,23 @@ class ProductSkuAttributeSeeder extends Seeder
 {
     public function run()
     {
-        $products = Product::factory()->count(5)->create();
+        $products = Product::factory()->count(50)->create();
 
-        $products->each(function ($product) {
+        $attributes = Attribute::factory()->count(2)->create();
+
+        $attributeValues = [];
+        foreach ($attributes as $attribute) {
+            $attributeValues[$attribute->id] = AttributeValue::factory()
+                ->count(3)
+                ->create(['attribute_id' => $attribute->id]);
+        }
+
+        $products->each(function ($product) use ($attributes, $attributeValues) {
             $skus = Sku::factory()->count(3)->create(['product_id' => $product->id]);
 
-            $attributes = Attribute::factory()->count(2)->create();
-
-            $skus->each(function ($sku) use ($attributes) {
-                $attributes->each(function ($attribute) use ($sku) {
-                    $attributeValue = AttributeValue::factory()->create([
-                        'attribute_id' => $attribute->id
-                    ]);
+            $skus->each(function ($sku) use ($attributes, $attributeValues) {
+                $attributes->each(function ($attribute) use ($sku, $attributeValues) {
+                    $attributeValue = $attributeValues[$attribute->id]->random();
 
                     $sku->attribute_values()->attach($attributeValue->id, [
                         'attribute_id' => $attribute->id,
