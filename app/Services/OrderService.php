@@ -28,7 +28,7 @@ class OrderService
             // Kiểm tra và áp dụng voucher
             if (!empty($voucherCode)) {
                 $voucher = Voucher::where('code', strtoupper($voucherCode))->first();
-                dd($voucher);
+
                 if ($voucher) {
                     if (!$voucher->is_active) {
                         return ['error' => 'VOUCHER_INACTIVE', 'message' => 'Mã giảm giá đã bị vô hiệu hóa'];
@@ -68,8 +68,8 @@ class OrderService
                 'subtotal' => $subtotal,
                 'discount' => $discount,
                 'final_total' => $finalTotal,
-                'status' => 'pending',
-                'payment_status' => 'unpaid',
+                'status' => 'pending', // Đơn hàng mới tạo luôn ở trạng thái 'pending'
+                'payment_status' => 'unpaid', // Chưa thanh toán
                 'voucher_id' => $voucherId, // Lưu ID voucher nếu có
             ]);
 
@@ -85,7 +85,7 @@ class OrderService
                 ]);
             }
 
-            // xóa giỏ hàng sau khi tạo đơn
+            // Xóa giỏ hàng sau khi tạo đơn
             $cart->items()->delete();
             $cart->delete();
 
@@ -114,6 +114,14 @@ class OrderService
             return ['error' => 'INVALID_STATUS', 'message' => 'Trạng thái không hợp lệ'];
         }
 
+        if ($status === 'shipped' && $order->payment_status === 'unpaid') {
+            return ['error' => 'PAYMENT_REQUIRED', 'message' => 'Không thể vận chuyển đơn hàng chưa thanh toán'];
+        }
+
+        if ($status === 'delivered' && $order->status !== 'shipped') {
+            return ['error' => 'ORDER_NOT_SHIPPED', 'message' => 'Chỉ có thể hoàn thành đơn hàng sau khi đã vận chuyển'];
+        }
+
         $order->update(['status' => $status]);
 
         return ['success' => true, 'order' => $order];
@@ -123,11 +131,14 @@ class OrderService
     {
         $order = Order::where('id', $orderId)->where('user_id', Auth::id())->first();
 
-        if (!$order || $order->status !== 'pending') {
+        if (!$order || !in_array($order->status, ['pending', 'processing'])) {
             return ['error' => 'ORDER_CANNOT_BE_CANCELLED', 'message' => 'Không thể hủy đơn hàng'];
         }
 
-        $order->update(['status' => 'cancelled']);
+        $order->update([
+            'status' => 'cancelled',
+            'payment_status' => $order->payment_status === 'paid' ? 'refunded' : 'unpaid'
+        ]);
 
         return ['success' => true, 'order' => $order];
     }

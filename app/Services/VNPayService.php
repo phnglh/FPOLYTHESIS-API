@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use Illuminate\Http\Request;
 
 class VNPayService
 {
@@ -13,15 +14,15 @@ class VNPayService
         $vnp_Url = env('VNP_URL');
         $vnp_ReturnUrl = env('VNP_RETURN_URL');
 
-        $vnp_TxnRef = $order->id;
+        $vnp_TxnRef = $order->order_number;
         $vnp_OrderInfo = "Thanh toán đơn hàng #{$order->id}";
         $vnp_OrderType = "billpayment";
-        $vnp_Amount = $order->total_amount * 100;
+        $vnp_Amount = $order->final_total * 100;
         $vnp_Locale = "vn";
         $vnp_BankCode = "";
         $vnp_IpAddr = request()->ip();
 
-        $inputData = array(
+        $inputData = [
             "vnp_Version" => "2.1.0",
             "vnp_TmnCode" => $vnp_TmnCode,
             "vnp_Amount" => $vnp_Amount,
@@ -34,42 +35,31 @@ class VNPayService
             "vnp_OrderType" => $vnp_OrderType,
             "vnp_ReturnUrl" => $vnp_ReturnUrl,
             "vnp_TxnRef" => $vnp_TxnRef
-        );
+        ];
 
         ksort($inputData);
-        $query = "";
-        $hashdata = "";
+        $query = http_build_query($inputData);
+        $hashdata = urldecode($query);
 
-        foreach ($inputData as $key => $value) {
-            $hashdata .= "&" . $key . "=" . $value;
-            $query .= urlencode($key) . "=" . urlencode($value) . "&";
-        }
+        $vnpSecureHash = hash_hmac("sha512", $hashdata, $vnp_HashSecret);
+        $paymentUrl = $vnp_Url . "?" . $query . "&vnp_SecureHash=" . $vnpSecureHash;
 
-        $vnp_Url .= "?" . $query;
-        $vnpSecureHash = hash_hmac("sha512", ltrim($hashdata, "&"), $vnp_HashSecret);
-        $vnp_Url .= "vnp_SecureHash=" . $vnpSecureHash;
-
-        return $vnp_Url;
+        return $paymentUrl;
     }
 
-    public function processReturnPayment($request)
+    public function processReturnPayment(Request $request)
     {
         $vnp_HashSecret = env('VNP_HASH_SECRET');
-        $inputData = $request->all();
-        $vnp_SecureHash = $inputData['vnp_SecureHash'];
-        unset($inputData['vnp_SecureHash']);
+        $inputData = $request->except('vnp_SecureHash');
+        $vnp_SecureHash = $request->input('vnp_SecureHash');
 
         ksort($inputData);
-        $hashData = "";
-        foreach ($inputData as $key => $value) {
-            $hashData .= "&" . $key . "=" . $value;
-        }
-
-        $secureHash = hash_hmac('sha512', ltrim($hashData, "&"), $vnp_HashSecret);
+        $hashData = urldecode(http_build_query($inputData));
+        $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
 
         if ($secureHash === $vnp_SecureHash) {
-            $order = Order::find($inputData['vnp_TxnRef']);
-            if ($inputData['vnp_ResponseCode'] == '00' && $order) {
+            $order = Order::where('order_number', $inputData['vnp_TxnRef'])->first();
+            if ($order && $inputData['vnp_ResponseCode'] == '00') {
                 $order->update([
                     'payment_status' => 'paid',
                     'status' => 'processing'

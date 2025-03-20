@@ -7,6 +7,15 @@ use Illuminate\Support\Facades\Schema;
 return new class () extends Migration {
     public function up()
     {
+        // Tạo bảng shipping_methods
+        Schema::create('shipping_methods', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->integer('price');
+            $table->string('estimated_time');
+            $table->boolean('is_express')->default(0);
+            $table->timestamps();
+        });
 
         // Tạo bảng orders
         Schema::create('orders', function (Blueprint $table) {
@@ -18,8 +27,9 @@ return new class () extends Migration {
             $table->string('order_number')->unique();
             $table->enum('status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'])
                 ->default('pending')->index();
-            $table->enum('payment_status', ['unpaid', 'paid', 'refunded', 'failed'])
+            $table->enum('payment_status', ['unpaid', 'pending', 'paid', 'failed', 'refunded'])
                 ->default('unpaid')->index();
+
 
             $table->decimal('subtotal', 10, 2)->default(0);
             $table->decimal('shipping_fee', 10, 2)->default(0);
@@ -67,16 +77,6 @@ return new class () extends Migration {
             $table->string('action');
             $table->text('description')->nullable();
             $table->timestamp('logged_at')->useCurrent();
-            $table->timestamps();
-        });
-
-        // Tạo bảng shipping_methods
-        Schema::create('shipping_methods', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->integer('price');
-            $table->string('estimated_time');
-            $table->boolean('is_express')->default(0);
             $table->timestamps();
         });
     }

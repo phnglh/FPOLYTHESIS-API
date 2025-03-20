@@ -31,6 +31,8 @@ class CartService
             ]);
         }
 
+        $sku->decrement('stock', $quantity);
+
         return $cart->load('items.sku');
     }
 
