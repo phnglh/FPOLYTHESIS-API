@@ -2,114 +2,82 @@
 
 namespace App\Services;
 
+use App\Models\Order;
+
 class VNPayService
 {
-    protected $vnp_TmnCode;
-
-    protected $vnp_HashSecret;
-
-    protected $vnp_Url;
-
-    protected $vnp_ReturnUrl;
-
-    public function __construct()
+    public function createPaymentUrl(Order $order)
     {
-        $this->vnp_TmnCode = env('VNPAY_TMN_CODE');
-        $this->vnp_HashSecret = env('VNPAY_HASH_SECRET');
-        $this->vnp_Url = env('VNPAY_URL');
-        $this->vnp_ReturnUrl = env('VNPAY_RETURN_URL');
-    }
+        $vnp_TmnCode = env('VNP_TMN_CODE');
+        $vnp_HashSecret = env('VNP_HASH_SECRET');
+        $vnp_Url = env('VNP_URL');
+        $vnp_ReturnUrl = env('VNP_RETURN_URL');
 
-    public function createPaymentUrl($order)
-    {
-        try {
-            // dd($order);
+        $vnp_TxnRef = $order->id;
+        $vnp_OrderInfo = "Thanh toán đơn hàng #{$order->id}";
+        $vnp_OrderType = "billpayment";
+        $vnp_Amount = $order->total_amount * 100;
+        $vnp_Locale = "vn";
+        $vnp_BankCode = "";
+        $vnp_IpAddr = request()->ip();
 
-            $inputData = [
-                'vnp_Version' => '2.1.0',
-                'vnp_TmnCode' => $this->vnp_TmnCode,
-                'vnp_Amount' => (int) ($order->finalTotal * 100),
-                'vnp_Command' => 'pay',
-                'vnp_CreateDate' => date('YmdHis'),
-                'vnp_CurrCode' => 'VND',
-                'vnp_IpAddr' => request()->ip(),
-                'vnp_Locale' => 'vn',
-                'vnp_OrderInfo' => "Thanh toán đơn hàng #{$order->order_number}",
-                'vnp_OrderType' => 'other',
-                'vnp_ReturnUrl' => $this->vnp_ReturnUrl,
-                'vnp_TxnRef' => $order->order_number,
+        $inputData = array(
+            "vnp_Version" => "2.1.0",
+            "vnp_TmnCode" => $vnp_TmnCode,
+            "vnp_Amount" => $vnp_Amount,
+            "vnp_Command" => "pay",
+            "vnp_CreateDate" => now()->format('YmdHis'),
+            "vnp_CurrCode" => "VND",
+            "vnp_IpAddr" => $vnp_IpAddr,
+            "vnp_Locale" => $vnp_Locale,
+            "vnp_OrderInfo" => $vnp_OrderInfo,
+            "vnp_OrderType" => $vnp_OrderType,
+            "vnp_ReturnUrl" => $vnp_ReturnUrl,
+            "vnp_TxnRef" => $vnp_TxnRef
+        );
 
-            ];
-
-            ksort($inputData);
-            // dd($inputData);
-            $hashData = '';
-            foreach ($inputData as $key => $value) {
-                $hashData .= $key.'='.$value.'&';
-            }
-            $hashData = rtrim($hashData, '&');
-
-            // dd($hashData);
-
-            $vnpSecureHash = strtoupper(hash_hmac('sha512', $hashData, $this->vnp_HashSecret));
-
-            // dd($vnpSecureHash);
-
-            $paymentUrl = "{$this->vnp_Url}?{$hashData}&vnp_SecureHash={$vnpSecureHash}";
-
-            return ['payment_url' => $paymentUrl];
-        } catch (\Exception $e) {
-
-            return $e->getMessage();
-        }
-    }
-
-    public function handleCallback($request)
-    {
-        $inputData = $request->all();
-
-        // kiểm tra xem 'vnp_SecureHash' có tồn tại không
-        if (! isset($inputData['vnp_SecureHash'])) {
-            return response()->json([
-                'error' => true,
-                'message' => "Thiếu tham số 'vnp_SecureHash' trong callback.",
-                'received_data' => $inputData, // Log lại dữ liệu nhận được
-            ], 400);
-        }
-
-        // lấy chữ ký VNPay gửi về
-        $vnp_SecureHash = $inputData['vnp_SecureHash'];
-        unset($inputData['vnp_SecureHash']); // Xóa chữ ký khỏi dữ liệu để kiểm tra
-
-        // sắp xếp key theo thứ tự A-Z
         ksort($inputData);
+        $query = "";
+        $hashdata = "";
 
-        // tạo chuỗi dữ liệu để hash
-        $hashData = '';
         foreach ($inputData as $key => $value) {
-            $hashData .= $key.'='.$value.'&';
-        }
-        $hashData = rtrim($hashData, '&'); // Bỏ dấu & cuối cùng
-
-        // tạo lại chữ ký
-        $secureHashCheck = strtoupper(hash_hmac('sha512', $hashData, $this->vnp_HashSecret));
-
-        // so sánh hash
-        if ($secureHashCheck !== $vnp_SecureHash) {
-            return response()->json([
-                'error' => true,
-                'message' => 'Chữ ký không hợp lệ!',
-                'expected_hash' => $secureHashCheck,
-                'received_hash' => $vnp_SecureHash,
-                'hash_data' => $hashData,
-            ], 400);
+            $hashdata .= "&" . $key . "=" . $value;
+            $query .= urlencode($key) . "=" . urlencode($value) . "&";
         }
 
-        return [
-            'order_number' => $inputData['vnp_TxnRef'],
-            'amount' => $inputData['vnp_Amount'] / 100,
-            'transaction_id' => $inputData['vnp_TransactionNo'] ?? null,
-            'status' => $inputData['vnp_ResponseCode'] == '00' ? 'paid' : 'failed',
-        ];
+        $vnp_Url .= "?" . $query;
+        $vnpSecureHash = hash_hmac("sha512", ltrim($hashdata, "&"), $vnp_HashSecret);
+        $vnp_Url .= "vnp_SecureHash=" . $vnpSecureHash;
+
+        return $vnp_Url;
+    }
+
+    public function processReturnPayment($request)
+    {
+        $vnp_HashSecret = env('VNP_HASH_SECRET');
+        $inputData = $request->all();
+        $vnp_SecureHash = $inputData['vnp_SecureHash'];
+        unset($inputData['vnp_SecureHash']);
+
+        ksort($inputData);
+        $hashData = "";
+        foreach ($inputData as $key => $value) {
+            $hashData .= "&" . $key . "=" . $value;
+        }
+
+        $secureHash = hash_hmac('sha512', ltrim($hashData, "&"), $vnp_HashSecret);
+
+        if ($secureHash === $vnp_SecureHash) {
+            $order = Order::find($inputData['vnp_TxnRef']);
+            if ($inputData['vnp_ResponseCode'] == '00' && $order) {
+                $order->update([
+                    'payment_status' => 'paid',
+                    'status' => 'processing'
+                ]);
+                return ['success' => true, 'order' => $order];
+            }
+        }
+
+        return ['error' => 'PAYMENT_FAILED', 'message' => 'Giao dịch không hợp lệ'];
     }
 }

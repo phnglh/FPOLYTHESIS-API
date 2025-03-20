@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Http\Controllers\Api\BaseController;
+use App\Http\Controllers\API\BaseController;
 use App\Http\Requests\CartRequest;
 use App\Services\CartService;
-use Illuminate\Http\Request;
 
 class CartController extends BaseController
 {
@@ -16,35 +15,49 @@ class CartController extends BaseController
         $this->cartService = $cartService;
     }
 
-    public function index(Request $request)
+    public function index()
     {
-        $cart = $this->cartService->getUserCart($request->user()->id);
-
-        return $this->successResponse($cart, 'Cart retrieved successfully.');
+        $cart = $this->cartService->getCart();
+        return $this->successResponse($cart, 'Cart retrieved successfully');
     }
 
     public function store(CartRequest $request)
     {
-        $cartItem = $this->cartService->addToCart(
-            $request->user()->id,
-            $request->product_id,
-            $request->quantity
-        );
-
-        return $this->successResponse($cartItem, 'Product added to cart successfully.');
+        try {
+            $cart = $this->cartService->addToCart($request->sku_id, $request->quantity);
+            return $this->successResponse($cart, 'Product added to cart successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('ADD_TO_CART_ERROR', $e->getMessage(), 500);
+        }
     }
 
-    public function update(CartRequest $request, $id)
+    public function update(CartRequest $request, $itemId)
     {
-        $cartItem = $this->cartService->updateCartItem($request->user()->id, $id, $request->quantity);
-
-        return $this->successResponse($cartItem, 'Cart item updated successfully.');
+        try {
+            $cart = $this->cartService->updateCartItem($itemId, $request->quantity);
+            return $this->successResponse($cart, 'Cart item updated successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('UPDATE_CART_ERROR', $e->getMessage(), 500);
+        }
     }
 
-    public function destroy(Request $request, $id)
+    public function destroy($itemId)
     {
-        $deleted = $this->cartService->removeCartItem($request->user()->id, $id);
+        try {
+            $cart = $this->cartService->removeCartItem($itemId);
+            return $this->successResponse($cart, 'Cart item removed successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('REMOVE_CART_ITEM_ERROR', $e->getMessage(), 500);
+        }
+    }
 
-        return $this->successResponse($deleted, 'Cart item removed successfully.');
+    public function clear()
+    {
+        try {
+            $this->cartService->clearCart();
+            return $this->successResponse(null, 'Cart cleared successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('CLEAR_CART_ERROR', $e->getMessage(), 500);
+        }
     }
 }

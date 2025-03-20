@@ -68,38 +68,29 @@ class VoucherService
     }
 
     // kiểm tra & áp dụng voucher (Customer)
-    public function apply($code, $order_total)
+    public function apply($voucherCode, $orderSubtotal)
     {
-        $voucher = Voucher::where('code', strtoupper($code))->first();
+        $voucher = Voucher::where('code', $voucherCode)
+            ->where('is_active', 1)
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->first();
 
-        if (! $voucher) {
-            return ['success' => false, 'message' => 'Mã giảm giá không tồn tại!'];
+        if (!$voucher) {
+            return ['success' => false, 'message' => 'Mã giảm giá không hợp lệ!'];
         }
 
-        if (! $voucher->isValid()) {
-            return ['success' => false, 'message' => 'Mã giảm giá không hợp lệ hoặc đã hết hạn!'];
+        if ($orderSubtotal < $voucher->min_order_value) {
+            return ['success' => false, 'message' => 'Đơn hàng không đủ điều kiện để áp dụng mã giảm giá!'];
         }
 
-        if ($voucher->min_order_value && $order_total < $voucher->min_order_value) {
-            return ['success' => false, 'message' => 'Đơn hàng không đủ điều kiện áp dụng mã giảm giá!'];
+        $discountAmount = 0;
+        if ($voucher->type === 'percentage') {
+            $discountAmount = ($voucher->discount_value / 100) * $orderSubtotal;
+        } elseif ($voucher->type === 'fixed') {
+            $discountAmount = $voucher->discount_value;
         }
 
-        // Kiểm tra giới hạn số lần sử dụng
-        if ($voucher->usage_limit !== null && $voucher->used_count >= $voucher->usage_limit) {
-            return ['success' => false, 'message' => 'Mã giảm giá đã đạt giới hạn sử dụng!'];
-        }
-
-        $discount = $voucher->type === 'percentage'
-            ? ($order_total * $voucher->discount_value / 100)
-            : $voucher->discount_value;
-
-        // Cập nhật số lần sử dụng
-        $voucher->increment('used_count');
-
-        return [
-            'success' => true,
-            'discount' => min($discount, $order_total), // Giảm giá không vượt quá tổng đơn hàng
-            'message' => 'Mã giảm giá được áp dụng thành công!',
-        ];
+        return ['success' => true, 'discount' => $discountAmount];
     }
 }

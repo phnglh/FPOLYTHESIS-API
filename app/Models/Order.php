@@ -2,25 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'user_id',
+        'shipping_method_id',
+        'address_id',
         'order_number',
         'status',
         'payment_status',
         'subtotal',
+        'shipping_fee',
         'discount',
         'final_total',
-        'shipping_address',
-        'shipping_method_id',
-        'shipping_status',
-        'coupon_code',
         'notes',
         'ordered_at',
         'shipped_at',
@@ -28,11 +24,19 @@ class Order extends Model
         'cancelled_at'
     ];
 
-    protected $dates = ['ordered_at', 'shipped_at', 'delivered_at', 'cancelled_at'];
-
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function shippingMethod()
+    {
+        return $this->belongsTo(ShippingMethod::class);
+    }
+
+    public function address()
+    {
+        return $this->belongsTo(UserAddress::class, 'address_id');
     }
 
     public function items()
@@ -48,5 +52,10 @@ class Order extends Model
     public function logs()
     {
         return $this->hasMany(OrderLog::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 }

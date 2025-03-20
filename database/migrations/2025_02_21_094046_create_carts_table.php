@@ -5,10 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class () extends Migration {
-    /**
-     * Run the migrations.
-     */
-    public function up()
+    public function up(): void
     {
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
@@ -20,14 +17,12 @@ return new class () extends Migration {
             $table->id();
             $table->foreignId('cart_id')->constrained('carts')->cascadeOnDelete();
             $table->foreignId('sku_id')->constrained('skus')->cascadeOnDelete();
-            $table->integer('quantity');
+            $table->integer('quantity')->unsigned();
+            $table->decimal('unit_price', 10, 2); // Lưu giá tại thời điểm thêm vào giỏ
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('cart_items');

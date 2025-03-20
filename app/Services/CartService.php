@@ -2,76 +2,66 @@
 
 namespace App\Services;
 
-use App\Exceptions\ApiException;
 use App\Models\Cart;
-use App\Models\Product; // them moi
+use App\Models\CartItem;
+use App\Models\Sku;
+use Illuminate\Support\Facades\Auth;
 
 class CartService
 {
-    /**
-     * Lấy danh sách giỏ hàng của người dùng.
-     */
-    public function getUserCart($userId)
+    public function getCart()
     {
-        return Cart::where('user_id', $userId)->with('product')->get();
+        return Cart::where('user_id', Auth::id())->with('items.sku')->first();
     }
 
-    /**
-     * Thêm sản phẩm vào giỏ hàng hoặc cập nhật số lượng.
-     */
-    public function addToCart($user_id, $product_id, $quantity)
+    public function addToCart($skuId, $quantity)
     {
-        $product = Product::find($product_id);
-        if (! $product) {
-            throw new ApiException('Sản phẩm không tồn tại!', 404);
-        }
+        $cart = Cart::firstOrCreate(['user_id' => Auth::id()]);
 
-        return Cart::updateOrCreate(
-            [
-                'user_id' => $user_id,
-                'product_id' => $product_id,
+        $sku = Sku::findOrFail($skuId);
+        $cartItem = CartItem::where('cart_id', $cart->id)->where('sku_id', $skuId)->first();
+
+        if ($cartItem) {
+            $cartItem->increment('quantity', $quantity);
+        } else {
+            $cart->items()->create([
+                'sku_id' => $skuId,
                 'quantity' => $quantity,
-            ]
-        );
-    }
-
-    /**
-     * Cập nhật số lượng sản phẩm trong giỏ hàng.
-     */
-    public function updateCartItem($user_id, $cartId, $quantity)
-    {
-        $cartItem = Cart::where('id', $cartId)->where('user_id', $user_id)->first();
-
-        if (! $cartItem) {
-            throw new ApiException('Sản phẩm không tìm thấy trong giỏ hàng!', 404);
-        } else {
-            $cartItem->update(['quantity' => $quantity]);
-
-            return $cartItem;
+                'unit_price' => $sku->price
+            ]);
         }
+
+        return $cart->load('items.sku');
     }
 
-    /**
-     * Xóa sản phẩm khỏi giỏ hàng.
-     */
-    public function removeCartItem($user_id, $cartId)
+    public function updateCartItem($itemId, $quantity)
     {
-        $cartItem = Cart::where('id', $cartId)->where('user_id', $user_id)->first();
+        $cartItem = CartItem::where('id', $itemId)->whereHas('cart', function ($query) {
+            $query->where('user_id', Auth::id());
+        })->firstOrFail();
 
-        if (! $cartItem) {
-            throw new ApiException('Sản phẩm không tìm thấy trong giỏ hàng!', 404);
-        } else {
-            $cartItem->delete();
+        $cartItem->update(['quantity' => $quantity]);
 
-            return true;
+        return $cartItem->cart->load('items.sku');
+    }
+
+    public function removeCartItem($itemId)
+    {
+        $cartItem = CartItem::where('id', $itemId)->whereHas('cart', function ($query) {
+            $query->where('user_id', Auth::id());
+        })->firstOrFail();
+
+        $cartItem->delete();
+
+        return $cartItem->cart->load('items.sku');
+    }
+
+    public function clearCart()
+    {
+        $cart = Cart::where('user_id', Auth::id())->first();
+        if ($cart) {
+            $cart->items()->delete();
+            $cart->delete();
         }
-    }
-
-    /**
-     * Tìm kiếm một sản phẩm trong giỏ hàng của người dùng.
-     */
-    private function findCartItem($userId, $cartId)
-    {
-        return Cart::where('id', $cartId)->where('user_id', $userId)->first();
     }
 }

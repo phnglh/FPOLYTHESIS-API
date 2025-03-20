@@ -7,42 +7,30 @@ use Illuminate\Support\Facades\Schema;
 return new class () extends Migration {
     public function up()
     {
-        // Tạo bảng shipping_methods
-        Schema::create('shipping_methods', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->integer('price');
-            $table->string('estimated_time');
-            $table->boolean('is_express')->default(0);
-            $table->timestamps();
-        });
 
         // Tạo bảng orders
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('shipping_method_id')->nullable()->constrained('shipping_methods')->onDelete('set null');
+            $table->foreignId('address_id')->constrained('user_addresses')->cascadeOnDelete();
 
             $table->string('order_number')->unique();
             $table->enum('status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'])
-                ->default('pending');
+                ->default('pending')->index();
             $table->enum('payment_status', ['unpaid', 'paid', 'refunded', 'failed'])
-                ->default('unpaid');
+                ->default('unpaid')->index();
 
             $table->decimal('subtotal', 10, 2)->default(0);
+            $table->decimal('shipping_fee', 10, 2)->default(0);
             $table->decimal('discount', 10, 2)->default(0);
             $table->decimal('final_total', 10, 2)->default(0);
 
-            $table->string('shipping_address');
-            $table->enum('shipping_status', ['pending', 'shipped', 'delivered', 'failed'])->default('pending');
-            $table->string('coupon_code')->nullable();
             $table->text('notes')->nullable();
-
             $table->timestamp('ordered_at')->useCurrent();
             $table->timestamp('shipped_at')->nullable();
             $table->timestamp('delivered_at')->nullable();
             $table->timestamp('cancelled_at')->nullable();
-
             $table->timestamps();
         });
 
@@ -79,6 +67,16 @@ return new class () extends Migration {
             $table->string('action');
             $table->text('description')->nullable();
             $table->timestamp('logged_at')->useCurrent();
+            $table->timestamps();
+        });
+
+        // Tạo bảng shipping_methods
+        Schema::create('shipping_methods', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->integer('price');
+            $table->string('estimated_time');
+            $table->boolean('is_express')->default(0);
             $table->timestamps();
         });
     }

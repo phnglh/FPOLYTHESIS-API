@@ -2,229 +2,133 @@
 
 namespace App\Services;
 
-use App\Exceptions\ApiException;
+use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\OrderLog;
-use App\Models\OrderStatusHistory;
-use App\Models\Sku;
-use App\Models\ShippingMethod;
-use Exception;
+use App\Models\Voucher;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    public function createOrder($request)
+    public function createOrder($addressId, $voucherCode = null)
     {
-        // Kiểm tra và lấy thông tin items
-        $items = is_array($request->items) ? $request->items : json_decode($request->items, true);
-        if (!is_array($items) || empty($items)) {
-            throw new Exception("Danh sách sản phẩm không hợp lệ.");
+        $userId = Auth::id();
+        $cart = Cart::where('user_id', $userId)->with('items.sku')->first();
+
+        if (!$cart || $cart->items->isEmpty()) {
+            return ['error' => 'CART_EMPTY', 'message' => 'Giỏ hàng trống'];
         }
 
-        $userID = auth()->id();
-        $subtotal = 0;
+        return DB::transaction(function () use ($cart, $addressId, $voucherCode) {
+            $subtotal = $cart->items->sum(fn ($item) => $item->quantity * $item->sku->price);
+            $discount = 0;
+            $voucherId = null;
 
-        // Lấy danh sách SKU từ DB
-        $skuIds = collect($items)->pluck('sku_id')->toArray();
-        $skus = Sku::whereIn('id', $skuIds)->get()->keyBy('id');
+            // Kiểm tra và áp dụng voucher
+            if (!empty($voucherCode)) {
+                $voucher = Voucher::where('code', strtoupper($voucherCode))->first();
+                dd($voucher);
+                if ($voucher) {
+                    if (!$voucher->is_active) {
+                        return ['error' => 'VOUCHER_INACTIVE', 'message' => 'Mã giảm giá đã bị vô hiệu hóa'];
+                    }
 
-        // Kiểm tra tồn kho và tính tổng giá trị đơn hàng
-        foreach ($items as $item) {
-            if (!isset($skus[$item['sku_id']]) || $skus[$item['sku_id']]->stock < $item['quantity']) {
-                throw new Exception("Sản phẩm '{$item['sku_id']}' không đủ hàng.");
-            }
-            $subtotal += $skus[$item['sku_id']]->price * $item['quantity'];
-        }
+                    if ($voucher->usage_limit !== null && $voucher->used_count >= $voucher->usage_limit) {
+                        return ['error' => 'VOUCHER_EXPIRED', 'message' => 'Mã giảm giá đã đạt giới hạn sử dụng'];
+                    }
 
-        $shippingMethod = ShippingMethod::where('is_express', $request->is_express)->first();
+                    if ($voucher->min_order_value && $subtotal < $voucher->min_order_value) {
+                        return ['error' => 'VOUCHER_MIN_ORDER', 'message' => 'Đơn hàng không đủ điều kiện áp dụng mã giảm giá'];
+                    }
 
-        if (!$shippingMethod) {
-            throw new Exception("Phương thức vận chuyển không tồn tại.");
-        }
+                    // Tính giá trị giảm giá
+                    $discount = ($voucher->type === 'percentage')
+                        ? ($subtotal * $voucher->discount_value / 100)
+                        : $voucher->discount_value;
 
-        // Kiểm tra & áp dụng mã giảm giá
-        $discount = 0;
-        if ($request->coupon_code) {
-            $voucherService = new VoucherService();
-            $voucherResult = $voucherService->apply($request->coupon_code, $subtotal);
+                    // Giảm giá không vượt quá tổng đơn hàng
+                    $discount = min($discount, $subtotal);
 
-            if ($voucherResult['success']) {
-                $discount = $voucherResult['discount'];
-            } else {
-                throw new Exception($voucherResult['message']);
-            }
-        }
-        // Tính tổng tiền đơn hàng
-        $finalTotal = max(0, $subtotal - $discount + $shippingMethod->price);
+                    $voucherId = $voucher->id;
 
-        // Tạo đơn hàng
-        $order = Order::create([
-            'user_id'           => $userID,
-            'order_number'      => 'FLAMES' . time(),
-            'subtotal'          => $subtotal,
-            'discount'          => $discount,
-            'final_total'       => $finalTotal,
-            'shipping_address'  => $request->shipping_address,
-            'shipping_method_id' => $shippingMethod->id,
-            'shipping_fee'      => $shippingMethod->price,
-            'status'            => 'pending',
-            'notes'             => $request->notes ?? null,
-            'coupon_code'       => $request->coupon_code ?? null,
-        ]);
-        // Thêm sản phẩm vào đơn hàng và cập nhật tồn kho
-        foreach ($items as $item) {
-            $sku = $skus[$item['sku_id']];
-            OrderItem::create([
-                'order_id'     => $order->id,
-                'sku_id'       => $sku->id,
-                'quantity'     => $item['quantity'],
-                'unit_price'   => $sku->price,
-                'total_price'  => $sku->price * $item['quantity'],
-                'product_name' => $sku->product->name ?? 'Sản phẩm không xác định',
-                'sku_code'     => $sku->sku,
-            ]);
-
-            $sku->decrement('stock', $item['quantity']);
-        }
-
-        // Ghi lại lịch sử trạng thái đơn hàng
-        OrderStatusHistory::create([
-            'order_id'   => $order->id,
-            'old_status' => 'pending',
-            'new_status' => 'pending',
-            'changed_by' => $userID,
-            'reason'     => 'Đơn hàng mới được tạo.',
-        ]);
-
-        // Ghi log đơn hàng
-        OrderLog::create([
-            'order_id'    => $order->id,
-            'user_id'     => $userID,
-            'action'      => 'create_order',
-            'description' => 'Khách hàng tạo đơn hàng mới.',
-        ]);
-
-        return $order;
-    }
-
-
-    // lấy đơn hàng chi tiết
-    public function getOrderDetails($orderId)
-    {
-        $OrderDetail = Order::with(['orderDetail.sku', 'orderStatusHistories', 'orderLogs'])->findOrFail($orderId);
-
-        if (! $OrderDetail) {
-            throw new ApiException(
-                'không tìm thấy sản phẩm',
-                404
-            );
-        }
-
-        return $OrderDetail;
-    }
-
-    // lấy lịch sử trạng thái đơn hàng
-    public function getOrderHistory($orderId)
-    {
-        $OrderHistory = OrderStatusHistory::where('order_id', $orderId)->orderBy('created_at', 'asc')->get();
-
-        if (! $OrderHistory) {
-            throw new ApiException(
-                'không tìm thấy sản phẩm',
-                404
-            );
-        }
-
-        return $OrderHistory;
-    }
-
-    // Khách hàng hủy đơn hàng
-    public function cancelOrder($orderID, $userID)
-    {
-        return DB::transaction(function () use ($orderID, $userID) {
-            $order = Order::where('id', $orderID)->where('user_id', $userID)->firstOrFail();
-            if (in_array($order->status, ['shipped', 'delivered', 'cancelled'])) {
-                throw new Exception('Không thể hủy đơn hàng đã giao hoặc đã bị hủy.');
-            }
-            $order->update(['status' => 'cancelled']);
-            foreach ($order->orderItems as $item) {
-                $sku = Sku::find($item->sku_id);
-                if ($sku) {
-                    $sku->increment('stock', $item->quantity);
+                    // Cập nhật số lần sử dụng voucher
+                    $voucher->increment('used_count');
+                } else {
+                    return ['error' => 'VOUCHER_NOT_FOUND', 'message' => 'Mã giảm giá không tồn tại'];
                 }
             }
-            OrderStatusHistory::create([
-                'order_id' => $order->id,
-                'old_status' => $order->status,
-                'new_status' => 'cancelled',
-                'changed_by' => $userID,
-                'reason' => 'Khách hàng đã hủy đơn hàng.',
+
+            $finalTotal = max($subtotal - $discount, 0); // Đảm bảo giá trị không âm
+
+            $order = Order::create([
+                'user_id' => Auth::id(),
+                'address_id' => $addressId,
+                'order_number' => 'FLAMES-' . strtoupper(uniqid()),
+                'subtotal' => $subtotal,
+                'discount' => $discount,
+                'final_total' => $finalTotal,
+                'status' => 'pending',
+                'payment_status' => 'unpaid',
+                'voucher_id' => $voucherId, // Lưu ID voucher nếu có
             ]);
-            OrderLog::create([
-                'order_id' => $order->id,
-                'user_id' => $userID,
-                'action' => 'order_cancelled',
-                'description' => "Khách hàng đã hủy đơn hàng {$order->order_number}",
-            ]);
-            return ['message' => 'Đơn hàng đã được hủy thành công.'];
-        });
-    }
 
-    // lấy danh sách đơn hàng
-    public function listOrders($user, $filters)
-    {
-        $query = Order::query();
-
-        if ($user->role === 'customer') {
-            $query->where('user_id', $user->id);
-        }
-
-        if (! empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        return $query->with('orderDetails.sku')->paginate(10);
-    }
-
-    // Admin cập nhật đơn hàng
-    public function updateOrderStatus($orderId, $newStatus, $adminId)
-    {
-        return DB::transaction(function () use ($orderId, $newStatus, $adminId) {
-            $order = Order::findOrFail($orderId);
-            $oldStatus = $order->status;
-
-            if ($oldStatus === 'delivered' || $oldStatus === 'cancelled') {
-                throw new Exception('Không thể cập nhật trạng thái đơn hàng đã hoàn thành hoặc bị hủy.');
+            foreach ($cart->items as $item) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'sku_id' => $item->sku_id,
+                    'product_name' => $item->sku->product->name,
+                    'sku_code' => "DON",
+                    'quantity' => $item->quantity,
+                    'unit_price' => $item->sku->price,
+                    'total_price' => $item->quantity * $item->sku->price,
+                ]);
             }
 
-            $order->update(['status' => $newStatus]);
+            // xóa giỏ hàng sau khi tạo đơn
+            $cart->items()->delete();
+            $cart->delete();
 
-            OrderStatusHistory::create([
-                'order_id' => $order->id,
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
-                'changed_by' => $adminId,
-                'reason' => 'Admin cập nhật trạng thái.',
-            ]);
-
-            return $order;
+            return ['success' => true, 'order' => $order];
         });
     }
 
-    // xóa đơn hàng
-    public function deleteOrder($orderId)
+    public function getOrderList($role)
     {
-        return DB::transaction(function () use ($orderId) {
-            $order = Order::findOrFail($orderId);
+        if ($role === 'admin') {
+            return Order::with('items.sku', 'user', 'address')->paginate(10);
+        } else {
+            return Order::where('user_id', Auth::id())->with('items.sku', 'address')->paginate(10);
+        }
+    }
 
-            if ($order->status === 'shipped' || $order->status === 'delivered') {
-                throw new Exception('Không thể xóa đơn hàng đã giao.');
-            }
+    public function updateOrderStatus($orderId, $status)
+    {
+        $order = Order::findOrFail($orderId);
 
-            $order->delete();
+        if (Auth::user()->role !== 'admin') {
+            return ['error' => 'PERMISSION_DENIED', 'message' => 'Bạn không có quyền cập nhật đơn hàng'];
+        }
 
-            return ['message' => 'Đơn hàng đã được xóa thành công.'];
-        });
+        if (!in_array($status, ['pending', 'processing', 'shipped', 'delivered', 'cancelled'])) {
+            return ['error' => 'INVALID_STATUS', 'message' => 'Trạng thái không hợp lệ'];
+        }
+
+        $order->update(['status' => $status]);
+
+        return ['success' => true, 'order' => $order];
+    }
+
+    public function cancelOrder($orderId)
+    {
+        $order = Order::where('id', $orderId)->where('user_id', Auth::id())->first();
+
+        if (!$order || $order->status !== 'pending') {
+            return ['error' => 'ORDER_CANNOT_BE_CANCELLED', 'message' => 'Không thể hủy đơn hàng'];
+        }
+
+        $order->update(['status' => 'cancelled']);
+
+        return ['success' => true, 'order' => $order];
     }
 }

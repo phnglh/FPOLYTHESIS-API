@@ -2,13 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class OrderItem extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'order_id',
         'sku_id',
@@ -26,6 +23,6 @@ class OrderItem extends Model
 
     public function sku()
     {
-        return $this->belongsTo(Sku::class, 'sku_id');
+        return $this->belongsTo(Sku::class);
     }
 }

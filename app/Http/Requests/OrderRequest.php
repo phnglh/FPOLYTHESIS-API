@@ -6,31 +6,19 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class OrderRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
+    public function authorize()
     {
-        return true;
+        return true; // Có thể thêm kiểm tra quyền tại đây
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
+    public function rules()
     {
         return [
-            'user_id' => 'required|integer|exists:users,id',
+            'shipping_method_id' => 'required|exists:shipping_methods,id',
+            'address_id' => 'required|exists:user_addresses,id',
             'items' => 'required|array|min:1',
-            'items.*.sku_id' => 'required|integer|exists:skus,id',
+            'items.*.sku_id' => 'required|exists:skus,id',
             'items.*.quantity' => 'required|integer|min:1',
-            'shipping_address' => 'required|string|max:255',
-            'shipping_method' => 'required|string|in:Standard Shipping,Express Shipping',
-            'payment_status' => 'required|string|in:unpaid,paid,refunded,failed',
-            'notes' => 'nullable|string|max:500',
-            'coupon_code' => 'nullable|string|exists:vouchers,code',
         ];
     }
 }

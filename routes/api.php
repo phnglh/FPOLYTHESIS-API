@@ -4,7 +4,6 @@ use App\Http\Controllers\API\V1\ApiController;
 use App\Http\Controllers\API\V1\AttributeController;
 use App\Http\Controllers\API\V1\AuthController;
 use App\Http\Controllers\API\V1\BrandController;
-use App\Http\Controllers\API\V1\CartController;
 use App\Http\Controllers\API\V1\CategoryController;
 use App\Http\Controllers\API\V1\OrderController;
 use App\Http\Controllers\API\V1\PaymentController;
@@ -15,6 +14,8 @@ use App\Http\Controllers\API\V1\UserController;
 use App\Http\Controllers\API\V1\VoucherController;
 use App\Http\Controllers\API\V1\WishListController;
 use App\Http\Controllers\API\V2\CategoryController as V2CategoryController;
+use App\Http\Controllers\API\V1\CartController;
+use App\Http\Controllers\API\V1\UserAddressController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use LaravelJsonApi\Laravel\Facades\JsonApiRoute;
@@ -74,6 +75,29 @@ Route::prefix('v1')->group(function () {
         Route::put('/reviews/{id}', [ReviewController::class, 'update']);
         Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
 
+        // order
+        Route::post('/orders/create', [OrderController::class, 'createOrder']); // Tạo đơn hàng
+        Route::get('/orders', [OrderController::class, 'getOrders']); // Xem đơn hàng của mình
+        Route::delete('/orders/{orderId}', [OrderController::class, 'cancelOrder']); // Hủy đơn hàng của mình
+
+        // voucher
+        Route::post('/vouchers/apply', [VoucherController::class, 'apply']);
+
+        // payment
+        Route::post('/payment/pay', [PaymentController::class, 'payOrder']);
+        Route::get('/payment/vnpay-return', [PaymentController::class, 'vnpayReturn']);
+
+        // Cart
+        Route::get('/cart', [CartController::class, 'index']);
+        Route::post('/cart', [CartController::class, 'store']);
+        Route::put('/cart/{itemId}', [CartController::class, 'update']);
+        Route::delete('/cart/{itemId}', [CartController::class, 'destroy']);
+        Route::delete('/cart', [CartController::class, 'clear']);
+
+        // user_address
+        Route::apiResource('user-addresses', UserAddressController::class);
+
+
         // -------------------------
         // Role-based API (Admin Only)
         // -------------------------
@@ -102,20 +126,12 @@ Route::prefix('v1')->group(function () {
         Route::patch('/{id}/publish', [ProductController::class, 'togglePublish']);
         Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
-        // Cart
-        Route::get('/cart', [CartController::class, 'index']);
-        Route::post('/cart', [CartController::class, 'store']);
-        Route::put('/cart/{id}', [CartController::class, 'update']);
-        Route::delete('/cart/{id}', [CartController::class, 'destroy']);
 
         // Orders
-        Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
-        Route::delete('/orders/{id}', [OrderController::class, 'deleteOrder']);
-        Route::post('/order/create', [OrderController::class, 'store']);
-        Route::get('/order', [OrderController::class, 'listOrders']);
-        Route::get('/order/{id}', [OrderController::class, 'getOrderDetails']);
-        Route::get('/order/{id}/history', [OrderController::class, 'getOrderHistory']);
-        Route::patch('/order/{id}/cancel', [OrderController::class, 'cancelOrder']);
+
+
+        Route::get('/orders/all', [OrderController::class, 'getOrders']); // Xem tất cả đơn hàng
+        Route::put('/orders/{orderId}/status', [OrderController::class, 'updateStatus']); // Cập nhật trạng thái đơn
 
         // Voucher
         Route::get('/vouchers', [VoucherController::class, 'index']);
@@ -133,7 +149,6 @@ Route::prefix('v1')->group(function () {
         Route::delete('/attributes/values/{id}', [AttributeController::class, 'destroyAttributeValue']);
         // });
 
-        Route::post('/payment', [PaymentController::class, 'createPayment']);
-        Route::get('/payment/vnpay/callback', [PaymentController::class, 'handleVNPayCallback']);
+
     });
 });

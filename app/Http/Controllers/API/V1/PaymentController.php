@@ -2,46 +2,46 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Http\Controllers\Api\BaseController;
+use App\Http\Controllers\API\BaseController;
 use App\Services\PaymentService;
-use Exception;
+use App\Services\VNPayService;
 use Illuminate\Http\Request;
 
 class PaymentController extends BaseController
 {
     protected $paymentService;
+    protected $vnpayService;
 
-    public function __construct(PaymentService $paymentService)
+    public function __construct(PaymentService $paymentService, VNPayService $vnpayService)
     {
         $this->paymentService = $paymentService;
+        $this->vnpayService = $vnpayService;
     }
 
-    // Create a payment
-    public function createPayment(Request $request)
+    public function payOrder(Request $request)
     {
         $request->validate([
             'order_id' => 'required|exists:orders,id',
-            'method' => 'required|in:cod,vnpay',
+            'payment_method' => 'required|in:cod,vnpay'
         ]);
 
-        try {
-            $payment = $this->paymentService->createPayment($request->order_id, $request->method);
+        $paymentResult = $this->paymentService->processPayment($request->order_id, $request->payment_method);
 
-            return $this->successResponse($payment, 'Payment created successfully.');
-        } catch (Exception $e) {
-            return $this->errorResponse('PAYMENT_CREATION_FAILED', $e->getMessage());
+        if (isset($paymentResult['error'])) {
+            return $this->errorResponse($paymentResult['error'], $paymentResult['message'], 400);
         }
+
+        return $this->successResponse($paymentResult, 'Payment initiated successfully');
     }
 
-    // Handle VNPay callback
-    public function handleVNPayCallback(Request $request)
+    public function vnpayReturn(Request $request)
     {
-        try {
-            $paymentResponse = $this->paymentService->processVNPayCallback($request);
+        $result = $this->vnpayService->processReturnPayment($request);
 
-            return $this->successResponse($paymentResponse, 'VNPay payment processed successfully.');
-        } catch (Exception $e) {
-            return $this->errorResponse('VNPAY_PROCESSING_FAILED', $e->getMessage());
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error'], $result['message'], 400);
         }
+
+        return $this->successResponse($result['order'], 'Payment successful');
     }
 }

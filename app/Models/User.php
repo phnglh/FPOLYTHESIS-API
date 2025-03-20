@@ -60,4 +60,9 @@ class User extends Authenticatable
     {
         return strtolower($this->role) === strtolower($role);
     }
+
+    public function userAddresses()
+    {
+        return $this->hasMany(UserAddress::class, 'user_id');
+    }
 }
