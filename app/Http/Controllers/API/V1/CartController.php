@@ -31,11 +31,31 @@ class CartController extends BaseController
         }
     }
 
-    public function update(CartRequest $request, $itemId)
+    public function increment($itemId)
     {
         try {
-            $cart = $this->cartService->updateCartItem($itemId, $request->quantity, $request->isIncrement ?? null);
-            return $this->successResponse($cart, 'Cart item updated successfully');
+            $cart = $this->cartService->incrementCartItem($itemId);
+            return $this->successResponse($cart, 'Cart item quantity increased successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('INCREMENT_CART_ERROR', $e->getMessage(), 500);
+        }
+    }
+
+    public function decrement($itemId)
+    {
+        try {
+            $cart = $this->cartService->decrementCartItem($itemId);
+            return $this->successResponse($cart, 'Cart item quantity decreased successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('DECREMENT_CART_ERROR', $e->getMessage(), 500);
+        }
+    }
+
+    public function updateQuantity(CartRequest $request, $itemId)
+    {
+        try {
+            $cart = $this->cartService->setCartItemQuantity($itemId, $request->quantity);
+            return $this->successResponse($cart, 'Cart item quantity updated successfully');
         } catch (\Exception $e) {
             return $this->errorResponse('UPDATE_CART_ERROR', $e->getMessage(), 500);
         }

@@ -88,11 +88,13 @@ Route::prefix('v1')->group(function () {
         Route::get('/payment/vnpay-return', [PaymentController::class, 'vnpayReturn']);
 
         // Cart
-        Route::get('/cart', [CartController::class, 'index']);
-        Route::post('/cart', [CartController::class, 'store']);
-        Route::put('/cart/{itemId}', [CartController::class, 'update']);
-        Route::delete('/cart/{itemId}', [CartController::class, 'destroy']);
-        Route::delete('/cart', [CartController::class, 'clear']);
+        Route::get('/cart', [CartController::class, 'index']); // Lấy giỏ hàng
+        Route::post('/cart', [CartController::class, 'store']); // Thêm sản phẩm vào giỏ hàng
+        Route::put('/cart/{itemId}', [CartController::class, 'updateQuantity']); // update số lượng sản phẩm
+        Route::patch('/cart/increment/{itemId}', [CartController::class, 'increment']); // Tăng 1 sản phẩm
+        Route::patch('/cart/decrement/{itemId}', [CartController::class, 'decrement']); // Giảm 1 sản phẩm
+        Route::delete('/cart/{itemId}', [CartController::class, 'destroy']); // Xóa sản phẩm khỏi giỏ hàng
+        Route::delete('/cart', [CartController::class, 'clear']); // Xóa toàn bộ giỏ hàng
 
         // user_address
         Route::apiResource('user-addresses', UserAddressController::class);
