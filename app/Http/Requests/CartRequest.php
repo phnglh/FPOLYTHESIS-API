@@ -9,10 +9,12 @@ class CartRequest extends FormRequest
     public function rules()
     {
         return [
-            'sku_id' => 'required|exists:skus,id',
-            'quantity' => 'required|integer|min:1'
+            'sku_id' => 'required|integer|exists:skus,id',
+            'quantity' => 'nullable|integer|min:1',
+            'isIncrement' => 'nullable|boolean'
         ];
     }
+
 
     public function messages()
     {

@@ -34,7 +34,7 @@ class CartController extends BaseController
     public function update(CartRequest $request, $itemId)
     {
         try {
-            $cart = $this->cartService->updateCartItem($itemId, $request->quantity);
+            $cart = $this->cartService->updateCartItem($itemId, $request->quantity, $request->isIncrement ?? null);
             return $this->successResponse($cart, 'Cart item updated successfully');
         } catch (\Exception $e) {
             return $this->errorResponse('UPDATE_CART_ERROR', $e->getMessage(), 500);

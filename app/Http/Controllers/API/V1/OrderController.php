@@ -21,13 +21,13 @@ class OrderController extends BaseController
             'address_id' => 'required|exists:user_addresses,id',
         ]);
 
-        $result = $this->orderService->createOrder($request->address_id);
+        $order = $this->orderService->createOrder($request->address_id, $request->selected_sku_ids, $request->voucher_code);
 
-        if (isset($result['error'])) {
-            return $this->errorResponse($result['error'], $result['message'], 400);
+        if (isset($order['error'])) {
+            return $this->errorResponse($order['error'], $order['message'], 400);
         }
 
-        return $this->successResponse($result['order'], 'Đơn hàng đã được tạo thành công');
+        return $this->successResponse($order['order'], 'Đơn hàng đã được tạo thành công');
     }
 
     public function getOrders(Request $request)
