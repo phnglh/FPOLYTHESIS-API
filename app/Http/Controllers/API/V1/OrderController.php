@@ -17,18 +17,25 @@ class OrderController extends BaseController
 
     public function createOrder(Request $request)
     {
-        $request->validate([
-            'address_id' => 'required|exists:user_addresses,id',
-        ]);
+        try {
+            $order = $this->orderService->createOrder(
+                $request->address_id,
+                $request->selected_sku_ids,
+                $request->voucher_code,
+                $request->new_address ?? []
+            );
 
-        $order = $this->orderService->createOrder($request->address_id, $request->selected_sku_ids, $request->voucher_code);
+            if (isset($order['error'])) {
+                return $this->errorResponse($order['error'], $order['message'], 400);
+            }
 
-        if (isset($order['error'])) {
-            return $this->errorResponse($order['error'], $order['message'], 400);
+            return $this->successResponse($order['order'], 'Đơn hàng đã được tạo thành công');
+        } catch (\Exception $e) {
+            return $this->errorResponse('SERVER_ERROR', $e->getMessage(), 400);
         }
-
-        return $this->successResponse($order['order'], 'Đơn hàng đã được tạo thành công');
     }
+
+
 
     public function getOrders(Request $request)
     {

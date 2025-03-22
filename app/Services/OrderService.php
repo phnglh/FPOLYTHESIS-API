@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    public function createOrder($addressId, $selectedSkuIds = [], $voucherCode = null)
+    public function createOrder($addressId = null, $selectedSkuIds, $voucherCode = null, $newAddress = [])
     {
         $userId = Auth::id();
         $cart = Cart::where('user_id', $userId)->with('items.sku')->first();
@@ -21,7 +21,19 @@ class OrderService
             return ['error' => 'CART_EMPTY', 'message' => 'Giỏ hàng trống'];
         }
 
-        return DB::transaction(function () use ($cart, $addressId, $selectedSkuIds, $voucherCode) {
+        return DB::transaction(function () use ($cart, $addressId, $selectedSkuIds, $voucherCode, $newAddress, $userId) {
+            // Nếu không có address_id, kiểm tra xem có thông tin địa chỉ mới không
+            if (!$addressId && !empty($newAddress)) {
+                $userAddressService = new UserAddressService();
+                $newAddress['user_id'] = $userId;
+                $address = $userAddressService->createUserAddress($newAddress);
+                $addressId = $address->id;
+            }
+
+            if (!$addressId) {
+                return ['error' => 'ADDRESS_REQUIRED', 'message' => 'Địa chỉ không hợp lệ'];
+            }
+
             $subtotal = 0;
             $orderItems = [];
 
@@ -48,13 +60,16 @@ class OrderService
 
             if (!empty($voucherCode)) {
                 $voucher = Voucher::where('code', strtoupper($voucherCode))->first();
+
                 if ($voucher) {
                     if (!$voucher->is_active) {
                         return ['error' => 'VOUCHER_INACTIVE', 'message' => 'Mã giảm giá đã bị vô hiệu hóa'];
                     }
+
                     if ($voucher->usage_limit !== null && $voucher->used_count >= $voucher->usage_limit) {
                         return ['error' => 'VOUCHER_EXPIRED', 'message' => 'Mã giảm giá đã đạt giới hạn sử dụng'];
                     }
+
                     if ($voucher->min_order_value && $subtotal < $voucher->min_order_value) {
                         return ['error' => 'VOUCHER_MIN_ORDER', 'message' => 'Đơn hàng không đủ điều kiện áp dụng mã giảm giá'];
                     }
@@ -73,8 +88,9 @@ class OrderService
 
             $finalTotal = max($subtotal - $discount, 0);
 
+            // Tạo đơn hàng
             $order = Order::create([
-                'user_id' => Auth::id(),
+                'user_id' => $userId,
                 'address_id' => $addressId,
                 'order_number' => 'FLAMES-' . strtoupper(uniqid()),
                 'subtotal' => $subtotal,
@@ -89,6 +105,7 @@ class OrderService
                 OrderItem::create(array_merge(['order_id' => $order->id], $item));
             }
 
+            // Cập nhật giỏ hàng: Chỉ xóa sản phẩm đã mua
             CartItem::where('cart_id', $cart->id)->whereIn('sku_id', $selectedSkuIds)->delete();
 
             return ['success' => true, 'order' => $order];
