@@ -12,7 +12,9 @@ class ProductSkuAttributeSeeder extends Seeder
 {
     public function run()
     {
-        $products = Product::factory()->count(50)->create();
+        $products = Product::factory()->count(50)->create([
+            'image_url' => "https://i.pinimg.com/736x/af/13/eb/af13eb5efbe36bb9abd64be1f32cc0cf.jpg"
+        ]);
 
         $attributes = Attribute::factory()->count(2)->create();
 
