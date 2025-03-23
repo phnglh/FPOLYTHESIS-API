@@ -61,7 +61,7 @@ Route::prefix('v1')->group(function () {
     // -------------------------
     Route::middleware('auth:sanctum')->group(function () {
         // User
-        Route::get('/users/profile', [UserController::class, 'proflie']);
+        Route::get('/users/profile', [UserController::class, 'me']);
         // User có thể cập nhật thông tin cá nhân
         Route::put('/users/profile', [UserController::class, 'updateProfile']);
         Route::post('/logout', [AuthController::class, 'logout']);
