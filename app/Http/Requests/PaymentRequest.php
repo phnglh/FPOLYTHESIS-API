@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class InitiatePaymentRequest extends FormRequest
+class PaymentRequest extends FormRequest
 {
     // Chỉ dành cho Customer
     public function authorize(): bool
