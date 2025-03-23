@@ -15,11 +15,11 @@ class UserAddressRequest extends FormRequest
     {
         return [
             'receiver_name' => 'required_with:address|string|max:255',
+            'receiver_email' => 'required_with:address|string|max:255',
             'receiver_phone' => 'required_with:address|string|max:15',
             'address' => 'required|string|max:255',
             'city' => 'required_with:address|string|max:100',
             'state' => 'nullable|string|max:100',
-            'zip_code' => 'nullable|string|max:20',
             'is_default' => 'boolean',
         ];
     }

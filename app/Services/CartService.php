@@ -17,7 +17,7 @@ class CartService
     public function addToCart($skuId, $quantity)
     {
         $cart = Cart::firstOrCreate(['user_id' => Auth::id()]);
-        $sku = Sku::findOrFail($skuId);
+        $sku = Sku::with('product')->findOrFail($skuId); // Load luôn product
 
         if ($sku->stock < $quantity) {
             return ['error' => 'OUT_OF_STOCK', 'message' => 'Số lượng sản phẩm không đủ trong kho'];
@@ -39,8 +39,19 @@ class CartService
         }
 
         $sku->decrement('stock', $quantity);
-        return ['success' => true, 'cart' => $cart->load('items.sku')];
+
+        $cartItems = $cart->items->map(function ($item) {
+            return [
+                'sku_id' => $item->sku_id,
+                'product_name' => $item->sku->product->name ?? 'N/A',
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price,
+            ];
+        });
+
+        return ['success' => true, 'cart' => $cartItems];
     }
+
 
     public function incrementCartItem($itemId)
     {

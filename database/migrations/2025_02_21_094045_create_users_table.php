@@ -42,11 +42,11 @@ return new class () extends Migration {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('receiver_name');
+            $table->string('receiver_email');
             $table->string('receiver_phone');
             $table->text('address');
-            $table->string('city');
+            $table->string('city')->nullable();
             $table->string('state')->nullable();
-            $table->string('zip_code')->nullable();
             $table->boolean('is_default')->default(false);
             $table->timestamps();
         });
