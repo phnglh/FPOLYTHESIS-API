@@ -42,7 +42,7 @@ return new class () extends Migration {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('receiver_name');
-            $table->string('receiver_email');
+            $table->string('receiver_email')->nullable();
             $table->string('receiver_phone');
             $table->text('address');
             $table->string('city')->nullable();

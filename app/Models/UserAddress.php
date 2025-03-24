@@ -13,7 +13,7 @@ class UserAddress extends Model
         'address',
         'city',
         'state',
-        'zip_code',
+        'receiver_email',
         'is_default'
     ];
     public function user()
