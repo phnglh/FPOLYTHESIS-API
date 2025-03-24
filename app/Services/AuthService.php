@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthService
 {
@@ -46,20 +47,49 @@ class AuthService
 
         return [
             'user' => $user,
-            'token' => $token,
+            'access_token' => $token,
         ];
     }
 
     public function logout(Request $request, $logoutAll = false)
     {
         $user = $request->user();
+
         if ($logoutAll) {
+            // Xóa tất cả token của user
             $user->tokens()->delete();
         } else {
-            $user->currentAccessToken()->delete();
+            // Lấy token từ request
+            $token = $request->bearerToken();
+
+            if (!$token) {
+                return response()->json([
+                    'status' => 'error',
+                    'status_code' => 401,
+                    'message' => 'No active token found.',
+                    'error_code' => 'TOKEN_NOT_FOUND',
+                ], 401);
+            }
+
+            // Tìm token trong database và xóa nó
+            $tokenInstance = PersonalAccessToken::findToken($token);
+            if ($tokenInstance) {
+                $tokenInstance->delete();
+            } else {
+                return response()->json([
+                    'status' => 'error',
+                    'status_code' => 401,
+                    'message' => 'Invalid token.',
+                    'error_code' => 'INVALID_TOKEN',
+                ], 401);
+            }
         }
 
-        return ['message' => 'Logged out successfully!'];
+        return response()->json([
+            'status' => 'success',
+            'status_code' => 200,
+            'message' => 'Logged out successfully!',
+        ]);
     }
 
     public function changePassword(User $user, string $currentPassword, string $newPassword)
