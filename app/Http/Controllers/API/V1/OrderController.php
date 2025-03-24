@@ -22,18 +22,31 @@ class OrderController extends BaseController
                 $request->address_id,
                 $request->selected_sku_ids,
                 $request->voucher_code,
-                $request->new_address ?? []
+                $request->new_address ?? [],
+                $request->payment_method
             );
 
             if (isset($order['error'])) {
                 return $this->errorResponse($order['error'], $order['message'], 400);
             }
 
+            // Nếu phương thức thanh toán là VNPay, trả về link thanh toán
+            if ($request->payment_method === 'vnpay') {
+                $vnpayUrl = $this->orderService->processVNPayPayment($order['order']);
+                return $this->successResponse([
+                    'order' => $order['order'],  // Thêm dữ liệu order vào response
+                    'payment_url' => $vnpayUrl
+                ], 'Chuyển hướng đến trang thanh toán');
+            }
+
+
             return $this->successResponse($order['order'], 'Đơn hàng đã được tạo thành công');
         } catch (\Exception $e) {
             return $this->errorResponse('SERVER_ERROR', $e->getMessage(), 400);
         }
     }
+
+
 
 
 

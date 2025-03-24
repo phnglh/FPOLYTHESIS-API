@@ -67,7 +67,13 @@ class PaymentService
                     'payment_status' => 'pending', // Chờ xác nhận từ VNPay
                 ]);
 
-                return ['success' => true, 'payment_url' => $paymentUrl];
+                // ✅ Fix: Trả về cả order và payment_url
+                return [
+                    'success' => true,
+                    'order' => $order,
+                    'payment_url' => $paymentUrl,
+                    'message' => 'Redirecting to payment page'
+                ];
             }
 
             return ['error' => 'INVALID_PAYMENT_METHOD', 'message' => 'Unsupported payment method'];

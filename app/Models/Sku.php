@@ -49,7 +49,7 @@ class Sku extends Model
 
     public function attributeSkus()
     {
-        return $this->hasMany(AttributeSku::class, 'sku_id');
+        return $this->hasMany(AttributeSku::class);
     }
 
     public function cartItems()

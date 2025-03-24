@@ -31,7 +31,18 @@ class PaymentController extends BaseController
             return $this->errorResponse($paymentResult['error'], $paymentResult['message'], 400);
         }
 
-        return $this->successResponse($paymentResult, 'Payment initiated successfully');
+        // Nếu thanh toán VNPay, đảm bảo có URL thanh toán
+        if ($request->payment_method === 'vnpay' && isset($paymentResult['payment_url'])) {
+            return $this->successResponse([
+                'order' => $paymentResult['order'] ?? null,
+                'payment_url' => $paymentResult['payment_url']
+            ], 'Chuyển hướng đến trang thanh toán');
+        }
+
+        // Nếu thanh toán COD, trả về thông tin đơn hàng
+        return $this->successResponse([
+            'order' => $paymentResult['order'] ?? null
+        ], 'Đơn hàng đã được tạo thành công');
     }
 
     public function vnpayReturn(Request $request)
@@ -42,6 +53,8 @@ class PaymentController extends BaseController
             return $this->errorResponse($result['error'], $result['message'], 400);
         }
 
-        return $this->successResponse($result['order'], 'Payment successful');
+        return $this->successResponse([
+            'order' => $result['order']
+        ], 'Thanh toán thành công');
     }
 }

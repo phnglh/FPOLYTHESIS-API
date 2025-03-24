@@ -12,7 +12,13 @@ use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    public function createOrder($addressId = null, $selectedSkuIds, $voucherCode = null, $newAddress = [])
+    public function processVNPayPayment($order)
+    {
+        $vnpayService = new VNPayService();
+        return $vnpayService->createPaymentUrl($order);
+    }
+
+    public function createOrder($addressId = null, $selectedSkuIds, $voucherCode = null, $newAddress = [], $paymentMethod = 'cod')
     {
         $userId = Auth::id();
         $cart = Cart::where('user_id', $userId)->with('items.sku')->first();
@@ -21,8 +27,8 @@ class OrderService
             return ['error' => 'CART_EMPTY', 'message' => 'Giỏ hàng trống'];
         }
 
-        return DB::transaction(function () use ($cart, $addressId, $selectedSkuIds, $voucherCode, $newAddress, $userId) {
-            // Nếu không có address_id, kiểm tra xem có thông tin địa chỉ mới không
+        return DB::transaction(function () use ($cart, $addressId, $selectedSkuIds, $voucherCode, $newAddress, $userId, $paymentMethod) {
+            // Nếu không có addressId, tạo địa chỉ mới
             if (!$addressId && !empty($newAddress)) {
                 $userAddressService = new UserAddressService();
                 $newAddress['user_id'] = $userId;
@@ -105,10 +111,29 @@ class OrderService
                 OrderItem::create(array_merge(['order_id' => $order->id], $item));
             }
 
-            // Cập nhật giỏ hàng: Chỉ xóa sản phẩm đã mua
+            // Gọi PaymentService để xử lý thanh toán ngay lúc tạo đơn
+            $paymentService = app(PaymentService::class);
+            $paymentResult = $paymentService->processPayment($order->id, $paymentMethod);
+
+            // Xóa sản phẩm đã mua khỏi giỏ hàng
             CartItem::where('cart_id', $cart->id)->whereIn('sku_id', $selectedSkuIds)->delete();
 
-            return ['success' => true, 'order' => $order];
+            // Nếu chọn VNPay, trả về link thanh toán
+            if ($paymentMethod === 'vnpay') {
+                return [
+                    'success' => true,
+                    'order' => $order, // Thêm order để tránh lỗi
+                    'payment_url' => $paymentResult['payment_url'],
+                    'message' => 'Chuyển hướng đến trang thanh toán'
+                ];
+            }
+
+
+            return [
+                'success' => true,
+                'order' => $order,
+                'message' => 'Đơn hàng đã được tạo và thanh toán thành công'
+            ];
         });
     }
 
