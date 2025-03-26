@@ -38,36 +38,50 @@ class VNPayService
         ];
 
         ksort($inputData);
-        $query = http_build_query($inputData);
-        $hashdata = urldecode($query);
+        $query = "";
+        $i = 0;
+        $hashdata = "";
+        foreach ($inputData as $key => $value) {
+            if ($i == 1) {
+                $hashdata .= '&' . urlencode($key) . "=" . urlencode($value);
+            } else {
+                $hashdata .= urlencode($key) . "=" . urlencode($value);
+                $i = 1;
+            }
+            $query .= urlencode($key) . "=" . urlencode($value) . '&';
+        }
 
-        $vnpSecureHash = hash_hmac("sha512", $hashdata, $vnp_HashSecret);
-        $paymentUrl = $vnp_Url . "?" . $query . "&vnp_SecureHash=" . $vnpSecureHash;
+        $vnp_Url = $vnp_Url . "?" . $query;
+        if (isset($vnp_HashSecret)) {
+            $vnpSecureHash =   hash_hmac('sha512', $hashdata, $vnp_HashSecret);//
+            $vnp_Url .= 'vnp_SecureHash=' . $vnpSecureHash;
+        }
 
-        return $paymentUrl;
+        return $vnp_Url;
     }
 
     public function processReturnPayment(Request $request)
     {
-        $vnp_HashSecret = env('VNP_HASH_SECRET');
-        $inputData = $request->except('vnp_SecureHash');
-        $vnp_SecureHash = $request->input('vnp_SecureHash');
-
-        ksort($inputData);
-        $hashData = urldecode(http_build_query($inputData));
-        $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
-
-        if ($secureHash === $vnp_SecureHash) {
-            $order = Order::where('order_number', $inputData['vnp_TxnRef'])->first();
-            if ($order && $inputData['vnp_ResponseCode'] == '00') {
-                $order->update([
-                    'payment_status' => 'paid',
-                    'status' => 'processing'
-                ]);
-                return ['success' => true, 'order' => $order];
+        $vnp_SecureHash = $_GET['vnp_SecureHash'];
+        $inputData = array();
+        foreach ($_GET as $key => $value) {
+            if (substr($key, 0, 4) == "vnp_") {
+                $inputData[$key] = $value;
             }
         }
 
-        return ['error' => 'PAYMENT_FAILED', 'message' => 'Giao dịch không hợp lệ'];
+        unset($inputData['vnp_SecureHash']);
+        ksort($inputData);
+        $i = 0;
+        $hashData = "";
+        foreach ($inputData as $key => $value) {
+            if ($i == 1) {
+                $hashData = $hashData . '&' . urlencode($key) . "=" . urlencode($value);
+            } else {
+                $hashData = $hashData . urlencode($key) . "=" . urlencode($value);
+                $i = 1;
+            }
+        }
+
     }
 }
