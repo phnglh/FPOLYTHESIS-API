@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Order;
-use Illuminate\Http\Request;
 
 class VNPayService
 {
@@ -60,28 +59,48 @@ class VNPayService
         return $vnp_Url;
     }
 
-    public function processReturnPayment(Request $request)
+    public function createPaymentUrlRetry($order)
     {
-        $vnp_SecureHash = $_GET['vnp_SecureHash'];
-        $inputData = array();
-        foreach ($_GET as $key => $value) {
-            if (substr($key, 0, 4) == "vnp_") {
-                $inputData[$key] = $value;
-            }
-        }
+        $vnp_TxnRef = $order->id;
+        $vnp_Amount = $order->final_total * 100;
+        $vnp_IpAddr = request()->ip();
+        $vnp_OrderInfo = "Retry Payment for Order #{$order->order_number}";
 
-        unset($inputData['vnp_SecureHash']);
+        $vnp_TmnCode = env('VNP_TMN_CODE');
+        $vnp_HashSecret = env('VNP_HASH_SECRET');
+        $vnp_Url = env('VNP_URL');
+        $vnp_ReturnUrl = env('VNP_RETURN_URL');
+
+        $inputData = [
+            "vnp_Version" => "2.1.0",
+            "vnp_Command" => "pay",
+            "vnp_TmnCode" => $vnp_TmnCode,
+            "vnp_Amount" => $vnp_Amount,
+            "vnp_CurrCode" => "VND",
+            "vnp_TxnRef" => $vnp_TxnRef,
+            "vnp_OrderInfo" => $vnp_OrderInfo,
+            "vnp_OrderType" => "billpayment",
+            "vnp_Locale" => "vn",
+            "vnp_ReturnUrl" => $vnp_ReturnUrl,
+            "vnp_IpAddr" => $vnp_IpAddr,
+        ];
+
         ksort($inputData);
-        $i = 0;
-        $hashData = "";
+        $query = "";
+        $hashdata = "";
         foreach ($inputData as $key => $value) {
-            if ($i == 1) {
-                $hashData = $hashData . '&' . urlencode($key) . "=" . urlencode($value);
-            } else {
-                $hashData = $hashData . urlencode($key) . "=" . urlencode($value);
-                $i = 1;
-            }
+            $hashdata .= $key . "=" . $value . "&";
+            $query .= urlencode($key) . "=" . urlencode($value) . "&";
         }
+        $query = rtrim($query, "&");
+        $hashdata = rtrim($hashdata, "&");
 
+        $vnp_SecureHash = hash_hmac('sha512', $hashdata, $vnp_HashSecret);
+        $paymentUrl = $vnp_Url . "?" . $query . "&vnp_SecureHash=" . $vnp_SecureHash;
+
+        return $paymentUrl;
     }
+
+
+
 }

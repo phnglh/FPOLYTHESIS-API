@@ -56,6 +56,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/{attributeId}/values', [AttributeController::class, 'getAttributeValues']);
     });
 
+    Route::get('/payment/vnpay-return', [PaymentController::class, 'vnPayCallback']);
+
+
     // -------------------------
     // Private API (Cần đăng nhập)
     // -------------------------
@@ -85,7 +88,6 @@ Route::prefix('v1')->group(function () {
 
         // payment
         Route::post('/payment/pay', [PaymentController::class, 'payOrder']);
-        Route::get('/payment/vnpay-return', [PaymentController::class, 'vnpayReturn']);
 
         // Cart
         Route::get('/cart', [CartController::class, 'index']); // Lấy giỏ hàng
@@ -98,6 +100,8 @@ Route::prefix('v1')->group(function () {
 
         // user_address
         Route::apiResource('user-addresses', UserAddressController::class);
+        Route::post('/payment/retry/{orderId}', [PaymentController::class, 'retryPayment']); // thanh toán lại
+
 
 
         // -------------------------

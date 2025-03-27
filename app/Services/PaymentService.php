@@ -31,8 +31,8 @@ class PaymentService
             if ($paymentMethod === 'cod') {
                 // Xử lý thanh toán COD (Trạng thái mặc định là 'pending' để xác nhận giao hàng)
                 $order->update([
-                    'payment_status' => 'pending', // Đợi thanh toán khi giao hàng
-                    'status' => 'processing', // Đơn hàng đang được xử lý
+                    'payment_status' => 'unpaid', // Đợi thanh toán khi giao hàng
+                    'status' => 'pending', // Đơn hàng đang được xử lý
                 ]);
 
                 // Lưu vào bảng payments
@@ -40,7 +40,7 @@ class PaymentService
                     'order_id' => $order->id,
                     'payment_method' => 'cod',
                     'amount' => $order->final_total,
-                    'status' => 'pending', // Đợi khách nhận hàng rồi thanh toán
+                    'status' => 'unpaid', // Đợi khách nhận hàng rồi thanh toán
                     'transaction_id' => null,
                     'paid_at' => null,
                     'payment_details' => null,
@@ -64,10 +64,10 @@ class PaymentService
 
                 // Cập nhật trạng thái đơn hàng
                 $order->update([
-                    'payment_status' => 'pending', // Chờ xác nhận từ VNPay
+                    'payment_status' => 'unpaid',
+                    'status' => 'pending'// Chờ xác nhận từ VNPay
                 ]);
 
-                // ✅ Fix: Trả về cả order và payment_url
                 return [
                     'success' => true,
                     'order' => $order,

@@ -128,7 +128,6 @@ class OrderService
                 ];
             }
 
-
             return [
                 'success' => true,
                 'order' => $order,
@@ -140,37 +139,91 @@ class OrderService
 
     public function getOrderList($role)
     {
-        if ($role === 'admin') {
-            return Order::with('items.sku', 'user', 'address')->paginate(10);
-        } else {
-            return Order::where('user_id', Auth::id())->with('items.sku', 'address')->paginate(10);
+        $query = Order::with([
+            'items.sku.product', // Lấy thông tin sản phẩm từ SKU
+            'user', // Lấy thông tin người dùng
+            'address', // Lấy địa chỉ giao hàng
+            'payment', // Thông tin thanh toán
+            'voucher' // Mã giảm giá nếu có
+        ]);
+
+        if ($role !== 'admin') {
+            $query->where('user_id', Auth::id());
         }
+
+        return $query->paginate(10);
     }
 
     public function updateOrderStatus($orderId, $status)
     {
         $order = Order::findOrFail($orderId);
 
+        // Kiểm tra quyền admin
         if (Auth::user()->role !== 'admin') {
             return ['error' => 'PERMISSION_DENIED', 'message' => 'Bạn không có quyền cập nhật đơn hàng'];
         }
 
-        if (!in_array($status, ['pending', 'processing', 'shipped', 'delivered', 'cancelled'])) {
+        // Danh sách trạng thái hợp lệ
+        $validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+        if (!in_array($status, $validStatuses)) {
             return ['error' => 'INVALID_STATUS', 'message' => 'Trạng thái không hợp lệ'];
         }
 
+        // Nếu muốn chuyển sang "shipped" nhưng chưa thanh toán (chỉ áp dụng cho online)
         if ($status === 'shipped' && $order->payment_status === 'unpaid') {
-            return ['error' => 'PAYMENT_REQUIRED', 'message' => 'Không thể vận chuyển đơn hàng chưa thanh toán'];
+            if ($order->payment->payment_method !== 'cod') {
+                return ['error' => 'PAYMENT_REQUIRED', 'message' => 'Không thể vận chuyển đơn hàng chưa thanh toán'];
+            }
         }
 
+        // Nếu muốn chuyển sang "delivered" nhưng đơn chưa "shipped"
         if ($status === 'delivered' && $order->status !== 'shipped') {
             return ['error' => 'ORDER_NOT_SHIPPED', 'message' => 'Chỉ có thể hoàn thành đơn hàng sau khi đã vận chuyển'];
         }
 
-        $order->update(['status' => $status]);
+        // Nếu muốn hủy đơn đã được giao thành công
+        if ($status === 'cancelled' && $order->status === 'delivered') {
+            return ['error' => 'ORDER_ALREADY_DELIVERED', 'message' => 'Không thể hủy đơn hàng đã hoàn tất'];
+        }
 
-        return ['success' => true, 'order' => $order];
+        // Nếu trạng thái là "delivered", xử lý logic thanh toán
+        if ($status === 'delivered') {
+            $updateData['delivered_at'] = now();
+
+            if ($order->payment) {
+                // Xử lý đơn hàng COD
+                if ($order->payment->payment_method === 'cod') {
+                    $updateData['payment_status'] = 'paid';
+
+                    $order->payment->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                    ]);
+                }
+
+                // Xử lý đơn hàng VNPay
+                if ($order->payment->payment_method === 'vnpay') {
+                    if ($order->payment_status !== 'paid') {
+                        return ['error' => 'VNPay_PAYMENT_REQUIRED', 'message' => 'Đơn hàng VNPay chưa thanh toán, không thể giao hàng'];
+                    }
+                }
+            }
+        }
+
+        // Nếu trạng thái là "shipped", cập nhật thời gian vận chuyển
+        if ($status === 'shipped') {
+            $updateData['shipped_at'] = now();
+        }
+
+        // Cập nhật trạng thái đơn hàng
+        $updateData['status'] = $status;
+        $order->update($updateData);
+
+        return ['success' => true, 'message' => 'Trạng thái đơn hàng đã được cập nhật', 'order' => $order];
     }
+
+
+
 
     public function cancelOrder($orderId)
     {

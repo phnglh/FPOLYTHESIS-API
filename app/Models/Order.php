@@ -54,8 +54,13 @@ class Order extends Model
         return $this->hasMany(OrderLog::class);
     }
 
-    public function payments()
+    public function payment()
     {
-        return $this->hasMany(Payment::class);
+        return $this->hasOne(Payment::class, 'order_id');
+    }
+
+    public function voucher()
+    {
+        return $this->belongsTo(Voucher::class, 'voucher_id');
     }
 }
