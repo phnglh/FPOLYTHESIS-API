@@ -6,6 +6,7 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Sku;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CartService
 {
@@ -133,11 +134,56 @@ class CartService
         return $this->updateCartItemQuantity($itemId, -1);
     }
 
+    // public function updateCartItemQuantity($itemId, $quantityChange)
+    // {
+    //     $cartItem = CartItem::where('id', $itemId)->whereHas('cart', function ($query) {
+    //         $query->where('user_id', Auth::id());
+    //     })->first();
+
+    //     if (!$cartItem) {
+    //         return response()->json([
+    //             'error' => 'ITEM_NOT_FOUND',
+    //             'message' => 'Không tìm thấy sản phẩm trong giỏ hàng'
+    //         ], 404);
+    //     }
+
+    //     $sku = Sku::find($cartItem->sku_id);
+    //     if (!$sku) {
+    //         return response()->json([
+    //             'error' => 'SKU_NOT_FOUND',
+    //             'message' => 'Không tìm thấy SKU sản phẩm'
+    //         ], 404);
+    //     }
+
+    //     $newQuantity = $cartItem->quantity + $quantityChange;
+
+    //     if ($newQuantity <= 0) {
+    //         $cartItem->delete();
+    //         return response()->json([
+    //             'error' => 'ITEM_REMOVED',
+    //             'message' => 'Sản phẩm đã được xóa khỏi giỏ hàng'
+    //         ], 200);
+    //     }
+
+    //     if ($sku->stock < $quantityChange) {
+    //         return response()->json([
+    //             'error' => 'STOCK_NOT_ENOUGH',
+    //             'message' => 'Số lượng sản phẩm không đủ'
+    //         ], 400);
+    //     }
+
+    //     $sku->decrement('stock', $quantityChange);
+    //     $cartItem->increment('quantity', $quantityChange);
+
+    //     return response()->json(['success' => true, 'cart' => $cartItem->cart->load('items.sku')]);
+    // }
     public function updateCartItemQuantity($itemId, $quantityChange)
     {
-        $cartItem = CartItem::where('id', $itemId)->whereHas('cart', function ($query) {
-            $query->where('user_id', Auth::id());
-        })->first();
+        $cartItem = CartItem::where('id', $itemId)
+            ->whereHas('cart', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
+            ->first();
 
         if (!$cartItem) {
             return response()->json([
@@ -156,27 +202,43 @@ class CartService
 
         $newQuantity = $cartItem->quantity + $quantityChange;
 
+        // Nếu số lượng <= 0, xóa sản phẩm khỏi giỏ hàng
         if ($newQuantity <= 0) {
             $cartItem->delete();
             return response()->json([
-                'error' => 'ITEM_REMOVED',
+                'success' => true,
                 'message' => 'Sản phẩm đã được xóa khỏi giỏ hàng'
             ], 200);
         }
 
-        if ($sku->stock < $quantityChange) {
+        // Kiểm tra tồn kho
+        if ($newQuantity > $sku->stock) {
             return response()->json([
                 'error' => 'STOCK_NOT_ENOUGH',
                 'message' => 'Số lượng sản phẩm không đủ'
             ], 400);
         }
 
-        $sku->decrement('stock', $quantityChange);
-        $cartItem->increment('quantity', $quantityChange);
+        // Dùng transaction để đảm bảo cả hai thao tác thành công
+        DB::beginTransaction();
+        try {
+            $sku->decrement('stock', $quantityChange); // Chỉ giảm stock khi quantityChange là số dương
+            $cartItem->update(['quantity' => $newQuantity]);
 
-        return response()->json(['success' => true, 'cart' => $cartItem->cart->load('items.sku')]);
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'cart' => $cartItem->cart->load('items.sku')
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'UPDATE_FAILED',
+                'message' => 'Cập nhật giỏ hàng thất bại'
+            ], 500);
+        }
     }
-
 
     public function setCartItemQuantity($itemId, $quantity)
     {
