@@ -20,8 +20,7 @@ return new class () extends Migration {
         // Tạo bảng orders
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('guest_email')->nullable();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('shipping_method_id')->nullable()->constrained('shipping_methods')->onDelete('set null');
             $table->foreignId('address_id')->constrained('user_addresses')->cascadeOnDelete();
 

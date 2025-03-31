@@ -3,19 +3,16 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\UserAddress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\PersonalAccessToken;
-use Illuminate\Support\Facades\DB;
 
 class AuthService
 {
     public function register(array $data)
     {
-        try {
-            DB::beginTransaction();
 
+        try {
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
@@ -23,23 +20,7 @@ class AuthService
                 'role' => $data['role'] ?? 'customer',
             ]);
 
-            // Merge giỏ hàng
-            app(CartService::class)->mergeGuestCartToUser($user->id, $data['email']);
-
-            // Merge địa chỉ của khách vào tài khoản
-            $guestEmail = session('guest_email');
-            if ($guestEmail) {
-                UserAddress::where('guest_email', $guestEmail)
-                    ->update(['user_id' => $user->id, 'guest_email' => null]);
-
-                // Xóa session guest_email sau khi đã merge
-                session()->forget('guest_email');
-            }
-
-            // Tạo token cho user
             $token = $user->createToken('auth_token')->plainTextToken;
-
-            DB::commit();
 
             return [
                 'access_token' => $token,
@@ -47,11 +28,9 @@ class AuthService
                 'user' => $user,
             ];
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            return $e->getMessage();
         }
     }
-
 
     public function login(array $data)
     {

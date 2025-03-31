@@ -69,13 +69,7 @@ class CartService
     public function addToCart($skuId, $quantity)
     {
         $userId = Auth::id();
-        $sessionId = session()->getId(); // Lấy session ID
-
-        if ($userId) {
-            $cart = Cart::firstOrCreate(['user_id' => $userId]);
-        } else {
-            $cart = Cart::firstOrCreate(['guest_session_id' => $sessionId]);
-        }
+        $cart = Cart::firstOrCreate(['user_id' => $userId]);
 
         // Lấy SKU kèm theo product để có product_name
         $sku = Sku::with('product')->findOrFail($skuId);
@@ -310,29 +304,6 @@ class CartService
         if ($cart) {
             $cart->items()->delete();
             $cart->delete();
-        }
-    }
-
-    public function mergeGuestCartToUser($userId, $email)
-    {
-        if ($userId && !empty($email)) {
-            $guestCart = Cart::where('guest_email', $email)->first();
-            $userCart = Cart::where('user_id', $userId)->first();
-
-            if ($guestCart && $userCart) {
-                // Hợp nhất sản phẩm từ guestCart vào userCart
-                foreach ($guestCart->items as $item) {
-                    $userCart->items()->updateOrCreate(
-                        ['sku_id' => $item->sku_id],
-                        ['quantity' => DB::raw('quantity + ' . $item->quantity)]
-                    );
-                }
-                // Xóa giỏ hàng guest
-                $guestCart->delete();
-            } elseif ($guestCart) {
-                // Nếu chỉ có guestCart, gán user_id và xóa guest_email
-                $guestCart->update(['user_id' => $userId, 'guest_email' => null]);
-            }
         }
     }
 }
