@@ -81,6 +81,7 @@ Route::prefix('v1')->group(function () {
         // order
         Route::post('/orders/create', [OrderController::class, 'createOrder']); // Tạo đơn hàng
         Route::get('/orders', [OrderController::class, 'getOrders']); // Xem đơn hàng của mình
+        Route::get('/orders/{order_id}', [OrderController::class, 'getOrderDetail']); // xem chi tiết đơn hàng
         Route::delete('/orders/{orderId}', [OrderController::class, 'cancelOrder']); // Hủy đơn hàng của mình
 
         // voucher
