@@ -9,7 +9,8 @@ return new class () extends Migration {
     {
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('guest_session_id')->nullable()->index();
             $table->timestamps();
         });
 
@@ -18,7 +19,7 @@ return new class () extends Migration {
             $table->foreignId('cart_id')->constrained('carts')->cascadeOnDelete();
             $table->foreignId('sku_id')->constrained('skus')->cascadeOnDelete();
             $table->integer('quantity')->unsigned();
-            $table->decimal('unit_price', 10, 2); // Lưu giá tại thời điểm thêm vào giỏ
+            $table->decimal('unit_price', 10, 2);
             $table->timestamps();
         });
     }

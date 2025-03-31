@@ -40,7 +40,8 @@ return new class () extends Migration {
 
         Schema::create('user_addresses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('guest_email')->nullable();
             $table->string('receiver_name');
             $table->string('receiver_email')->nullable();
             $table->string('receiver_phone');
