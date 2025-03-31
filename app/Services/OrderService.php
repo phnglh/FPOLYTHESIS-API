@@ -154,6 +154,29 @@ class OrderService
         return $query->paginate(10);
     }
 
+    public function getOrderDetail($orderId, $role)
+    {
+        $query = Order::with([
+            'items.sku.product',
+            'user',
+            'address',
+            'payment',
+            'voucher'
+        ])->where('id', $orderId);
+
+        if ($role !== 'admin') {
+            $query->where('user_id', Auth::id());
+        }
+
+        $order = $query->first();
+
+        if (!$order) {
+            return ['error' => 'ORDER_NOT_FOUND', 'message' => 'Đơn hàng không tồn tại hoặc bạn không có quyền xem'];
+        }
+
+        return $order;
+    }
+
     public function updateOrderStatus($orderId, $status)
     {
         $order = Order::findOrFail($orderId);

@@ -134,8 +134,8 @@ Route::prefix('v1')->group(function () {
 
 
             // Orders
-
             Route::get('/orders/all', [OrderController::class, 'getOrders']); // Xem tất cả đơn hàng
+            Route::get('/orders/{orderId}', [OrderController::class, 'getOrderDetail']); // lấy chi tiết đơn hàng
             Route::put('/orders/{orderId}/status', [OrderController::class, 'updateStatus']); // Cập nhật trạng thái đơn
 
             // Voucher
