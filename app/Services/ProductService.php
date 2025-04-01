@@ -90,7 +90,10 @@ class ProductService
         return DB::transaction(function () use ($data) {
             $product = Product::create($this->getProductData($data));
 
-            // Upload ảnh cho product (nếu có)
+            $this->processSkus($product, $data['skus'] ?? []);
+
+            $product->loadSum('skus', 'stock');
+
             if (!empty($data['image_url']) && $data['image_url'] instanceof UploadedFile) {
                 $uploadedImage = $this->imageUploadService->uploadSingle($data['image_url'], true, $product);
 
@@ -99,8 +102,7 @@ class ProductService
                 }
             }
 
-            $this->processSkus($product, $data['skus'] ?? []);
-            $product->loadSum('skus', 'stock');
+
             return $product->load('skus.attribute_values');
         });
     }
@@ -166,26 +168,13 @@ class ProductService
      */
     private function processSkuRelations(Sku $sku, array $skuData)
     {
-        $uploadedImages = [];
 
-        if (is_array($skuData['image_url'])) {
-            $filesToUpload = [];
+        if (!empty($skuData['image_url']) && $skuData['image_url'] instanceof UploadedFile) {
+            $uploadedImage = $this->imageUploadService->uploadSingle($skuData['image_url'], true, $sku);
 
-            foreach ($skuData['image_url'] as $image) {
-                if ($image instanceof UploadedFile) {
-                    $filesToUpload[] = $image;
-                } else {
-                    $uploadedImages[] = $image;
-                }
+            if ($uploadedImage) {
+                $sku->update(['image_url' => $uploadedImage]);
             }
-
-            if (!empty($filesToUpload)) {
-                $uploadedImages = array_merge($uploadedImages, $this->imageUploadService->uploadMultiple($filesToUpload, true, $sku));
-            }
-        }
-
-        if (!empty($uploadedImages)) {
-            $sku->update(['image_url' => $uploadedImages]);
         }
 
         $sku->attribute_values()->detach();
@@ -230,7 +219,7 @@ class ProductService
             'product_id' => $productId,
             'price' => $skuData['price'],
             'stock' => $skuData['stock'],
-            'image_url' => json_encode($skuData['image_url'] ?? []),
+            'image_url' => is_string($skuData['image_url'] ?? null) ? $skuData['image_url'] : null,
         ];
     }
 }
