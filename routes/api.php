@@ -50,6 +50,10 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('promotions', PromotionController::class);
     Route::apiResource('wishlist', WishListController::class);
 
+
+
+
+
     // Attribute (Public access to GET)
     Route::prefix('attributes')->group(function () {
         Route::get('/', [AttributeController::class, 'index']);
@@ -68,7 +72,7 @@ Route::prefix('v1')->group(function () {
         // User có thể cập nhật thông tin cá nhân
         Route::put('/users/profile', [UserController::class, 'updateProfile']);
         Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/check-user', fn (Request $request) => response()->json($request->user()));
+        Route::get('/check-user', fn(Request $request) => response()->json($request->user()));
         Route::post('/change-password', [AuthController::class, 'changePassword']);
 
 
@@ -102,6 +106,11 @@ Route::prefix('v1')->group(function () {
         // user_address
         Route::apiResource('user-addresses', UserAddressController::class);
         Route::post('/payment/retry/{orderId}', [PaymentController::class, 'retryPayment']); // thanh toán lại
+
+        // wishlist
+        Route::get('/wishlist', [WishListController::class, 'getWishList']);
+        Route::post('/wishlist', [WishListController::class, 'addWishList']);
+        Route::delete('/wishlist/{id}', [WishListController::class, 'deleteWishList']);
 
 
 
