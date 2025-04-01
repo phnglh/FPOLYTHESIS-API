@@ -47,9 +47,6 @@ class OrderController extends BaseController
     }
 
 
-
-
-
     public function getOrders(Request $request)
     {
         $role = $request->user()->role ?? 'customer';
@@ -57,6 +54,20 @@ class OrderController extends BaseController
 
         return $this->successResponse($orders, 'Danh sách đơn hàng');
     }
+
+
+    public function getOrderDetail(Request $request, $orderId)
+    {
+        $role = $request->user()->role ?? 'customer';
+        $order = $this->orderService->getOrderDetail($orderId, $role);
+
+        if (isset($order['error'])) {
+            return $this->errorResponse($order['error'], $order['message'], 400);
+        }
+
+        return $this->successResponse($order, 'Chi tiết đơn hàng');
+    }
+
 
     public function updateStatus(Request $request, $orderId)
     {
