@@ -50,7 +50,7 @@ return new class () extends Migration {
             $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
             $table->foreignId('sku_id')->constrained('skus')->onDelete('cascade');
             $table->string('product_name');
-            $table->string('sku_code');
+            $table->string('sku');
             $table->decimal('unit_price', 10, 2);
             $table->integer('quantity')->unsigned();
             $table->decimal('total_price', 10, 2);

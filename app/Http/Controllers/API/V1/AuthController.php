@@ -27,11 +27,27 @@ class AuthController extends BaseController
 
     public function login(LoginRequest $request)
     {
-        $credentials = $request->only('email', 'password');
-        $result = $this->authService->login($credentials);
+        $result = $this->authService->login($request->validated());
 
-        return $this->successResponse($result);
+        if (!$result) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email hoặc mật khẩu không đúng.',
+            ], 401);
+        }
+
+        return $this->successResponse([
+            'user' => [
+                'id' => $result['user']->id,
+                'email' => $result['user']->email,
+                'name' => $result['user']->name,
+                "role" => $result['user']->role,
+
+            ],
+            'access_token' => $result['access_token'],
+        ]);
     }
+
 
     public function logout(Request $request)
     {

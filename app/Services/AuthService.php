@@ -37,10 +37,7 @@ class AuthService
         $user = User::where('email', $data['email'])->first();
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
-            return [
-                'success' => false,
-                'message' => 'Email hoặc mật khẩu không đúng.',
-            ];
+            return null;
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -50,7 +47,6 @@ class AuthService
             'access_token' => $token,
         ];
     }
-
     public function logout(Request $request, $logoutAll = false)
     {
         $user = $request->user();
