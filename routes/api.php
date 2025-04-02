@@ -80,8 +80,8 @@ Route::prefix('v1')->group(function () {
 
         // order
         Route::post('/orders/create', [OrderController::class, 'createOrder']); // Tạo đơn hàng
-        Route::get('/orders', [OrderController::class, 'getOrders']); // Xem đơn hàng của mình
-        Route::get('/orders/{order_id}', [OrderController::class, 'getOrderDetail']); // xem chi tiết đơn hàng
+        Route::get('/orders', [OrderController::class, 'index']); // Xem đơn hàng của mình
+        Route::get('/orders/{order_id}', [OrderController::class, 'show']); // xem chi tiết đơn hàng
         Route::delete('/orders/{orderId}', [OrderController::class, 'cancelOrder']); // Hủy đơn hàng của mình
 
         // voucher
@@ -135,9 +135,9 @@ Route::prefix('v1')->group(function () {
 
 
             // Orders
-            Route::get('/orders/all', [OrderController::class, 'getOrders']); // Xem tất cả đơn hàng
-            Route::get('/orders/{orderId}', [OrderController::class, 'getOrderDetail']); // lấy chi tiết đơn hàng
-            Route::put('/orders/{orderId}/status', [OrderController::class, 'updateStatus']); // Cập nhật trạng thái đơn
+            Route::get('/orders/all', [OrderController::class, 'getOrders']);
+            Route::get('/orders/{orderId}', [OrderController::class, 'getOrderDetail']);
+            Route::put('/orders/{orderId}/status', [OrderController::class, 'updateStatus']);
 
             // Voucher
             Route::get('/vouchers', [VoucherController::class, 'index']);

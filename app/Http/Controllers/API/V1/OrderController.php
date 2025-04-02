@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\API\BaseController;
+use App\Http\Resources\Orders\OrderResource;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 
@@ -19,8 +20,8 @@ class OrderController extends BaseController
     {
         try {
             $order = $this->orderService->createOrder(
-                $request->address_id,
                 $request->selected_sku_ids,
+                $request->address_id,
                 $request->voucher_code,
                 $request->new_address ?? [],
                 $request->payment_method
@@ -40,23 +41,22 @@ class OrderController extends BaseController
             }
 
 
-            return $this->successResponse($order['order'], 'Đơn hàng đã được tạo thành công');
+            return $this->successResponse(new OrderResource($order['order']), 'Đơn hàng đã được tạo thành công');
         } catch (\Exception $e) {
             return $this->errorResponse('SERVER_ERROR', $e->getMessage(), 400);
         }
     }
 
 
-    public function getOrders(Request $request)
+    public function index(Request $request)
     {
-        $role = $request->user()->role ?? 'customer';
-        $orders = $this->orderService->getOrderList($role);
+        $orders = $this->orderService->getOrderList($request);
 
-        return $this->successResponse($orders, 'Danh sách đơn hàng');
+        return $this->successResponse(OrderResource::collection($orders), 'Danh sách đơn hàng');
     }
 
 
-    public function getOrderDetail(Request $request, $orderId)
+    public function show(Request $request, $orderId)
     {
         $role = $request->user()->role ?? 'customer';
         $order = $this->orderService->getOrderDetail($orderId, $role);
