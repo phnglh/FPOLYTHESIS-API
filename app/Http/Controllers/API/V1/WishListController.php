@@ -15,6 +15,29 @@ class WishListController extends BaseController
     {
         $this->wishListService = $wishListService;
     }
+
+    public function index()
+    {
+        $wishlists = $this->wishListService->getAllWishLists();
+
+        if ($wishlists->isEmpty()) {
+            return $this->errorResponse('No data found', 404);
+        }
+
+        return $this->successResponse($wishlists, 'Wishlist retrieved successfully.');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+        ]);
+
+        $response = $this->wishListService->addWishList($request->product_id);
+
+        return $this->successResponse(null, $response['message']);
+    }
+
     public function show($id)
     {
         $wishlist = WishList::find($id);
@@ -33,31 +56,18 @@ class WishListController extends BaseController
         ]);
     }
 
-
-    public function getWishList()
-    {
-        $wishlists = $this->wishListService->getAllWishLists();
-
-        if ($wishlists->isEmpty()) {
-            return $this->errorResponse('No data found', 404);
-        }
-
-        return $this->successResponse($wishlists, 'Wishlist retrieved successfully.');
-    }
-
-
-    public function addWishList(Request $request)
+    public function update(Request $request, $id)
     {
         $request->validate([
-            'sku_id' => 'required|exists:skus,id',
+            'product_id' => 'required|exists:products,id',
         ]);
 
-        $response = $this->wishListService->addWishList($request->sku_id);
+        $response = $this->wishListService->updateWishList($id, $request->product_id);
 
         return $this->successResponse(null, $response['message']);
     }
 
-    public function deleteWishList($id)
+    public function destroy($id)
     {
         $response = $this->wishListService->deleteWishList($id);
 
