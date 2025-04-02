@@ -13,7 +13,7 @@ class ImageUploadService
             $extension = $file->getClientOriginalExtension();
             $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $fileName = $originalName . '-' . uniqid() . '.' . $extension;
-            $path = Storage::disk('s3')->put($fileName, file_get_contents($file), $isPublic ? 'public' : 'private');
+            $path = Storage::disk('s3')->putFileAs('', $file, $fileName, $isPublic ? 'public' : 'private');
 
             return Storage::disk('s3')->url($fileName);
         }
@@ -23,15 +23,19 @@ class ImageUploadService
     public function uploadMultiple(array $files, bool $isPublic = true, $model = null)
     {
         $uploadedFiles = [];
+
         foreach ($files as $file) {
-            if ($file->isValid()) {
-                $extension = $file->getClientOriginalExtension();
-                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                $fileName = $originalName . '-' . uniqid() . '.' . $extension;
-                $path = Storage::disk('s3')->put($fileName, file_get_contents($file), $isPublic ? 'public' : 'private');
-                $uploadedFiles[] = Storage::disk('s3')->url($fileName);
-            }
+            $extension = $file->getClientOriginalExtension();
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $fileName = $originalName . '-' . uniqid() . '.' . $extension;
+
+            // Upload lên S3
+            $path = Storage::disk('s3')->putFileAs('', $file, $fileName, $isPublic ? 'public' : 'private');
+            $uploadedFiles[] = Storage::disk('s3')->url($fileName);
+
         }
+
         return $uploadedFiles;
     }
+
 }

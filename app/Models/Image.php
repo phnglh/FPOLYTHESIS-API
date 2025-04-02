@@ -10,9 +10,16 @@ class Image extends Model
     use HasFactory;
 
     protected $fillable = ['image_url'];
+    protected $appends = ['url'];
+
 
     public function imageable()
     {
         return $this->morphTo();
+    }
+
+    public function getUrlAttribute()
+    {
+        return $this->image_url ? $this->image_url : null;
     }
 }

@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Sku;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class ProductService
@@ -168,15 +169,50 @@ class ProductService
      */
     private function processSkuRelations(Sku $sku, array $skuData)
     {
+        // Xử lý ảnh SKU (cả đơn và nhiều ảnh)
+        if (!empty($skuData['image_url'])) {
+            $uploadedImages = [];
 
-        if (!empty($skuData['image_url']) && $skuData['image_url'] instanceof UploadedFile) {
-            $uploadedImage = $this->imageUploadService->uploadSingle($skuData['image_url'], true, $sku);
+            if ($skuData['image_url'] instanceof UploadedFile) {
+                // Nếu chỉ có một ảnh đơn
+                Log::info('Uploading single SKU image:', ['file' => $skuData['image_url']]);
+                $uploadedImage = $this->imageUploadService->uploadSingle($skuData['image_url'], true, $sku);
+                if ($uploadedImage) {
+                    $uploadedImages[] = $uploadedImage;
+                }
+            } elseif (is_array($skuData['image_url'])) {
+                // Nếu là danh sách ảnh
+                $validFiles = array_filter($skuData['image_url'], function ($file) {
+                    return $file instanceof UploadedFile && $file->isValid();
+                });
 
-            if ($uploadedImage) {
-                $sku->update(['image_url' => $uploadedImage]);
+                if (!empty($validFiles)) {
+                    Log::info('Uploading multiple SKU images:', ['files' => $validFiles]);
+                    $uploadedImages = $this->imageUploadService->uploadMultiple($validFiles, true, $sku);
+                } else {
+                    Log::warning('Invalid files detected in SKU images', ['files' => $skuData['image_url']]);
+                }
+            } else {
+                Log::warning('Invalid SKU image format', ['data' => $skuData]);
+            }
+
+            // Nếu có ảnh hợp lệ, tiến hành cập nhật vào DB
+            if (!empty($uploadedImages)) {
+                // Cập nhật ảnh đại diện SKU (ảnh đầu tiên)
+                $sku->update(['image_url' => $uploadedImages[0]]);
+
+                // Xóa ảnh cũ trước khi thêm mới
+                $sku->images()->delete();
+
+                // Lưu tất cả ảnh vào bảng images
+                $imageRecords = array_map(fn ($imgUrl) => ['image_url' => urldecode($imgUrl)], $uploadedImages);
+                $sku->images()->createMany($imageRecords);
+
             }
         }
 
+
+        // Cập nhật thuộc tính SKU
         $sku->attribute_values()->detach();
         if (!empty($skuData['attributes']) && is_array($skuData['attributes'])) {
             foreach ($skuData['attributes'] as $attr) {
@@ -191,6 +227,7 @@ class ProductService
             }
         }
     }
+
 
     // ------------------------- PRIVATE -------------------------
 
