@@ -8,4 +8,11 @@ class WishListRequest extends BaseRequest
     {
         return true;
     }
+
+    public function rules()
+    {
+        return [
+            'product_id' => 'required|exists:products,id',
+        ];
+    }
 }
