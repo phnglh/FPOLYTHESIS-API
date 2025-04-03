@@ -113,24 +113,45 @@ class ProductService
      */
     public function updateProduct(int|string $id, array $data)
     {
-        $product = Product::findOrFail($id);
+        return DB::transaction(function () use ($id, $data) {
+            // Tải trước quan hệ skus để tránh N+1
+            $product = Product::with('skus')->lockForUpdate()->findOrFail($id);
 
-        return DB::transaction(function () use ($product, $data) {
+            // Cập nhật thông tin sản phẩm
             $product->update($this->getProductData($data));
 
-            if (!empty($data['image']) && $data['image'] instanceof UploadedFile) {
-                $uploadedImage = $this->imageUploadService->uploadSingle($data['image'], false);
-
-                if ($uploadedImage) {
-                    $product->update(['image_url' => $uploadedImage]);
+            // Xử lý ảnh sản phẩm
+            if (!empty($data['image_url']) && $data['image_url'] instanceof UploadedFile) {
+                $uploadedImage = $this->imageUploadService->uploadSingle($data['image_url'], true, $product);
+                if (!$uploadedImage) {
+                    throw new ApiException('Failed to upload product image', 500);
                 }
+                if ($product->image_url) {
+                    try {
+                        Storage::disk('s3')->delete($product->image_url);
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to delete old product image', [
+                            'product_id' => $product->id,
+                            'image_url' => $product->image_url,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+                $product->update(['image_url' => $uploadedImage]);
             }
 
+            // Đồng bộ SKU (chỉ cập nhật hoặc thêm mới, không xóa)
             $this->syncSkus($product, $data['skus'] ?? []);
 
-            return $product->load('skus.attribute_values');
+            // Tải lại quan hệ chỉ khi cần thiết
+            return $product->load(['skus' => function ($query) {
+                $query->with('attribute_values');
+            }]);
         });
     }
+
+
+
 
     /**
      * Xử lý danh sách SKU khi tạo mới.
@@ -148,19 +169,53 @@ class ProductService
      */
     private function syncSkus(Product $product, array $skus)
     {
-        $inputSkuIds = collect($skus)->pluck('id')->filter()->toArray();
-        $product->skus()->whereNotIn('id', $inputSkuIds)->delete();
+        if (empty($skus)) {
+            return; // Nếu không có SKU gửi lên, bỏ qua
+        }
 
-        foreach ($skus as $skuData) {
-            if (!empty($skuData['id'])) {
-                $sku = Sku::find($skuData['id']);
-                if ($sku) {
-                    $sku->update($this->getSkuData($skuData, $product->id));
+        // Cập nhật SKU hiện có
+        foreach (collect($skus)->chunk(100) as $skuBatch) {
+            foreach ($skuBatch as $skuData) {
+                // Nếu có id, cập nhật dựa trên id
+                if (!empty($skuData['id'])) {
+                    $sku = Sku::where('product_id', $product->id)
+                        ->where('id', $skuData['id'])
+                        ->first();
+
+                    if (!$sku) {
+                        throw new ApiException("SKU with ID {$skuData['id']} not found for this product", 404);
+                    }
+                } else {
+                    // Nếu không có id, khớp SKU dựa trên attributes
+                    if (empty($skuData['attributes']) || !is_array($skuData['attributes'])) {
+                        throw new ApiException('Attributes are required to match SKU when ID is not provided', 400);
+                    }
+
+                    // Tạo một mảng để so sánh attributes
+                    $attributesToMatch = collect($skuData['attributes'])->mapWithKeys(function ($attr) {
+                        return [$attr['attribute_id'] => $attr['value']];
+                    })->toArray();
+
+                    // Tìm SKU khớp với tất cả attributes
+                    $sku = $product->skus->first(function ($sku) use ($attributesToMatch) {
+                        $skuAttributes = $sku->attribute_values->mapWithKeys(function ($attrValue) {
+                            return [$attrValue->pivot->attribute_id => $attrValue->pivot->value];
+                        })->toArray();
+
+                        // So sánh attributes
+                        return empty(array_diff_assoc($attributesToMatch, $skuAttributes)) &&
+                               empty(array_diff_assoc($skuAttributes, $attributesToMatch));
+                    });
+
+                    if (!$sku) {
+                        throw new ApiException('No existing SKU matches the provided attributes. Creating new SKUs is not allowed in update.', 404);
+                    }
                 }
-            } else {
-                $sku = Sku::create($this->getSkuData($skuData, $product->id));
+
+                // Cập nhật SKU
+                $sku->update($this->getSkuData($skuData, $product->id));
+                $this->processSkuRelations($sku, $skuData);
             }
-            $this->processSkuRelations($sku, $skuData);
         }
     }
 
@@ -251,11 +306,25 @@ class ProductService
      */
     private function getSkuData(array $skuData, int $productId): array
     {
+        $stock = $skuData['stock'];
+        if (isset($skuData['id'])) {
+            $sku = Sku::find($skuData['id']);
+            if ($sku) {
+                $pendingOrders = DB::table('order_sku')
+                    ->where('sku_id', $sku->id)
+                    ->whereIn('status', ['pending', 'processing'])
+                    ->sum('quantity');
+                if ($stock < $pendingOrders) {
+                    throw new ApiException("Cannot reduce stock of SKU {$sku->sku} to {$stock}. There are {$pendingOrders} items in pending orders.", 400);
+                }
+            }
+        }
+
         return [
-            'sku' => CodeService::generateCode('SKU', $productId),
+            'sku' => isset($skuData['sku']) ? $skuData['sku'] : CodeService::generateCode('SKU', $productId),
             'product_id' => $productId,
             'price' => $skuData['price'],
-            'stock' => $skuData['stock'],
+            'stock' => $stock,
             'image_url' => is_string($skuData['image_url'] ?? null) ? $skuData['image_url'] : null,
         ];
     }
