@@ -18,7 +18,7 @@ class ProductSeeder extends Seeder
         ]);
 
         $products->each(function ($product) use ($attributes) {
-            $skus = Sku::factory()->count(3)->create(['product_id' => $product->id]);
+            $skus = Sku::factory()->count(3)->create(['product_id' => $product->id,  'image_url' => "https://i.pinimg.com/736x/af/13/eb/af13eb5efbe36bb9abd64be1f32cc0cf.jpg"]);
 
             $skus->each(function ($sku) use ($attributes) {
                 $attributes->each(function ($attribute) use ($sku) {
