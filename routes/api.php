@@ -46,9 +46,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{id}', [ProductController::class, 'show']);
 
-    // Review, Promotion, Wishlist (Public access)
+    // Review, Promotion (Public access)
     Route::apiResource('promotions', PromotionController::class);
-    Route::apiResource('wishlist', WishListController::class);
 
     // Attribute (Public access to GET)
     Route::prefix('attributes')->group(function () {
@@ -103,6 +102,10 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('user-addresses', UserAddressController::class);
         Route::post('/payment/retry/{orderId}', [PaymentController::class, 'retryPayment']); // thanh toán lại
 
+        // wishList
+        Route::get('/wishlist', [WishListController::class, 'getWishList']);
+        Route::post('/wishlist', [WishListController::class, 'addWishList']);
+        Route::delete('/wishlist/{id}', [WishListController::class, 'deleteWishList']);
 
 
         // -------------------------

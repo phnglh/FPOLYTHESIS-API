@@ -13,7 +13,7 @@ class WishList extends Model
 
     protected $fillable = [
         'user_id',
-        'sku_id',
+        'product_id',
     ];
 
     public function user()
@@ -21,8 +21,8 @@ class WishList extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function sku()
+    public function product()
     {
-        return $this->belongsTo(Sku::class);
+        return $this->belongsTo(Product::class, 'product_id');
     }
 }
