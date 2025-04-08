@@ -48,6 +48,7 @@ Route::prefix('v1')->group(function () {
 
     // Review, Promotion (Public access)
     Route::apiResource('promotions', PromotionController::class);
+    Route::apiResource('wishlist', WishListController::class);
 
 
 

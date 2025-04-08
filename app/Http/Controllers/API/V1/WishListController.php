@@ -69,8 +69,6 @@ class WishListController extends BaseController
 
     public function destroy($id)
 
-    {
-        $response = $this->wishListService->deleteWishList($id);
         return $this->successResponse(null, $response['message']);
     }
 
