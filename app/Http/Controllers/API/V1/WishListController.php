@@ -73,4 +73,5 @@ class WishListController extends BaseController
 
         return $this->successResponse(null, $response['message']);
     }
+
 }
