@@ -22,33 +22,21 @@ class ProductService
 
     // ------------------------- PUBLIC -------------------------
 
-    /**
-     * Tạo mới Product và các mối quan hệ.
-     */
     public function getAllProduct($perPage = 10)
     {
         $products = Product::with('category', 'brand', 'skus.attribute_values')->withSum('skus', 'stock')->paginate($perPage);
-        if (! $products) {
-            throw new ApiException(
-                'Không lấy được dữ liệu',
-                404
-            );
+        if (!$products) {
+            throw new ApiException('Không lấy được dữ liệu', 404);
         }
-
         return $products;
     }
 
     public function getProductById($id)
     {
         $product = Product::with('category', 'brand', 'skus.attribute_values')->withSum('skus', 'stock')->findOrFail($id);
-
-        if (! $product) {
-            throw new ApiException(
-                'Product Not Found',
-                404
-            );
+        if (!$product) {
+            throw new ApiException('Product Not Found', 404);
         }
-
         return $product;
     }
 
@@ -66,23 +54,19 @@ class ProductService
                 if ($sku->image_url) {
                     Storage::disk('s3')->delete($sku->image_url);
                 }
-
-                $sku->attributes()->detach();
+                $sku->attribute_values()->detach();
             }
 
             $product->skus()->delete();
-
             $product->delete();
         });
     }
 
-
     public function togglePublish($id)
     {
         $product = Product::findOrFail($id);
-        $product->is_published = ! $product->is_published;
+        $product->is_published = !$product->is_published;
         $product->save();
-
         return $product;
     }
 
@@ -90,32 +74,24 @@ class ProductService
     {
         return DB::transaction(function () use ($data) {
             $product = Product::create($this->getProductData($data));
-
             $this->processSkus($product, $data['skus'] ?? []);
-
             $product->loadSum('skus', 'stock');
 
             if (!empty($data['image_url']) && $data['image_url'] instanceof UploadedFile) {
                 $uploadedImage = $this->imageUploadService->uploadSingle($data['image_url'], true, $product);
-
                 if ($uploadedImage) {
                     $product->update(['image_url' => $uploadedImage]);
                 }
             }
 
-
             return $product->load('skus.attribute_values');
         });
     }
 
-    /**
-     * Cập nhật Product và các mối quan hệ.
-     */
     public function updateProduct(int|string $id, array $data)
     {
         return DB::transaction(function () use ($id, $data) {
-            // Tải trước quan hệ skus để tránh N+1
-            $product = Product::with('skus')->lockForUpdate()->findOrFail($id);
+            $product = Product::lockForUpdate()->findOrFail($id);
 
             // Cập nhật thông tin sản phẩm
             $product->update($this->getProductData($data));
@@ -140,22 +116,163 @@ class ProductService
                 $product->update(['image_url' => $uploadedImage]);
             }
 
-            // Đồng bộ SKU (chỉ cập nhật hoặc thêm mới, không xóa)
-            $this->syncSkus($product, $data['skus'] ?? []);
-
-            // Tải lại quan hệ chỉ khi cần thiết
-            return $product->load(['skus' => function ($query) {
-                $query->with('attribute_values');
-            }]);
+            return $product;
         });
     }
 
+    // Lấy danh sách SKU của sản phẩm
+    public function getSkusByProductId($product_id)
+    {
+        $product = Product::findOrFail($product_id);
+        return $product->skus()->with('attribute_values')->get()->map(function ($sku) {
+            return [
+                'id' => $sku->id,
+                'sku' => $sku->sku,
+                'price' => $sku->price,
+                'stock' => $sku->stock,
+                'image_url' => $sku->image_url,
+                'attributes' => $sku->attribute_values->map(function ($attr) {
+                    return [
+                        'attribute_id' => $attr->pivot->attribute_id,
+                        'attribute_name' => $attr->attribute->name,
+                        'value' => $attr->pivot->value,
+                    ];
+                }),
+                'images' => $sku->images->map(function ($image) {
+                    return [
+                        'id' => $image->id,
+                        'url' => $image->image_url,
+                    ];
+                }),
+            ];
+        });
+    }
 
+    // Thêm SKU mới
+    public function createSku($product_id, array $data)
+    {
+        return DB::transaction(function () use ($product_id, $data) {
+            $product = Product::findOrFail($product_id);
 
+            // Kiểm tra attributes
+            if (empty($data['attributes']) || !is_array($data['attributes'])) {
+                throw new ApiException('Attributes are required to create a new SKU', 400);
+            }
 
-    /**
-     * Xử lý danh sách SKU khi tạo mới.
-     */
+            // Kiểm tra xem SKU với attributes này đã tồn tại chưa
+            $attributesToMatch = collect($data['attributes'])->mapWithKeys(function ($attr) {
+                return [$attr['attribute_id'] => $attr['value']];
+            })->toArray();
+
+            $existingSku = $product->skus()->with('attribute_values')->get()->first(function ($sku) use ($attributesToMatch) {
+                $skuAttributes = $sku->attribute_values->mapWithKeys(function ($attrValue) {
+                    return [$attrValue->pivot->attribute_id => $attrValue->pivot->value];
+                })->toArray();
+                return empty(array_diff_assoc($attributesToMatch, $skuAttributes)) &&
+                    empty(array_diff_assoc($skuAttributes, $attributesToMatch));
+            });
+
+            if ($existingSku) {
+                throw new ApiException('A SKU with these attributes already exists', 400);
+            }
+
+            // Tạo SKU mới
+            $sku = Sku::create($this->getSkuData($data, $product_id));
+            $this->processSkuRelations($sku, $data);
+
+            return [
+                'id' => $sku->id,
+                'sku' => $sku->sku,
+                'price' => $sku->price,
+                'stock' => $sku->stock,
+                'image_url' => $sku->image_url,
+                'attributes' => $sku->attribute_values->map(function ($attr) {
+                    return [
+                        'attribute_id' => $attr->pivot->attribute_id,
+                        'attribute_name' => $attr->attribute->name,
+                        'value' => $attr->pivot->value,
+                    ];
+                }),
+                'images' => $sku->images->map(function ($image) {
+                    return [
+                        'id' => $image->id,
+                        'url' => $image->image_url,
+                    ];
+                }),
+            ];
+        });
+    }
+
+    // Cập nhật SKU
+    public function updateSku($sku_id, array $data)
+    {
+        return DB::transaction(function () use ($sku_id, $data) {
+            $sku = Sku::findOrFail($sku_id);
+            $sku->update($this->getSkuData($data, $sku->product_id));
+            $this->processSkuRelations($sku, $data);
+
+            return [
+                'id' => $sku->id,
+                'sku' => $sku->sku,
+                'price' => $sku->price,
+                'stock' => $sku->stock,
+                'image_url' => $sku->image_url,
+                'attributes' => $sku->attribute_values->map(function ($attr) {
+                    return [
+                        'attribute_id' => $attr->pivot->attribute_id,
+                        'attribute_name' => $attr->attribute->name,
+                        'value' => $attr->pivot->value,
+                    ];
+                }),
+                'images' => $sku->images->map(function ($image) {
+                    return [
+                        'id' => $image->id,
+                        'url' => $image->image_url,
+                    ];
+                }),
+            ];
+        });
+    }
+
+    // Xóa SKU
+    public function deleteSku($sku_id)
+    {
+        return DB::transaction(function () use ($sku_id) {
+            $sku = Sku::findOrFail($sku_id);
+
+            // Kiểm tra xem SKU có được sử dụng trong đơn hàng không
+            $orderCount = DB::table('order_items')
+                ->join('orders', 'order_items.order_id', '=', 'orders.id') // Join với bảng orders
+                ->where('order_items.sku_id', $sku->id)
+                ->whereIn('orders.status', ['pending', 'processing']) // Kiểm tra status từ bảng orders
+                ->count();
+
+            if ($orderCount > 0) {
+                throw new ApiException("Cannot delete SKU because it is used in {$orderCount} pending or processing orders.", 400);
+            }
+
+            // Xóa ảnh trên S3
+            if ($sku->image_url) {
+                try {
+                    Storage::disk('s3')->delete($sku->image_url);
+                } catch (\Exception $e) {
+                    Log::warning('Failed to delete SKU image', [
+                        'sku_id' => $sku->id,
+                        'image_url' => $sku->image_url,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            // Xóa quan hệ
+            $sku->attribute_values()->detach();
+            $sku->images()->delete();
+            $sku->delete();
+        });
+    }
+
+    // ------------------------- PRIVATE -------------------------
+
     private function processSkus(Product $product, array $skus)
     {
         foreach ($skus as $skuData) {
@@ -164,79 +281,19 @@ class ProductService
         }
     }
 
-    /**
-     * Đồng bộ danh sách SKU khi cập nhật.
-     */
-    private function syncSkus(Product $product, array $skus)
-    {
-        if (empty($skus)) {
-            return; // Nếu không có SKU gửi lên, bỏ qua
-        }
-
-        // Cập nhật SKU hiện có
-        foreach (collect($skus)->chunk(100) as $skuBatch) {
-            foreach ($skuBatch as $skuData) {
-                // Nếu có id, cập nhật dựa trên id
-                if (!empty($skuData['id'])) {
-                    $sku = Sku::where('product_id', $product->id)
-                        ->where('id', $skuData['id'])
-                        ->first();
-
-                    if (!$sku) {
-                        throw new ApiException("SKU with ID {$skuData['id']} not found for this product", 404);
-                    }
-                } else {
-                    // Nếu không có id, khớp SKU dựa trên attributes
-                    if (empty($skuData['attributes']) || !is_array($skuData['attributes'])) {
-                        throw new ApiException('Attributes are required to match SKU when ID is not provided', 400);
-                    }
-
-                    // Tạo một mảng để so sánh attributes
-                    $attributesToMatch = collect($skuData['attributes'])->mapWithKeys(function ($attr) {
-                        return [$attr['attribute_id'] => $attr['value']];
-                    })->toArray();
-
-                    // Tìm SKU khớp với tất cả attributes
-                    $sku = $product->skus->first(function ($sku) use ($attributesToMatch) {
-                        $skuAttributes = $sku->attribute_values->mapWithKeys(function ($attrValue) {
-                            return [$attrValue->pivot->attribute_id => $attrValue->pivot->value];
-                        })->toArray();
-
-                        // So sánh attributes
-                        return empty(array_diff_assoc($attributesToMatch, $skuAttributes)) &&
-                               empty(array_diff_assoc($skuAttributes, $attributesToMatch));
-                    });
-
-                    if (!$sku) {
-                        throw new ApiException('No existing SKU matches the provided attributes. Creating new SKUs is not allowed in update.', 404);
-                    }
-                }
-
-                // Cập nhật SKU
-                $sku->update($this->getSkuData($skuData, $product->id));
-                $this->processSkuRelations($sku, $skuData);
-            }
-        }
-    }
-
-    /**
-     * Xử lý các quan hệ của SKU: Image, Attributes.
-     */
     private function processSkuRelations(Sku $sku, array $skuData)
     {
-        // Xử lý ảnh SKU (cả đơn và nhiều ảnh)
+        // Xử lý ảnh SKU
         if (!empty($skuData['image_url'])) {
             $uploadedImages = [];
 
             if ($skuData['image_url'] instanceof UploadedFile) {
-                // Nếu chỉ có một ảnh đơn
                 Log::info('Uploading single SKU image:', ['file' => $skuData['image_url']]);
                 $uploadedImage = $this->imageUploadService->uploadSingle($skuData['image_url'], true, $sku);
                 if ($uploadedImage) {
                     $uploadedImages[] = $uploadedImage;
                 }
             } elseif (is_array($skuData['image_url'])) {
-                // Nếu là danh sách ảnh
                 $validFiles = array_filter($skuData['image_url'], function ($file) {
                     return $file instanceof UploadedFile && $file->isValid();
                 });
@@ -251,21 +308,13 @@ class ProductService
                 Log::warning('Invalid SKU image format', ['data' => $skuData]);
             }
 
-            // Nếu có ảnh hợp lệ, tiến hành cập nhật vào DB
             if (!empty($uploadedImages)) {
-                // Cập nhật ảnh đại diện SKU (ảnh đầu tiên)
                 $sku->update(['image_url' => $uploadedImages[0]]);
-
-                // Xóa ảnh cũ trước khi thêm mới
                 $sku->images()->delete();
-
-                // Lưu tất cả ảnh vào bảng images
                 $imageRecords = array_map(fn ($imgUrl) => ['image_url' => urldecode($imgUrl)], $uploadedImages);
                 $sku->images()->createMany($imageRecords);
-
             }
         }
-
 
         // Cập nhật thuộc tính SKU
         $sku->attribute_values()->detach();
@@ -283,12 +332,6 @@ class ProductService
         }
     }
 
-
-    // ------------------------- PRIVATE -------------------------
-
-    /**
-     * Chuẩn hóa dữ liệu Product.
-     */
     private function getProductData(array $data): array
     {
         return [
@@ -301,9 +344,6 @@ class ProductService
         ];
     }
 
-    /**
-     * Chuẩn hóa dữ liệu SKU.
-     */
     private function getSkuData(array $skuData, int $productId): array
     {
         $stock = $skuData['stock'];

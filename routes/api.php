@@ -72,7 +72,7 @@ Route::prefix('v1')->group(function () {
         // User có thể cập nhật thông tin cá nhân
         Route::put('/users/profile', [UserController::class, 'updateProfile']);
         Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/check-user', fn(Request $request) => response()->json($request->user()));
+        Route::get('/check-user', fn (Request $request) => response()->json($request->user()));
         Route::post('/change-password', [AuthController::class, 'changePassword']);
 
 
@@ -141,6 +141,12 @@ Route::prefix('v1')->group(function () {
             Route::patch('/products/{id}', [ProductController::class, 'updatePartial']);
             Route::patch('/{id}/publish', [ProductController::class, 'togglePublish']);
             Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+
+            // Route cho quản lý SKU
+            Route::get('/{product_id}/skus', [ProductController::class, 'getSkus']); // Lấy danh sách SKU của sản phẩm
+            Route::post('/{product_id}/skus', [ProductController::class, 'createSku']); // Thêm SKU mới
+            Route::put('/skus/{sku_id}', [ProductController::class, 'updateSku']); // Cập nhật SKU
+            Route::delete('/skus/{sku_id}', [ProductController::class, 'deleteSku']); // Xóa SKU
 
 
             // Orders

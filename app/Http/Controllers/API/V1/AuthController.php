@@ -60,10 +60,17 @@ class AuthController extends BaseController
     {
         $data = $request->validate([
             'current_password' => 'required|string',
-            'new_password' => 'required|string|confirmed',
+            'new_password' => 'required|string|min:8|confirmed', // Đảm bảo new_password được xác nhận
         ]);
-        $this->authService->changePassword($request->user(), $data['current_password'], $data['new_password']);
 
-        return $this->successResponse('Password changed successfully');
+        try {
+            $this->authService->changePassword($request->user(), $data['current_password'], $data['new_password']);
+            return $this->successResponse(null, 'Password changed successfully.');
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
     }
 }
