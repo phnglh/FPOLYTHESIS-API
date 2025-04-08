@@ -4,19 +4,15 @@ namespace App\Services;
 
 use App\Exceptions\ApiException;
 use App\Models\WishList;
-use Illuminate\Support\Facades\Auth; // them moi
+use Illuminate\Support\Facades\Auth;
 
 class WishListService
 {
-    // lấy danh sách sản phẩm yêu thích
     public function getAllWishLists()
     {
         $userId = Auth::id();
         if (! $userId) {
-            throw new ApiException(
-                'Không lấy được dữ liệu',
-                404
-            );
+            throw new ApiException('Không lấy được dữ liệu', 404);
         }
 
         return WishList::where('user_id', $userId)->with('product')->get();
@@ -25,10 +21,7 @@ class WishListService
     {
         $userId = Auth::id();
         if (! $userId) {
-            throw new ApiException(
-                'Không lấy được dữ liệu',
-                404
-            );
+            throw new ApiException('Không lấy được dữ liệu', 404);
         }
 
         $wishlist = WishList::where('id', $id)->where('user_id', $userId)->first();
@@ -73,23 +66,16 @@ class WishListService
     {
         $userId = Auth::id();
         if (! $userId) {
-            throw new ApiException(
-                'Không lấy được dữ liệu',
-                404
-            );
+            throw new ApiException('Không lấy được dữ liệu', 404);
         }
-
-        // Kiểm tra xem sản phẩm có trong wishlist không
-        $listExists = WishList::where('user_id', $userId)->where('product_id', $productId)->first();
-
-        // Nếu không có sản phẩm trong wishlist, trả về thông báo lỗi
-        if (!$listExists) {
-            return ['message' => 'Sản phẩm không tồn tại trong danh sách yêu thích', 'status' => 400];
+        $listExists = WishList::where('userId', $userId)->where('sku_id', $skuId)->first();
+        if ($listExists) {
+            return ['message' => 'sản phẩm không tồn tại trong danh sách yêu thích', 'status' => 400];
         }
 
         // Xóa sản phẩm khỏi wishlist
         $listExists->delete();
 
-        return ['message' => 'Sản phẩm đã được xóa khỏi danh sách yêu thích', 'status' => 200];
+        return ['message' => 'đã xoá thành công sản phẩm khỏi danh sách yêu thích', 'status' => 400];
     }
 }
