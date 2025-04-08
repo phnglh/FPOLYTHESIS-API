@@ -93,6 +93,7 @@ Route::prefix('v1')->group(function () {
 
         // payment
         Route::post('/payment/pay', [PaymentController::class, 'payOrder']);
+        Route::post('/payment/retry/{orderId}', [PaymentController::class, 'retryPayment']); // thanh toán lại
 
         // Cart
         Route::get('/cart', [CartController::class, 'index']); // Lấy giỏ hàng
@@ -105,7 +106,9 @@ Route::prefix('v1')->group(function () {
 
         // user_address
         Route::apiResource('user-addresses', UserAddressController::class);
-        Route::post('/payment/retry/{orderId}', [PaymentController::class, 'retryPayment']); // thanh toán lại
+        Route::patch('/user-addresses/{id}/set-default', [UserAddressController::class, 'setDefault']);
+
+
 
 
         // wishlist

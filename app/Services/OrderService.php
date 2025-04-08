@@ -18,6 +18,7 @@ class OrderService
         $vnpayService = new VNPayService();
         return $vnpayService->createPaymentUrl($order);
     }
+
     public function createOrder($selectedSkuIds, $addressId = null, $voucherCode = null, $newAddress = [], $paymentMethod = 'cod')
     {
         $userId = Auth::id();
@@ -28,9 +29,10 @@ class OrderService
         }
 
         return DB::transaction(function () use ($cart, $addressId, $selectedSkuIds, $voucherCode, $newAddress, $userId, $paymentMethod) {
+            $userAddressService = new UserAddressService();
+
             // Nếu không có addressId, tạo địa chỉ mới
             if (!$addressId && !empty($newAddress)) {
-                $userAddressService = new UserAddressService();
                 $newAddress['user_id'] = $userId;
                 $address = $userAddressService->createUserAddress($newAddress);
                 $addressId = $address->id;
@@ -42,7 +44,6 @@ class OrderService
 
             $subtotal = 0;
             $orderItems = [];
-            // Kiểm tra dữ liệu trước khi thực hiện vòng lặp
             if (!is_array($selectedSkuIds) || empty($selectedSkuIds)) {
                 return ['error' => 'INVALID_SKU_IDS', 'message' => 'Mã sản phẩm không hợp lệ'];
             }
@@ -125,7 +126,7 @@ class OrderService
             if ($paymentMethod === 'vnpay') {
                 return [
                     'success' => true,
-                    'order' => $order, // Thêm order để tránh lỗi
+                    'order' => $order,
                     'payment_url' => $paymentResult['payment_url'],
                     'message' => 'Chuyển hướng đến trang thanh toán'
                 ];
@@ -139,27 +140,22 @@ class OrderService
         });
     }
 
-
     public function getOrderList(Request $request)
     {
-        // Tạo query ban đầu với các mối quan hệ cần thiết
         $query = Order::with([
-            'items.sku.product', // Lấy thông tin sản phẩm từ SKU
-            'user', // Lấy thông tin người dùng
-            'address', // Lấy địa chỉ giao hàng
-            'payment', // Thông tin thanh toán
-            'voucher' // Mã giảm giá nếu có
+            'items.sku.product',
+            'user',
+            'address',
+            'payment',
+            'voucher'
         ]);
 
-        // Nếu là admin, lấy tất cả đơn hàng
-        if (auth()->user()->hasRole('admin')) {
-            // Không cần điều kiện, lấy tất cả đơn hàng
+        if (Auth::user()->hasRole('admin')) {
+            // Lấy tất cả đơn hàng
         } else {
-            // Nếu không phải admin, chỉ lấy đơn hàng của người dùng hiện tại
             $query->where('user_id', Auth::id());
         }
 
-        // Thêm các điều kiện lọc từ request (nếu có)
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
@@ -168,10 +164,8 @@ class OrderService
             $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
         }
 
-        // Phân trang kết quả
         return $query->paginate(10);
     }
-
 
     public function getOrderDetail($orderId, $role)
     {
@@ -200,50 +194,41 @@ class OrderService
     {
         $order = Order::findOrFail($orderId);
 
-        // Kiểm tra quyền admin
         if (Auth::user()->role !== 'admin') {
             return ['error' => 'PERMISSION_DENIED', 'message' => 'Bạn không có quyền cập nhật đơn hàng'];
         }
 
-        // Danh sách trạng thái hợp lệ
         $validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
         if (!in_array($status, $validStatuses)) {
             return ['error' => 'INVALID_STATUS', 'message' => 'Trạng thái không hợp lệ'];
         }
 
-        // Nếu muốn chuyển sang "shipped" nhưng chưa thanh toán (chỉ áp dụng cho online)
         if ($status === 'shipped' && $order->payment_status === 'unpaid') {
             if ($order->payment->payment_method !== 'cod') {
                 return ['error' => 'PAYMENT_REQUIRED', 'message' => 'Không thể vận chuyển đơn hàng chưa thanh toán'];
             }
         }
 
-        // Nếu muốn chuyển sang "delivered" nhưng đơn chưa "shipped"
         if ($status === 'delivered' && $order->status !== 'shipped') {
             return ['error' => 'ORDER_NOT_SHIPPED', 'message' => 'Chỉ có thể hoàn thành đơn hàng sau khi đã vận chuyển'];
         }
 
-        // Nếu muốn hủy đơn đã được giao thành công
         if ($status === 'cancelled' && $order->status === 'delivered') {
             return ['error' => 'ORDER_ALREADY_DELIVERED', 'message' => 'Không thể hủy đơn hàng đã hoàn tất'];
         }
 
-        // Nếu trạng thái là "delivered", xử lý logic thanh toán
         if ($status === 'delivered') {
             $updateData['delivered_at'] = now();
 
             if ($order->payment) {
-                // Xử lý đơn hàng COD
                 if ($order->payment->payment_method === 'cod') {
                     $updateData['payment_status'] = 'paid';
-
                     $order->payment->update([
                         'status' => 'paid',
                         'paid_at' => now(),
                     ]);
                 }
 
-                // Xử lý đơn hàng VNPay
                 if ($order->payment->payment_method === 'vnpay') {
                     if ($order->payment_status !== 'paid') {
                         return ['error' => 'VNPay_PAYMENT_REQUIRED', 'message' => 'Đơn hàng VNPay chưa thanh toán, không thể giao hàng'];
@@ -252,20 +237,15 @@ class OrderService
             }
         }
 
-        // Nếu trạng thái là "shipped", cập nhật thời gian vận chuyển
         if ($status === 'shipped') {
             $updateData['shipped_at'] = now();
         }
 
-        // Cập nhật trạng thái đơn hàng
         $updateData['status'] = $status;
         $order->update($updateData);
 
         return ['success' => true, 'message' => 'Trạng thái đơn hàng đã được cập nhật', 'order' => $order];
     }
-
-
-
 
     public function cancelOrder($orderId)
     {
