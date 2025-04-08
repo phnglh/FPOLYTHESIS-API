@@ -15,6 +15,9 @@ class WishListService
             throw new ApiException('Không lấy được dữ liệu', 404);
         }
 
+        return WishList::where('user_id', $userId)->with('product')->get();
+    }
+    public function updateWishList($id, $productId)
         return WishList::where('user_id', $userId)
             ->with('product')
             ->get();
@@ -27,10 +30,30 @@ class WishListService
             throw new ApiException('Không lấy được dữ liệu', 404);
         }
 
-        $exists = WishList::where('user_id', $userId)
-            ->where('product_id', $productId)
-            ->exists();
+        $wishlist = WishList::where('id', $id)->where('user_id', $userId)->first();
+        if (! $wishlist) {
+            return ['message' => 'Sản phẩm không tồn tại trong danh sách yêu thích', 'status' => 404];
+        }
 
+        $wishlist->update(['product_id' => $productId]);
+
+        return ['message' => 'Sản phẩm trong danh sách yêu thích đã được cập nhật', 'status' => 200];
+    }
+
+
+    // thêm sản phẩm vào danh sách sản phẩm yêu thích
+    public function addWishList($productId)
+    {
+        $userId = Auth::id();
+        if (! $userId) {
+            throw new ApiException(
+                'Không lấy được dữ liệu',
+                404
+            );
+        }
+
+        // Kiểm tra nếu sản phẩm đã có trong wishlist
+        $exists = WishList::where('user_id', $userId)->where('product_id', $productId)->exists();
         if ($exists) {
             return ['message' => 'Sản phẩm đã có trong danh sách yêu thích', 'status' => 400];
         }
@@ -40,7 +63,7 @@ class WishListService
             'product_id' => $productId,
         ]);
 
-        return ['message' => 'Đã thêm thành công vào danh sách yêu thích', 'status' => 200];
+        return ['message' => 'Sản phẩm đã được thêm vào danh sách yêu thích', 'status' => 200];
     }
 
     public function deleteWishList($productId)
@@ -50,17 +73,20 @@ class WishListService
             throw new ApiException('Không lấy được dữ liệu', 404);
         }
 
-        $listExists = WishList::where('user_id', $userId)
-            ->where('product_id', $productId)
-            ->first();
 
-        if (! $listExists) {
+        // Kiểm tra xem sản phẩm có trong wishlist không
+        $listExists = WishList::where('user_id', $userId)->where('product_id', $productId)->first();
+
+        // Nếu không có sản phẩm trong wishlist, trả về thông báo lỗi
+        if (!$listExists) {
             return ['message' => 'Sản phẩm không tồn tại trong danh sách yêu thích', 'status' => 400];
         }
 
+        // Xóa sản phẩm khỏi wishlist
         $listExists->delete();
 
-        return ['message' => 'Đã xóa thành công sản phẩm khỏi danh sách yêu thích', 'status' => 200];
+        return ['message' => 'Sản phẩm đã được xóa khỏi danh sách yêu thích', 'status' => 200];
+
     }
 
 }
