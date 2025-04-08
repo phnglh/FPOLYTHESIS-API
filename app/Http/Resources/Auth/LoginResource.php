@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Http\Resources\Orders;
+namespace App\Http\Resources\Auth;
 
-use App\Http\Resources\User\UserResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class OrderResource extends JsonResource
+class AuthResource extends JsonResource
 {
     public function toArray($request)
     {
@@ -18,7 +17,6 @@ class OrderResource extends JsonResource
             'status' => $this->status,
             'payment_status' => $this->payment_status,
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
-            'user' => new UserResource($this->whenLoaded('user')),
         ];
     }
 }

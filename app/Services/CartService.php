@@ -46,7 +46,7 @@ class CartService
                     'id' => $item->sku->id,
                     'sku' => $item->sku->sku,
                     'product_id' => $item->sku->product_id,
-                    'image_url' => json_decode($item->sku->image_url),
+                    'image_url' => $item->sku->image_url,
                     'price' => $item->sku->price,
                     'stock' => $item->sku->stock,
 

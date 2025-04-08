@@ -7,6 +7,7 @@ use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Voucher;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -17,8 +18,7 @@ class OrderService
         $vnpayService = new VNPayService();
         return $vnpayService->createPaymentUrl($order);
     }
-
-    public function createOrder($addressId = null, $selectedSkuIds, $voucherCode = null, $newAddress = [], $paymentMethod = 'cod')
+    public function createOrder($selectedSkuIds, $addressId = null, $voucherCode = null, $newAddress = [], $paymentMethod = 'cod')
     {
         $userId = Auth::id();
         $cart = Cart::where('user_id', $userId)->with('items.sku')->first();
@@ -42,7 +42,10 @@ class OrderService
 
             $subtotal = 0;
             $orderItems = [];
-
+            // Kiểm tra dữ liệu trước khi thực hiện vòng lặp
+            if (!is_array($selectedSkuIds) || empty($selectedSkuIds)) {
+                return ['error' => 'INVALID_SKU_IDS', 'message' => 'Mã sản phẩm không hợp lệ'];
+            }
             foreach ($selectedSkuIds as $skuId) {
                 $cartItem = $cart->items->where('sku_id', $skuId)->first();
                 if (!$cartItem) {
@@ -52,7 +55,7 @@ class OrderService
                 $orderItems[] = [
                     'sku_id' => $cartItem->sku_id,
                     'product_name' => $cartItem->sku->product->name,
-                    'sku_code' => "DON",
+                    'sku' => $cartItem->sku->sku,
                     'quantity' => $cartItem->quantity,
                     'unit_price' => $cartItem->sku->price,
                     'total_price' => $cartItem->quantity * $cartItem->sku->price,
@@ -137,8 +140,9 @@ class OrderService
     }
 
 
-    public function getOrderList($role)
+    public function getOrderList(Request $request)
     {
+        // Tạo query ban đầu với các mối quan hệ cần thiết
         $query = Order::with([
             'items.sku.product', // Lấy thông tin sản phẩm từ SKU
             'user', // Lấy thông tin người dùng
@@ -147,12 +151,27 @@ class OrderService
             'voucher' // Mã giảm giá nếu có
         ]);
 
-        if ($role !== 'admin') {
+        // Nếu là admin, lấy tất cả đơn hàng
+        if (auth()->user()->hasRole('admin')) {
+            // Không cần điều kiện, lấy tất cả đơn hàng
+        } else {
+            // Nếu không phải admin, chỉ lấy đơn hàng của người dùng hiện tại
             $query->where('user_id', Auth::id());
         }
 
+        // Thêm các điều kiện lọc từ request (nếu có)
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+        }
+
+        // Phân trang kết quả
         return $query->paginate(10);
     }
+
 
     public function getOrderDetail($orderId, $role)
     {

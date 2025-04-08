@@ -46,9 +46,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{id}', [ProductController::class, 'show']);
 
-    // Review, Promotion, Wishlist (Public access)
+    // Review, Promotion (Public access)
     Route::apiResource('promotions', PromotionController::class);
-    Route::apiResource('wishlist', WishListController::class);
 
 
 
@@ -84,8 +83,8 @@ Route::prefix('v1')->group(function () {
 
         // order
         Route::post('/orders/create', [OrderController::class, 'createOrder']); // Tạo đơn hàng
-        Route::get('/orders', [OrderController::class, 'getOrders']); // Xem đơn hàng của mình
-        Route::get('/orders/{order_id}', [OrderController::class, 'getOrderDetail']); // xem chi tiết đơn hàng
+        Route::get('/orders', [OrderController::class, 'index']); // Xem đơn hàng của mình
+        Route::get('/orders/{order_id}', [OrderController::class, 'show']); // xem chi tiết đơn hàng
         Route::delete('/orders/{orderId}', [OrderController::class, 'cancelOrder']); // Hủy đơn hàng của mình
 
         // voucher
@@ -107,12 +106,12 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('user-addresses', UserAddressController::class);
         Route::post('/payment/retry/{orderId}', [PaymentController::class, 'retryPayment']); // thanh toán lại
 
+
         // wishlist
         Route::get('/wishlist', [WishListController::class, 'getWishList']);
         Route::post('/wishlist', [WishListController::class, 'addWishList']);
         Route::delete('/wishlist/{id}', [WishListController::class, 'deleteWishList']);
-
-
+      
 
         // -------------------------
         // Role-based API (Admin Only)
@@ -144,9 +143,9 @@ Route::prefix('v1')->group(function () {
 
 
             // Orders
-            Route::get('/orders/all', [OrderController::class, 'getOrders']); // Xem tất cả đơn hàng
-            Route::get('/orders/{orderId}', [OrderController::class, 'getOrderDetail']); // lấy chi tiết đơn hàng
-            Route::put('/orders/{orderId}/status', [OrderController::class, 'updateStatus']); // Cập nhật trạng thái đơn
+            Route::get('/orders/all', [OrderController::class, 'getOrders']);
+            Route::get('/orders/{orderId}', [OrderController::class, 'getOrderDetail']);
+            Route::put('/orders/{orderId}/status', [OrderController::class, 'updateStatus']);
 
             // Voucher
             Route::get('/vouchers', [VoucherController::class, 'index']);
