@@ -8,12 +8,11 @@ use Illuminate\Support\Facades\DB;
 
 class VoucherService
 {
-    // cạo voucher (Admin)
     public function create(array $data)
     {
         return DB::transaction(function () use ($data) {
             return Voucher::create([
-                'code' => strtoupper($data['code']), // Chuyển code thành chữ in hoa
+                'code' => strtoupper($data['code']),
                 'type' => $data['type'],
                 'discount_value' => $data['discount_value'],
                 'min_order_value' => $data['min_order_value'] ?? null,
@@ -26,7 +25,6 @@ class VoucherService
         });
     }
 
-    // cập nhật voucher (Admin)
     public function update(Voucher $voucher, array $data)
     {
         return DB::transaction(function () use ($voucher, $data) {
@@ -45,7 +43,6 @@ class VoucherService
         });
     }
 
-    // xóa voucher (Admin)
     public function delete(Voucher $voucher)
     {
         return DB::transaction(function () use ($voucher) {
@@ -53,10 +50,9 @@ class VoucherService
         });
     }
 
-    // danh sách voucher (Admin & Customer)
     public function list($isAdmin = false)
     {
-        return Voucher::when(! $isAdmin, function ($query) {
+        return Voucher::when(!$isAdmin, function ($query) {
             $query->where('is_active', true)
                 ->where(function ($q) {
                     $q->whereNull('start_date')->orWhere('start_date', '<=', Carbon::now());
@@ -67,13 +63,16 @@ class VoucherService
         })->get();
     }
 
-    // kiểm tra & áp dụng voucher (Customer)
     public function apply($voucherCode, $orderSubtotal)
     {
         $voucher = Voucher::where('code', $voucherCode)
             ->where('is_active', 1)
-            ->where('start_date', '<=', now())
-            ->where('end_date', '>=', now())
+            ->where(function ($query) {
+                $query->whereNull('start_date')->orWhere('start_date', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('end_date')->orWhere('end_date', '>=', now());
+            })
             ->first();
 
         if (!$voucher) {

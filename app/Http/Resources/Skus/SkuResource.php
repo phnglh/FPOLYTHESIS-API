@@ -15,9 +15,7 @@ class SkuResource extends JsonResource
             'price' => $this->price,
             'stock' => $this->stock,
             'image_url' => $this->image_url,
-            // 'image_url' => json_decode($this->image_url),
 
-            // Attributes with null-safe access
             'attributes' => $this->attribute_values->map(function ($attrValue) {
                 return [
                     'id' => optional($attrValue->pivot)->attribute_value_id,

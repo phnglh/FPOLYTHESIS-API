@@ -46,9 +46,13 @@ Route::prefix('v1')->group(function () {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{id}', [ProductController::class, 'show']);
 
-    // Review, Promotion, Wishlist (Public access)
+    // Review, Promotion (Public access)
     Route::apiResource('promotions', PromotionController::class);
     Route::apiResource('wishlist', WishListController::class);
+
+
+
+
 
     // Attribute (Public access to GET)
     Route::prefix('attributes')->group(function () {
@@ -68,7 +72,7 @@ Route::prefix('v1')->group(function () {
         // User có thể cập nhật thông tin cá nhân
         Route::put('/users/profile', [UserController::class, 'updateProfile']);
         Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/check-user', fn (Request $request) => response()->json($request->user()));
+        Route::get('/check-user', fn(Request $request) => response()->json($request->user()));
         Route::post('/change-password', [AuthController::class, 'changePassword']);
 
 
@@ -80,7 +84,8 @@ Route::prefix('v1')->group(function () {
 
         // order
         Route::post('/orders/create', [OrderController::class, 'createOrder']); // Tạo đơn hàng
-        Route::get('/orders', [OrderController::class, 'getOrders']); // Xem đơn hàng của mình
+        Route::get('/orders', [OrderController::class, 'index']); // Xem đơn hàng của mình
+        Route::get('/orders/{order_id}', [OrderController::class, 'show']); // xem chi tiết đơn hàng
         Route::delete('/orders/{orderId}', [OrderController::class, 'cancelOrder']); // Hủy đơn hàng của mình
 
         // voucher
@@ -103,58 +108,60 @@ Route::prefix('v1')->group(function () {
         Route::post('/payment/retry/{orderId}', [PaymentController::class, 'retryPayment']); // thanh toán lại
 
 
+        // wishlist
+        Route::get('/wishlist', [WishListController::class, 'getWishList']);
+        Route::post('/wishlist', [WishListController::class, 'addWishList']);
+        Route::delete('/wishlist/{id}', [WishListController::class, 'deleteWishList']);
+      
 
         // -------------------------
         // Role-based API (Admin Only)
         // -------------------------
-        // Route::middleware('role:admin')->group(function () {
-        // Users
-        Route::get('/users', [UserController::class, 'index']);
-        Route::get('/users/{id}', [UserController::class, 'show']);
-        Route::post('/users', [UserController::class, 'store']);
-        Route::put('/users/{id}', [UserController::class, 'update']);
-        Route::delete('/users/{id}', [UserController::class, 'destroy']);
+        Route::middleware('role:admin')->group(function () {
+            // Users
+            Route::get('/users', [UserController::class, 'index']);
+            Route::get('/users/{id}', [UserController::class, 'show']);
+            Route::post('/users', [UserController::class, 'store']);
+            Route::put('/users/{id}', [UserController::class, 'update']);
+            Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
-        // Brand
-        Route::post('/brands', [BrandController::class, 'store']);
-        Route::put('/brands/{id}', [BrandController::class, 'update']);
-        Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
+            // Brand
+            Route::post('/brands', [BrandController::class, 'store']);
+            Route::put('/brands/{id}', [BrandController::class, 'update']);
+            Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
 
-        // Category
-        Route::post('/categories', [CategoryController::class, 'store']);
-        Route::put('/categories/{id}', [CategoryController::class, 'update']);
-        Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+            // Category
+            Route::post('/categories', [CategoryController::class, 'store']);
+            Route::put('/categories/{id}', [CategoryController::class, 'update']);
+            Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
-        // Product
-        Route::post('/products', [ProductController::class, 'store']);
-        Route::put('/products/{id}', [ProductController::class, 'update']);
-        Route::patch('/products/{id}', [ProductController::class, 'updatePartial']);
-        Route::patch('/{id}/publish', [ProductController::class, 'togglePublish']);
-        Route::delete('/products/{id}', [ProductController::class, 'destroy']);
-
-
-        // Orders
+            // Product
+            Route::post('/products', [ProductController::class, 'store']);
+            Route::put('/products/{id}', [ProductController::class, 'update']);
+            Route::patch('/products/{id}', [ProductController::class, 'updatePartial']);
+            Route::patch('/{id}/publish', [ProductController::class, 'togglePublish']);
+            Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
 
-        Route::get('/orders/all', [OrderController::class, 'getOrders']); // Xem tất cả đơn hàng
-        Route::put('/orders/{orderId}/status', [OrderController::class, 'updateStatus']); // Cập nhật trạng thái đơn
+            // Orders
+            Route::get('/orders/all', [OrderController::class, 'getOrders']);
+            Route::get('/orders/{orderId}', [OrderController::class, 'getOrderDetail']);
+            Route::put('/orders/{orderId}/status', [OrderController::class, 'updateStatus']);
 
-        // Voucher
-        Route::get('/vouchers', [VoucherController::class, 'index']);
-        Route::post('/vouchers/apply', [VoucherController::class, 'apply']);
-        Route::post('/vouchers', [VoucherController::class, 'store']);
-        Route::put('/vouchers/{voucher}', [VoucherController::class, 'update']);
-        Route::delete('/vouchers/{voucher}', [VoucherController::class, 'destroy']);
+            // Voucher
+            Route::get('/vouchers', [VoucherController::class, 'index']);
+            Route::post('/vouchers/apply', [VoucherController::class, 'apply']);
+            Route::post('/vouchers', [VoucherController::class, 'store']);
+            Route::put('/vouchers/{voucher}', [VoucherController::class, 'update']);
+            Route::delete('/vouchers/{voucher}', [VoucherController::class, 'destroy']);
 
-        // Attribute (CRUD)
-        Route::post('/attributes', [AttributeController::class, 'store']);
-        Route::put('/attributes/{id}', [AttributeController::class, 'update']);
-        Route::delete('/attributes/{id}', [AttributeController::class, 'destroy']);
-        Route::post('/attributes/{attributeId}/values', [AttributeController::class, 'storeAttributeValue']);
-        Route::put('/attributes/values/{id}', [AttributeController::class, 'updateAttributeValue']);
-        Route::delete('/attributes/values/{id}', [AttributeController::class, 'destroyAttributeValue']);
-        // });
-
-
+            // Attribute (CRUD)
+            Route::post('/attributes', [AttributeController::class, 'store']);
+            Route::put('/attributes/{id}', [AttributeController::class, 'update']);
+            Route::delete('/attributes/{id}', [AttributeController::class, 'destroy']);
+            Route::post('/attributes/{attributeId}/values', [AttributeController::class, 'storeAttributeValue']);
+            Route::put('/attributes/values/{id}', [AttributeController::class, 'updateAttributeValue']);
+            Route::delete('/attributes/values/{id}', [AttributeController::class, 'destroyAttributeValue']);
+        });
     });
 });

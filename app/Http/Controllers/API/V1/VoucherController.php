@@ -7,6 +7,8 @@ use App\Http\Requests\VoucherRequest;
 use App\Models\Voucher;
 use App\Services\VoucherService;
 use Illuminate\Http\Request;
+use App\Http\Resources\Voucher\VoucherResource;
+use App\Http\Resources\Voucher\VoucherCollection;
 
 class VoucherController extends BaseController
 {
@@ -22,30 +24,29 @@ class VoucherController extends BaseController
         $isAdmin = $request->user()->hasRole('admin');
         $vouchers = $this->voucherService->list($isAdmin);
 
-        return $this->successResponse($vouchers, 'Vouchers retrieved successfully.');
+        return $this->successResponse(new VoucherCollection($vouchers), 'Vouchers retrieved successfully.');
     }
 
     public function store(VoucherRequest $request)
     {
-
         $voucher = $this->voucherService->create($request->validated());
 
-        return $this->successResponse($voucher, 'Voucher created successfully.');
+        return $this->successResponse(new VoucherResource($voucher), 'Voucher created successfully.');
     }
 
     public function update(VoucherRequest $request, Voucher $voucher)
     {
-        if (! $request->user()) {
+        if (!$request->user()) {
             return $this->errorResponse('UNAUTHORIZED', 'Invalid token or user not logged in.', 401);
         }
 
-        if (! $request->user()->hasRole('admin')) {
+        if (!$request->user()->hasRole('admin')) {
             return $this->errorResponse('FORBIDDEN', 'You do not have permission to perform this action.', 403);
         }
 
         $updatedVoucher = $this->voucherService->update($voucher, $request->validated());
 
-        return $this->successResponse($updatedVoucher, 'Voucher updated successfully.');
+        return $this->successResponse(new VoucherResource($updatedVoucher), 'Voucher updated successfully.');
     }
 
     public function destroy(Request $request, Voucher $voucher)
@@ -63,7 +64,6 @@ class VoucherController extends BaseController
         ]);
 
         $result = $this->voucherService->apply($request->code, $request->order_total);
-
 
         return $this->successResponse($result, 'Voucher applied successfully.');
     }

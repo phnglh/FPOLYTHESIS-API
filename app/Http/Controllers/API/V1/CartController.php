@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Http\Controllers\API\BaseController;
 use App\Http\Requests\CartRequest;
 use App\Services\CartService;
+use Illuminate\Http\Request;
 
 class CartController extends BaseController
 {
@@ -51,7 +52,7 @@ class CartController extends BaseController
         }
     }
 
-    public function updateQuantity(CartRequest $request, $itemId)
+    public function updateQuantity(Request $request, $itemId)
     {
         try {
             $cart = $this->cartService->setCartItemQuantity($itemId, $request->quantity);
