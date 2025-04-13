@@ -12,8 +12,8 @@ class SkuResource extends JsonResource
             'id' => $this->id,
             'product_id' => $this->product_id,
             'sku' => $this->sku,
-            'price' => $this->price,
-            'stock' => $this->stock,
+            'price' => (float) $this->price,
+            'stock' => (int) $this->stock,
             'image_url' => $this->image_url,
 
             'attributes' => $this->attribute_values->map(function ($attrValue) {

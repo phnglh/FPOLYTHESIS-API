@@ -19,7 +19,7 @@ class PaymentResource extends JsonResource
             'order_id' => $this->order_id,
             'payment_method' => $this->payment_method,
             'transaction_id' => $this->transaction_id,
-            'amount' => $this->amount,
+            'amount' => (float) $this->amount,
             'status' => $this->status,
             'paid_at' => $this->paid_at ? $this->paid_at->format('Y-m-d H:i:s') : null,
             'refunded_at' => $this->refunded_at ? $this->refunded_at->format('Y-m-d H:i:s') : null,

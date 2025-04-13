@@ -28,27 +28,27 @@ class BrandController extends BaseController
     {
         $brand = $this->brandService->getBrandById($id);
 
-        return $this->successResponse(new BrandResource($brand), 'Brand details fetched successfully');
+        return $this->successResponse(new BrandResource($brand), 'ADD_TO_BRAND_SUCCESS');
     }
 
     public function store(BrandRequest $request)
     {
         $brand = $this->brandService->createBrand($request->validated());
 
-        return $this->successResponse($brand, 'Brand created successfully');
+        return $this->successResponse($brand, 'ADD_TO_ATTRIBUTES_SUCCESS');
     }
 
     public function update(BrandRequest $request, $id)
     {
         $brand = $this->brandService->updateBrand($id, $request->validated());
 
-        return $this->successResponse($brand, 'Brand updated successfully');
+        return $this->successResponse($brand, 'UPDATE_TO_ATTRIBUTES_SUCCESS');
     }
 
     public function destroy($id)
     {
         $this->brandService->deleteBrand($id);
 
-        return $this->successResponse(null, 'Brand deleted successfully');
+        return $this->successResponse(null, 'DELETE_TO_ATTRIBUTES_SUCCESS');
     }
 }

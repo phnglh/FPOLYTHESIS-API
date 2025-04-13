@@ -19,14 +19,14 @@ class CartController extends BaseController
     public function index()
     {
         $cart = $this->cartService->getCart();
-        return $this->successResponse($cart, 'Cart retrieved successfully');
+        return $this->successResponse($cart, 'GET_TO_CART_SUCCESS');
     }
 
     public function store(CartRequest $request)
     {
         try {
             $cart = $this->cartService->addToCart($request->sku_id, $request->quantity);
-            return $this->successResponse($cart, 'Product added to cart successfully');
+            return $this->successResponse($cart, 'ADD_TO_CART_SUCCESS');
         } catch (\Exception $e) {
             return $this->errorResponse('ADD_TO_CART_ERROR', $e->getMessage(), 500);
         }
@@ -36,7 +36,7 @@ class CartController extends BaseController
     {
         try {
             $cart = $this->cartService->incrementCartItem($itemId);
-            return $this->successResponse($cart, 'Cart item quantity increased successfully');
+            return $this->successResponse($cart, 'INCREMENT_CART_SUCCESS');
         } catch (\Exception $e) {
             return $this->errorResponse('INCREMENT_CART_ERROR', $e->getMessage(), 500);
         }
@@ -46,7 +46,7 @@ class CartController extends BaseController
     {
         try {
             $cart = $this->cartService->decrementCartItem($itemId);
-            return $this->successResponse($cart, 'Cart item quantity decreased successfully');
+            return $this->successResponse($cart, 'DECREMENT_CART_SUCCESS');
         } catch (\Exception $e) {
             return $this->errorResponse('DECREMENT_CART_ERROR', $e->getMessage(), 500);
         }
@@ -56,7 +56,7 @@ class CartController extends BaseController
     {
         try {
             $cart = $this->cartService->setCartItemQuantity($itemId, $request->quantity);
-            return $this->successResponse($cart, 'Cart item quantity updated successfully');
+            return $this->successResponse($cart, 'UPDATE_CART_SUCCESS');
         } catch (\Exception $e) {
             return $this->errorResponse('UPDATE_CART_ERROR', $e->getMessage(), 500);
         }
@@ -66,7 +66,7 @@ class CartController extends BaseController
     {
         try {
             $cart = $this->cartService->removeCartItem($itemId);
-            return $this->successResponse($cart, 'Cart item removed successfully');
+            return $this->successResponse($cart, 'REMOVE_CART_ITEM_SUCCESS');
         } catch (\Exception $e) {
             return $this->errorResponse('REMOVE_CART_ITEM_ERROR', $e->getMessage(), 500);
         }
@@ -76,7 +76,7 @@ class CartController extends BaseController
     {
         try {
             $this->cartService->clearCart();
-            return $this->successResponse(null, 'Cart cleared successfully');
+            return $this->successResponse(null, 'CLEAR_CART_SUCCESS');
         } catch (\Exception $e) {
             return $this->errorResponse('CLEAR_CART_ERROR', $e->getMessage(), 500);
         }

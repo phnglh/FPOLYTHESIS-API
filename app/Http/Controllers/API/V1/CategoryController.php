@@ -21,34 +21,34 @@ class CategoryController extends BaseController
     {
         $categories = $this->categoryService->getCategoriesWithPagination($request);
 
-        return $this->paginatedResponse(CategoryResource::collection($categories), 'Categories fetched successfully');
+        return $this->paginatedResponse(CategoryResource::collection($categories), 'GET_TO_CATEGORY_SUCCESS');
     }
 
     public function show($id)
     {
         $category = $this->categoryService->getCategoryById($id);
 
-        return $this->successResponse(new CategoryResource($category), 'Category details fetched successfully');
+        return $this->successResponse(new CategoryResource($category), 'GET_TO_CATEGORY_SUCCESS');
     }
 
     public function store(CategoryRequest $request)
     {
         $category = $this->categoryService->createCategory($request->validated());
 
-        return $this->successResponse(new CategoryResource($category), 'Category created successfully', 201);
+        return $this->successResponse(new CategoryResource($category), 'ADD_TO_CATEGORY_SUCCESS', 201);
     }
 
     public function update(CategoryRequest $request, $id)
     {
         $category = $this->categoryService->updateCategory($id, $request->validated());
 
-        return $this->successResponse(new CategoryResource($category), 'Category updated successfully');
+        return $this->successResponse(new CategoryResource($category), 'UPDATE_TO_CATEGORY_SUCCESS');
     }
 
     public function destroy($id)
     {
         $this->categoryService->deleteCategory($id);
 
-        return $this->successResponse(null, 'Category deleted successfully');
+        return $this->successResponse(null, 'DELETE_TO_CATEGORY_SUCCESS');
     }
 }

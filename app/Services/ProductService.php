@@ -128,8 +128,8 @@ class ProductService
             return [
                 'id' => $sku->id,
                 'sku' => $sku->sku,
-                'price' => $sku->price,
-                'stock' => $sku->stock,
+                'price' => (float) $sku->price,
+                'stock' => (int) $sku->stock,
                 'image_url' => $sku->image_url,
                 'attributes' => $sku->attribute_values->map(function ($attr) {
                     return [
@@ -183,8 +183,8 @@ class ProductService
             return [
                 'id' => $sku->id,
                 'sku' => $sku->sku,
-                'price' => $sku->price,
-                'stock' => $sku->stock,
+                'price' => (float) $sku->price,
+                'stock' => (int) $sku->stock,
                 'image_url' => $sku->image_url,
                 'attributes' => $sku->attribute_values->map(function ($attr) {
                     return [
@@ -214,8 +214,8 @@ class ProductService
             return [
                 'id' => $sku->id,
                 'sku' => $sku->sku,
-                'price' => $sku->price,
-                'stock' => $sku->stock,
+                'price' => (float) $sku->price,
+                'stock' => (int) $sku->stock,
                 'image_url' => $sku->image_url,
                 'attributes' => $sku->attribute_values->map(function ($attr) {
                     return [
