@@ -23,17 +23,20 @@ class CartService
 
         if (!$cart) {
             return [
-                'status' => 'error',
-                'message' => 'Giỏ hàng trống',
-                'data' => [],
+                'success' => false,
+                'cart' => [
+                    'id' => null,
+                    'user_id' => Auth::id(),
+                    'items' => [],
+                ],
             ];
         }
 
-        return new CartResource($cart);
+        return [
+            'success' => true,
+            'cart' => new CartResource($cart),
+        ];
     }
-
-
-
 
     public function addToCart($skuId, $quantity)
     {
@@ -42,11 +45,12 @@ class CartService
 
         $sku = Sku::with('product')->findOrFail($skuId);
 
+        // Kiểm tra kho trước khi thêm
         if ($sku->stock < $quantity) {
-            return response()->json([
+            return [
                 'error' => 'OUT_OF_STOCK',
                 'message' => 'Số lượng sản phẩm không đủ trong kho',
-            ], 400);
+            ];
         }
 
         $cartItem = CartItem::where('cart_id', $cart->id)
@@ -54,14 +58,17 @@ class CartService
             ->first();
 
         if ($cartItem) {
+            // Kiểm tra số lượng trong giỏ hàng cộng thêm số lượng mới
             if ($sku->stock < $cartItem->quantity + $quantity) {
-                return response()->json([
+                return [
                     'error' => 'STOCK_NOT_ENOUGH',
                     'message' => 'Số lượng sản phẩm trong kho không đủ',
-                ], 400);
+                ];
             }
+            // Cập nhật số lượng của sản phẩm trong giỏ hàng
             $cartItem->increment('quantity', $quantity);
         } else {
+            // Thêm sản phẩm mới vào giỏ hàng
             $cartItem = $cart->items()->create([
                 'sku_id' => $skuId,
                 'quantity' => $quantity,
@@ -69,15 +76,12 @@ class CartService
             ]);
         }
 
-        $sku->decrement('stock', $quantity);
-
-        return response()->json([
+        // Không trừ stock tại đây nữa
+        return [
             'success' => true,
             'cart' => new CartResource($cart->load('items.sku.product')),
-        ]);
+        ];
     }
-
-
 
     public function incrementCartItem($itemId)
     {
@@ -131,7 +135,7 @@ class CartService
 
         DB::beginTransaction();
         try {
-            $sku->decrement('stock', $quantityChange);
+            // Không trừ stock tại đây
             $cartItem->update(['quantity' => $newQuantity]);
 
             DB::commit();
@@ -148,6 +152,7 @@ class CartService
             ], 500);
         }
     }
+
     public function setCartItemQuantity($itemId, $quantity)
     {
         $cartItem = CartItem::where('id', $itemId)->whereHas('cart', function ($query) {
@@ -184,20 +189,13 @@ class CartService
             ], 400);
         }
 
-        $difference = $quantity - $cartItem->quantity;
-        if ($difference > 0) {
-            $sku->decrement('stock', $difference);
-        } elseif ($difference < 0) {
-            $sku->increment('stock', abs($difference));
-        }
-
+        // Không điều chỉnh stock tại đây
         $cartItem->update(['quantity' => $quantity]);
         return response()->json([
             'success' => true,
             'cart' => new CartResource($cartItem->cart->load('items.sku')),
         ]);
     }
-
 
     public function removeCartItem($itemId)
     {

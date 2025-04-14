@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Http\Resources\Orders\OrderResource;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Sku;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -51,6 +53,11 @@ class OrderService
                 $cartItem = $cart->items->where('sku_id', $skuId)->first();
                 if (!$cartItem) {
                     return ['error' => 'ITEM_NOT_FOUND', 'message' => 'Sản phẩm không tồn tại trong giỏ hàng'];
+                }
+
+                // Kiểm tra tồn kho trước khi tạo đơn
+                if ($cartItem->sku->stock < $cartItem->quantity) {
+                    return ['error' => 'OUT_OF_STOCK', 'message' => "Sản phẩm {$cartItem->sku->sku} không đủ tồn kho"];
                 }
 
                 $orderItems[] = [
@@ -119,6 +126,14 @@ class OrderService
             $paymentService = app(PaymentService::class);
             $paymentResult = $paymentService->processPayment($order->id, $paymentMethod);
 
+            // Trừ tồn kho cho COD ngay sau khi tạo đơn
+            if ($paymentMethod === 'cod') {
+                foreach ($orderItems as $item) {
+                    $sku = Sku::find($item['sku_id']);
+                    $sku->decrement('stock', $item['quantity']);
+                }
+            }
+
             // Xóa sản phẩm đã mua khỏi giỏ hàng
             CartItem::where('cart_id', $cart->id)->whereIn('sku_id', $selectedSkuIds)->delete();
 
@@ -144,15 +159,15 @@ class OrderService
     {
         $query = Order::with([
             'items.sku.product',
+            'items.sku.attributeSkus.attribute',
+            'items.sku.attributeSkus.attributeValue',
             'user',
             'address',
             'payment',
             'voucher'
         ]);
 
-        if (Auth::user()->hasRole('admin')) {
-            // Lấy tất cả đơn hàng
-        } else {
+        if (!Auth::user()->hasRole('admin')) {
             $query->where('user_id', Auth::id());
         }
 
@@ -164,12 +179,16 @@ class OrderService
             $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
         }
 
-        return $query->paginate(10);
+        $orders = $query->paginate(10);
+
+        return OrderResource::collection($orders);
     }
 
     public function getOrderDetail($orderId, $role)
     {
         $query = Order::with([
+            'items.sku.attributeSkus.attribute',
+            'items.sku.attributeSkus.attributeValue',
             'items.sku.product',
             'user',
             'address',
@@ -184,7 +203,10 @@ class OrderService
         $order = $query->first();
 
         if (!$order) {
-            return ['error' => 'ORDER_NOT_FOUND', 'message' => 'Đơn hàng không tồn tại hoặc bạn không có quyền xem'];
+            return response()->json([
+                'error' => 'ORDER_NOT_FOUND',
+                'message' => 'Đơn hàng không tồn tại hoặc bạn không có quyền xem'
+            ], 404);
         }
 
         return $order;
@@ -255,11 +277,25 @@ class OrderService
             return ['error' => 'ORDER_CANNOT_BE_CANCELLED', 'message' => 'Không thể hủy đơn hàng'];
         }
 
-        $order->update([
-            'status' => 'cancelled',
-            'payment_status' => $order->payment_status === 'paid' ? 'refunded' : 'unpaid'
-        ]);
+        return DB::transaction(function () use ($order) {
+            // Hoàn lại tồn kho nếu đã trừ trước đó
+            $orderItems = OrderItem::where('order_id', $order->id)->get();
+            foreach ($orderItems as $item) {
+                $sku = Sku::find($item->sku_id);
+                if ($sku) {
+                    // Hoàn tồn kho nếu thanh toán COD hoặc VNPay đã thành công
+                    if ($order->payment_status === 'paid' || $order->payment->payment_method === 'cod') {
+                        $sku->increment('stock', $item->quantity);
+                    }
+                }
+            }
 
-        return ['success' => true, 'order' => $order];
+            $order->update([
+                'status' => 'cancelled',
+                'payment_status' => $order->payment_status === 'paid' ? 'refunded' : 'unpaid'
+            ]);
+
+            return ['success' => true, 'order' => $order];
+        });
     }
 }
