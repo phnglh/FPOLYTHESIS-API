@@ -22,9 +22,14 @@ class ProductController extends BaseController
     public function index(Request $request)
     {
         $perPage = $request->query('per_page', 10);
-        $products = $this->productService->getAllProduct($perPage);
-        return $this->paginatedResponse(ProductResource::collection($products), 'Lấy danh sách sản phẩm thành công');
+        $products = $this->productService->getAllProduct($request, $perPage);
+
+        return $this->paginatedResponse(
+            ProductResource::collection($products),
+            'Lấy danh sách sản phẩm thành công'
+        );
     }
+
 
     public function show($id)
     {

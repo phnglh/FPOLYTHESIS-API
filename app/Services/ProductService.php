@@ -6,6 +6,7 @@ use App\Exceptions\ApiException;
 use App\Models\AttributeValue;
 use App\Models\Product;
 use App\Models\Sku;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -22,14 +23,48 @@ class ProductService
 
     // ------------------------- PUBLIC -------------------------
 
-    public function getAllProduct($perPage = 10)
+    public function getAllProduct(Request $request, $perPage = 10)
     {
-        $products = Product::with('category', 'brand', 'skus.attribute_values')->withSum('skus', 'stock')->paginate($perPage);
+        $query = Product::with('category', 'brand', 'skus.attribute_values')
+            ->withSum('skus', 'stock');
+
+        // Filter theo category
+        if ($request->has('category')) {
+            $query->where('category_id', $request->category);
+        }
+
+        // Filter theo brand
+        if ($request->has('brand')) {
+            $query->where('brand_id', $request->brand);
+        }
+
+        // Filter theo khoảng giá (dựa vào sku min/max price)
+        if ($request->has('min_price')) {
+            $query->whereHas('skus', function ($q) use ($request) {
+                $q->where('price', '>=', $request->min_price);
+            });
+        }
+
+        if ($request->has('max_price')) {
+            $query->whereHas('skus', function ($q) use ($request) {
+                $q->where('price', '<=', $request->max_price);
+            });
+        }
+
+        // Sort theo mới nhất
+        if ($request->sort === 'newest') {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $products = $query->paginate($perPage);
+
         if (!$products) {
             throw new ApiException('Không lấy được dữ liệu', 404);
         }
+
         return $products;
     }
+
 
     public function getProductById($id)
     {
