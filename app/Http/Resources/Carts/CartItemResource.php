@@ -13,12 +13,6 @@ class CartItemResource extends JsonResource
             'cart_id' => $this->cart_id,
             'sku_id' => $this->sku_id,
             'product_name' => $this->sku->product->name ?? 'N/A',
-            'attributes' => $this->sku->attributeSkus->map(function ($attrSku) {
-                return [
-                    'name' => $attrSku->attribute->name,
-                    'value' => $attrSku->attributeValue->value,
-                ];
-            }),
             'quantity' => (float) $this->quantity,
             'unit_price' => (float) $this->unit_price,
             'sku' => [
@@ -28,6 +22,12 @@ class CartItemResource extends JsonResource
                 'image_url' => $this->sku->image_url,
                 'price' => (float) $this->sku->price,
                 'stock' => (float) $this->sku->stock,
+                'attributes' => $this->sku->attributeSkus->map(function ($attrSku) {
+                    return [
+                        'name' => $attrSku->attribute->name,
+                        'value' => $attrSku->attributeValue->value,
+                    ];
+                }),
             ],
         ];
     }

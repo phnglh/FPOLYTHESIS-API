@@ -6,6 +6,7 @@ use App\Http\Controllers\API\BaseController;
 use App\Http\Requests\ReviewRequest;
 use App\Services\ReviewService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends BaseController
 {
@@ -33,7 +34,7 @@ class ReviewController extends BaseController
 
     public function store(ReviewRequest $request): JsonResponse
     {
-        $data = array_merge($request->validated(), ['user_id' => auth()->id()]);
+        $data = array_merge($request->validated(), ['user_id' => Auth::id()]);
         $review = $this->reviewService->createReview($data);
         return response()->json(['status' => 'success', 'data' => $review], 201);
     }
@@ -41,7 +42,7 @@ class ReviewController extends BaseController
 
     public function update(ReviewRequest $request, int $id): JsonResponse
     {
-        $data = array_merge($request->validated(), ['user_id' => auth()->id()]);
+        $data = array_merge($request->validated(), ['user_id' => Auth::id()]);
         $review = $this->reviewService->updateReview($id, $data);
         return response()->json(['status' => 'success', 'data' => $review], 200);
     }

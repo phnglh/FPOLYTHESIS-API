@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\API\BaseController;
-use App\Http\Requests\CartRequest;
 use App\Services\CartService;
 use Illuminate\Http\Request;
 
@@ -22,15 +21,25 @@ class CartController extends BaseController
         return $this->successResponse($cart, 'GET_TO_CART_SUCCESS');
     }
 
-    public function store(CartRequest $request)
+    public function store(Request $request)
     {
         try {
             $cart = $this->cartService->addToCart($request->sku_id, $request->quantity);
+
+            // Kiểm tra nếu kết quả là mảng và chứa lỗi
+            if (isset($cart['error'])) {
+                return response()->json([
+                    'error' => $cart['error'],
+                    'message' => $cart['message'],
+                ], 400); // Trả về lỗi nếu có
+            }
+
             return $this->successResponse($cart, 'ADD_TO_CART_SUCCESS');
         } catch (\Exception $e) {
             return $this->errorResponse('ADD_TO_CART_ERROR', $e->getMessage(), 500);
         }
     }
+
 
     public function increment($itemId)
     {

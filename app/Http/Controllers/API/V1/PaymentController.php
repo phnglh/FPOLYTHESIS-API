@@ -4,7 +4,9 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\API\BaseController;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\Sku;
 use App\Services\PaymentService;
 use App\Services\VNPayService;
 use Illuminate\Http\Request;
@@ -13,6 +15,7 @@ class PaymentController extends BaseController
 {
     protected $paymentService;
     protected $vnpayService;
+    protected $orderService;
 
     public function __construct(PaymentService $paymentService, VNPayService $vnpayService)
     {
@@ -113,6 +116,20 @@ class PaymentController extends BaseController
         }
 
         if ($inputData['vnp_ResponseCode'] == '00') {
+            // Kiểm tra và trừ tồn kho
+            $orderItems = OrderItem::where('order_id', $order->id)->get();
+            foreach ($orderItems as $item) {
+                $sku = Sku::find($item->sku_id);
+                if (!$sku || $sku->stock < $item->quantity) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Sản phẩm không đủ tồn kho',
+                        'data' => null,
+                        'errors' => ['stock' => "Sản phẩm {$item->sku} không đủ tồn kho"]
+                    ], 400);
+                }
+                $sku->decrement('stock', $item->quantity);
+            }
 
             // Cập nhật trạng thái thanh toán của đơn hàng
             $order->update([
@@ -135,7 +152,6 @@ class PaymentController extends BaseController
                 'errors' => null
             ]);
         } else {
-
             // Nếu giao dịch thất bại
             $payment->update([
                 'status' => 'failed',
