@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\API\BaseController;
+use App\Http\Resources\Carts\CartResource;
 use App\Services\CartService;
 use Illuminate\Http\Request;
 
@@ -18,7 +19,7 @@ class CartController extends BaseController
     public function index()
     {
         $cart = $this->cartService->getCart();
-        return $this->successResponse($cart, 'GET_TO_CART_SUCCESS');
+        return $this->successResponse(new CartResource($cart), 'GET_TO_CART_SUCCESS');
     }
 
     public function store(Request $request)
@@ -34,7 +35,7 @@ class CartController extends BaseController
                 ], 400); // Trả về lỗi nếu có
             }
 
-            return $this->successResponse($cart, 'ADD_TO_CART_SUCCESS');
+            return $this->successResponse(new CartResource($cart), 'ADD_TO_CART_SUCCESS');
         } catch (\Exception $e) {
             return $this->errorResponse('ADD_TO_CART_ERROR', $e->getMessage(), 500);
         }
@@ -45,7 +46,7 @@ class CartController extends BaseController
     {
         try {
             $cart = $this->cartService->incrementCartItem($itemId);
-            return $this->successResponse($cart, 'INCREMENT_CART_SUCCESS');
+            return $this->successResponse(new CartResource($cart), 'INCREMENT_CART_SUCCESS');
         } catch (\Exception $e) {
             return $this->errorResponse('INCREMENT_CART_ERROR', $e->getMessage(), 500);
         }
@@ -55,7 +56,7 @@ class CartController extends BaseController
     {
         try {
             $cart = $this->cartService->decrementCartItem($itemId);
-            return $this->successResponse($cart, 'DECREMENT_CART_SUCCESS');
+            return $this->successResponse(new CartResource($cart), 'DECREMENT_CART_SUCCESS');
         } catch (\Exception $e) {
             return $this->errorResponse('DECREMENT_CART_ERROR', $e->getMessage(), 500);
         }
@@ -65,7 +66,7 @@ class CartController extends BaseController
     {
         try {
             $cart = $this->cartService->setCartItemQuantity($itemId, $request->quantity);
-            return $this->successResponse($cart, 'UPDATE_CART_SUCCESS');
+            return $this->successResponse(new CartResource($cart), 'UPDATE_CART_SUCCESS');
         } catch (\Exception $e) {
             return $this->errorResponse('UPDATE_CART_ERROR', $e->getMessage(), 500);
         }
@@ -75,7 +76,7 @@ class CartController extends BaseController
     {
         try {
             $cart = $this->cartService->removeCartItem($itemId);
-            return $this->successResponse($cart, 'REMOVE_CART_ITEM_SUCCESS');
+            return $this->successResponse(new CartResource($cart), 'REMOVE_CART_ITEM_SUCCESS');
         } catch (\Exception $e) {
             return $this->errorResponse('REMOVE_CART_ITEM_ERROR', $e->getMessage(), 500);
         }

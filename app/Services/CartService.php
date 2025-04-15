@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Http\Resources\Carts\CartResource;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Sku;
@@ -32,10 +31,7 @@ class CartService
             ];
         }
 
-        return [
-            'success' => true,
-            'cart' => new CartResource($cart),
-        ];
+        return $cart;
     }
 
     public function addToCart($skuId, $quantity)
@@ -77,10 +73,9 @@ class CartService
         }
 
         // Không trừ stock tại đây nữa
-        return [
-            'success' => true,
-            'cart' => new CartResource($cart->load('items.sku.product')),
-        ];
+        $cart = $cartItem->cart()->with('items.sku.product')->first();
+
+        return $cart;
     }
 
     public function incrementCartItem($itemId)
@@ -140,10 +135,10 @@ class CartService
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'cart' => new CartResource($cartItem->cart->load('items.sku')),
-            ]);
+            $cart = $cartItem->cart()->with('items.sku')->first();
+
+            return $cart;
+
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -191,10 +186,10 @@ class CartService
 
         // Không điều chỉnh stock tại đây
         $cartItem->update(['quantity' => $quantity]);
-        return response()->json([
-            'success' => true,
-            'cart' => new CartResource($cartItem->cart->load('items.sku')),
-        ]);
+        $cart = $cartItem->cart()->with('items.sku')->first();
+
+        return $cart;
+
     }
 
     public function removeCartItem($itemId)
@@ -204,7 +199,9 @@ class CartService
         })->firstOrFail();
 
         $cartItem->delete();
-        return new CartResource($cartItem->cart->load('items.sku'));
+        $cart = $cartItem->cart()->with('items.sku')->first();
+
+        return $cart;
     }
 
     public function clearCart()
