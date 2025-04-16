@@ -15,6 +15,7 @@ use App\Http\Controllers\API\V1\VoucherController;
 use App\Http\Controllers\API\V1\WishListController;
 use App\Http\Controllers\API\V2\CategoryController as V2CategoryController;
 use App\Http\Controllers\API\V1\CartController;
+use App\Http\Controllers\API\V1\ReportController;
 use App\Http\Controllers\API\V1\UserAddressController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -171,6 +172,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/attributes/{attributeId}/values', [AttributeController::class, 'storeAttributeValue']);
             Route::put('/attributes/values/{id}', [AttributeController::class, 'updateAttributeValue']);
             Route::delete('/attributes/values/{id}', [AttributeController::class, 'destroyAttributeValue']);
+
+            // Report
+            Route::get('/reports/revenue', [ReportController::class, 'getRevenueReport']);// Option 1: Doanh thu
+            Route::get('/reports/orders', [ReportController::class, 'getOrderReport']); // Option 2: Đơn hàng
+            Route::get('/reports/products', [ReportController::class, 'getProductReport']); // Option 3: Sản phẩm
+            Route::get('/reports/customers', [ReportController::class, 'getCustomerReport']);// Option 4: Khách hàng
+            Route::get('/reports/inventory', [ReportController::class, 'getInventoryReport']); // Option 7: Kho hàng
+
         });
     });
 });

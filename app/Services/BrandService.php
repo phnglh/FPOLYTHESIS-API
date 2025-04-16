@@ -36,7 +36,7 @@ class BrandService
      */
     public function getBrandById(int $id)
     {
-        $brand = Brand::with('children')->find($id);
+        $brand = Brand::find($id);
 
         if (! $brand) {
             throw new ApiException('Không tìm thấy nhãn hàng', 'BRAND_NOT_FOUND', 404);
