@@ -100,4 +100,17 @@ class ProductController extends BaseController
             return response()->json(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
         }
     }
+
+    public function togglePublish($id)
+    {
+        try {
+            $product = $this->productService->togglePublish($id);
+            return $this->successResponse($product, 'Product publish status updated successfully');
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
+        }
+    }
 }
