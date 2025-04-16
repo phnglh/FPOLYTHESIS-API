@@ -143,7 +143,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/products', [ProductController::class, 'store']);
             Route::put('/products/{id}', [ProductController::class, 'update']);
             Route::patch('/products/{id}', [ProductController::class, 'updatePartial']);
-            Route::patch('/{id}/publish', [ProductController::class, 'togglePublish']);
+            Route::patch('products/{id}/publish', [ProductController::class, 'togglePublish']);
             Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
             // Route cho quản lý SKU
