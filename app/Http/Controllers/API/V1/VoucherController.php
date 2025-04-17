@@ -8,7 +8,6 @@ use App\Models\Voucher;
 use App\Services\VoucherService;
 use Illuminate\Http\Request;
 use App\Http\Resources\Voucher\VoucherResource;
-use App\Http\Resources\Voucher\VoucherCollection;
 
 class VoucherController extends BaseController
 {
@@ -24,7 +23,7 @@ class VoucherController extends BaseController
         $isAdmin = $request->user()->hasRole('admin');
         $vouchers = $this->voucherService->list($isAdmin);
 
-        return $this->successResponse(new VoucherCollection($vouchers), 'Vouchers retrieved successfully.');
+        return $this->successResponse(Voucher::Collection($vouchers), 'Vouchers retrieved successfully.');
     }
 
     public function store(VoucherRequest $request)

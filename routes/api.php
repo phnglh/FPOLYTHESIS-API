@@ -89,9 +89,6 @@ Route::prefix('v1')->group(function () {
         Route::get('/orders/{order_id}', [OrderController::class, 'show']); // xem chi tiết đơn hàng
         Route::delete('/orders/{orderId}', [OrderController::class, 'cancelOrder']); // Hủy đơn hàng của mình
 
-        // voucher
-        Route::post('/vouchers/apply', [VoucherController::class, 'apply']);
-
         // payment
         Route::post('/payment/pay', [PaymentController::class, 'payOrder']);
         Route::post('/payment/retry/{orderId}', [PaymentController::class, 'retryPayment']); // thanh toán lại

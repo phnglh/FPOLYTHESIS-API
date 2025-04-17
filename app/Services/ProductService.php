@@ -244,7 +244,7 @@ class ProductService
         return DB::transaction(function () use ($sku_id, $data) {
             $sku = Sku::findOrFail($sku_id);
 
-            // Chuẩn bị dữ liệu để cập nhật, chỉ lấy các trường có trong $data
+            // Chuẩn bị dữ liệu để cập nhật
             $updateData = [];
 
             // Kiểm tra và thêm các trường vào $updateData nếu tồn tại trong $data
@@ -257,14 +257,18 @@ class ProductService
             if (isset($data['stock'])) {
                 $updateData['stock'] = $data['stock'];
             }
-            if (isset($data['image_url'])) {
+            // Xử lý image_url linh hoạt
+            if (isset($data['image_url']) && is_string($data['image_url'])) {
+                // Nếu image_url là chuỗi, sử dụng chuỗi đó
                 $updateData['image_url'] = $data['image_url'];
             }
+            // Nếu image_url là file, để processSkuRelations xử lý
+            // Nếu không có image_url, giữ nguyên giá trị hiện tại
 
             // Cập nhật SKU với các trường đã được xác định
             $sku->update($this->getSkuData($updateData, $sku->product_id));
 
-            // Xử lý các quan hệ
+            // Xử lý các quan hệ (attributes, images, ...)
             $this->processSkuRelations($sku, $data);
 
             // Trả về thông tin SKU đã cập nhật

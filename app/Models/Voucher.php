@@ -11,8 +11,15 @@ class Voucher extends Model
     use HasFactory;
 
     protected $fillable = [
-        'code', 'type', 'discount_value', 'min_order_value',
-        'usage_limit', 'used_count', 'start_date', 'end_date', 'is_active',
+        'code',
+        'type',
+        'discount_value',
+        'min_order_value',
+        'usage_limit',
+        'used_count',
+        'start_date',
+        'end_date',
+        'is_active',
     ];
 
     protected $dates = [
