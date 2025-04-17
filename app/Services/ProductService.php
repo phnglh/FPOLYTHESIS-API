@@ -243,9 +243,31 @@ class ProductService
     {
         return DB::transaction(function () use ($sku_id, $data) {
             $sku = Sku::findOrFail($sku_id);
-            $sku->update($this->getSkuData($data, $sku->product_id));
+
+            // Chuẩn bị dữ liệu để cập nhật, chỉ lấy các trường có trong $data
+            $updateData = [];
+
+            // Kiểm tra và thêm các trường vào $updateData nếu tồn tại trong $data
+            if (isset($data['sku'])) {
+                $updateData['sku'] = $data['sku'];
+            }
+            if (isset($data['price'])) {
+                $updateData['price'] = $data['price'];
+            }
+            if (isset($data['stock'])) {
+                $updateData['stock'] = $data['stock'];
+            }
+            if (isset($data['image_url'])) {
+                $updateData['image_url'] = $data['image_url'];
+            }
+
+            // Cập nhật SKU với các trường đã được xác định
+            $sku->update($this->getSkuData($updateData, $sku->product_id));
+
+            // Xử lý các quan hệ
             $this->processSkuRelations($sku, $data);
 
+            // Trả về thông tin SKU đã cập nhật
             return [
                 'id' => $sku->id,
                 'sku' => $sku->sku,
