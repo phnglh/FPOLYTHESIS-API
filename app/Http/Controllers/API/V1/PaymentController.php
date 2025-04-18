@@ -145,12 +145,14 @@ class PaymentController extends BaseController
                 'payment_details' => json_encode($inputData),
             ]);
 
-            return response()->json([
+
+
+            return redirect()->to('http://localhost:3000/order-status?' . http_build_query([
                 'success' => true,
                 'message' => 'Thanh toán thành công',
-                'data' => $order,
-                'errors' => null
-            ]);
+                'order_number' => $order->order_number,
+            ]));
+
         } else {
             // Nếu giao dịch thất bại
             $payment->update([
@@ -162,12 +164,11 @@ class PaymentController extends BaseController
                 'payment_status' => 'failed'
             ]);
 
-            return response()->json([
-                'success' => false,
+            return redirect()->to('http://localhost:3000/order-status?' . http_build_query([
+                'success' => 0,
                 'message' => 'Thanh toán thất bại',
-                'data' => $order,
-                'errors' => ['payment' => 'Transaction failed']
-            ]);
+                'order_number' => $order->order_number,
+            ]));
         }
     }
 
