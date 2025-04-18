@@ -151,6 +151,7 @@ class PaymentController extends BaseController
                 'success' => true,
                 'message' => 'Thanh toán thành công',
                 'order_number' => $order->order_number,
+                "id" => $order->id
             ]));
 
         } else {
@@ -168,6 +169,7 @@ class PaymentController extends BaseController
                 'success' => 0,
                 'message' => 'Thanh toán thất bại',
                 'order_number' => $order->order_number,
+                "id" => $order->id
             ]));
         }
     }
