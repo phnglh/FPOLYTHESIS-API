@@ -128,15 +128,22 @@ class ProductService
         return DB::transaction(function () use ($id, $data) {
             $product = Product::lockForUpdate()->findOrFail($id);
 
-            // Cập nhật thông tin sản phẩm
-            $product->update($this->getProductData($data));
+            // Loại bỏ image_url khỏi dữ liệu cập nhật chung
+            $productData = $this->getProductData($data);
+            unset($productData['image_url']);
 
-            // Xử lý ảnh sản phẩm
-            if (!empty($data['image_url']) && $data['image_url'] instanceof UploadedFile) {
-                $uploadedImage = $this->imageUploadService->uploadSingle($data['image_url'], true, $product);
+            // Cập nhật các trường khác (không chạm đến image_url)
+            $product->update($productData);
+
+            // Chỉ xử lý ảnh nếu có file mới hợp lệ
+            if (request()->hasFile('image_url') && request()->file('image_url')->isValid()) {
+                $uploadedImage = $this->imageUploadService->uploadSingle(request()->file('image_url'), true, $product);
+
                 if (!$uploadedImage) {
                     throw new ApiException('Failed to upload product image', 500);
                 }
+
+                // Xóa ảnh cũ nếu có
                 if ($product->image_url) {
                     try {
                         Storage::disk('s3')->delete($product->image_url);
@@ -148,13 +155,14 @@ class ProductService
                         ]);
                     }
                 }
+
+                // Cập nhật image_url mới
                 $product->update(['image_url' => $uploadedImage]);
             }
 
             return $product;
         });
     }
-
     // Lấy danh sách SKU của sản phẩm
     public function getSkusByProductId($product_id)
     {
