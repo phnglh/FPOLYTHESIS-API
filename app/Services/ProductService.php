@@ -245,7 +245,9 @@ class ProductService
             $sku = Sku::findOrFail($sku_id);
 
             // Chuẩn bị dữ liệu để cập nhật
-            $updateData = [];
+            $updateData = [
+                'image_url' => $sku->image_url, // Giữ nguyên image_url hiện tại
+            ];
 
             // Kiểm tra và thêm các trường vào $updateData nếu tồn tại trong $data
             if (isset($data['sku'])) {
@@ -257,15 +259,19 @@ class ProductService
             if (isset($data['stock'])) {
                 $updateData['stock'] = $data['stock'];
             }
-            // Xử lý image_url linh hoạt
-            if (isset($data['image_url']) && is_string($data['image_url'])) {
-                // Nếu image_url là chuỗi, sử dụng chuỗi đó
-                $updateData['image_url'] = $data['image_url'];
+            // Xử lý image_url chỉ khi có dữ liệu mới
+            if (isset($data['image_url']) && !empty($data['image_url'])) {
+                if ($data['image_url'] instanceof UploadedFile) {
+                    // Nếu là file, lưu file và cập nhật đường dẫn
+                    $path = $data['image_url']->store('images', 'public');
+                    $updateData['image_url'] = $path;
+                } elseif (is_string($data['image_url']) && !empty($data['image_url'])) {
+                    // Nếu là chuỗi không rỗng, sử dụng chuỗi
+                    $updateData['image_url'] = $data['image_url'];
+                }
             }
-            // Nếu image_url là file, để processSkuRelations xử lý
-            // Nếu không có image_url, giữ nguyên giá trị hiện tại
 
-            // Cập nhật SKU với các trường đã được xác định
+            // Cập nhật SKU với các trường đã xác định
             $sku->update($this->getSkuData($updateData, $sku->product_id));
 
             // Xử lý các quan hệ (attributes, images, ...)
@@ -344,8 +350,8 @@ class ProductService
 
     private function processSkuRelations(Sku $sku, array $skuData)
     {
-        // Xử lý ảnh SKU
-        if (!empty($skuData['image_url'])) {
+        // Xử lý ảnh SKU chỉ khi có dữ liệu image_url mới
+        if (isset($skuData['image_url']) && !empty($skuData['image_url'])) {
             $uploadedImages = [];
 
             if ($skuData['image_url'] instanceof UploadedFile) {
@@ -376,6 +382,7 @@ class ProductService
                 $sku->images()->createMany($imageRecords);
             }
         }
+        // Nếu không có image_url, không làm gì với ảnh
 
         // Cập nhật thuộc tính SKU
         $sku->attribute_values()->detach();
@@ -392,7 +399,6 @@ class ProductService
             }
         }
     }
-
     private function getProductData(array $data): array
     {
         return [
