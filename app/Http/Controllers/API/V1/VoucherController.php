@@ -7,6 +7,7 @@ use App\Http\Requests\VoucherRequest;
 use App\Services\VoucherService;
 use Illuminate\Http\Request;
 use App\Http\Resources\Voucher\VoucherResource;
+use App\Models\Voucher; // Thêm dòng này
 
 class VoucherController extends BaseController
 {
@@ -32,7 +33,7 @@ class VoucherController extends BaseController
         return $this->successResponse(new VoucherResource($voucher), 'Voucher created successfully.');
     }
 
-    public function update(VoucherRequest $request, Voucher $voucher)
+    public function update(VoucherRequest $request, $voucher)
     {
         if (!$request->user()) {
             return $this->errorResponse('UNAUTHORIZED', 'Invalid token or user not logged in.', 401);
@@ -42,7 +43,13 @@ class VoucherController extends BaseController
             return $this->errorResponse('FORBIDDEN', 'You do not have permission to perform this action.', 403);
         }
 
-        $updatedVoucher = $this->voucherService->update($voucher, $request->validated());
+        // Tìm voucher theo ID
+        $voucherModel = Voucher::find($voucher);
+        if (!$voucherModel) {
+            return $this->errorResponse('NOT_FOUND', 'Voucher not found.', 404);
+        }
+
+        $updatedVoucher = $this->voucherService->update($voucherModel, $request->validated());
 
         return $this->successResponse(new VoucherResource($updatedVoucher), 'Voucher updated successfully.');
     }
