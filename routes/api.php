@@ -173,12 +173,18 @@ Route::prefix('v1')->group(function () {
             Route::put('/attributes/values/{id}', [AttributeController::class, 'updateAttributeValue']);
             Route::delete('/attributes/values/{id}', [AttributeController::class, 'destroyAttributeValue']);
 
-            // Report
-            Route::get('/reports/revenue', [ReportController::class, 'getRevenueReport']);// Option 1: Doanh thu
-            Route::get('/reports/orders', [ReportController::class, 'getOrderReport']); // Option 2: Đơn hàng
-            Route::get('/reports/products', [ReportController::class, 'getProductReport']); // Option 3: Sản phẩm
-            Route::get('/reports/customers', [ReportController::class, 'getCustomerReport']);// Option 4: Khách hàng
-            Route::get('/reports/inventory', [ReportController::class, 'getInventoryReport']); // Option 7: Kho hàng
+            Route::prefix('reports')->group(function () {
+                Route::get('/revenue', [ReportController::class, 'getRevenueReport']);
+                Route::get('/orders', [ReportController::class, 'getOrderReport']);
+                Route::get('/products', [ReportController::class, 'getProductReport']);
+                Route::get('/customers', [ReportController::class, 'getCustomerReport']);
+                Route::get('/inventory', [ReportController::class, 'getInventoryReport']);
+                Route::get('/monthly-revenue', [ReportController::class, 'getMonthlyRevenueReport']);
+                Route::get('/cancel-rate', [ReportController::class, 'getCancelRate']);
+                Route::get('/revenue-by-category', [ReportController::class, 'getRevenueByCategory']);
+                Route::get('/daily-average', [ReportController::class, 'getDailyAverageOrderValue']);
+            });
+
 
         });
     });

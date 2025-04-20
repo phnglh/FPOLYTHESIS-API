@@ -4,12 +4,18 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\API\BaseController;
 use App\Http\Requests\ReportRequest;
-use App\Http\Resources\ReportFlames\RevenueReportResource;
-use App\Http\Resources\ReportFlames\OrderReportResource;
-use App\Http\Resources\ReportFlames\ProductReportResource;
-use App\Http\Resources\ReportFlames\CustomerReportResource;
-use App\Http\Resources\ReportFlames\InventoryReportResource;
+use App\Http\Resources\ReportFlames\{
+    RevenueReportResource,
+    OrderReportResource,
+    ProductReportResource,
+    CustomerReportResource,
+    InventoryReportResource,
+    MonthlyRevenueReportResource,
+    RevenueByCategoryResource,
+    DailyAverageOrderResource
+};
 use App\Services\ReportService;
+use Illuminate\Support\Facades\Log;
 
 class ReportController extends BaseController
 {
@@ -87,6 +93,60 @@ class ReportController extends BaseController
             );
         } catch (\Exception $e) {
             return $this->errorResponse('INVENTORY_REPORT_ERROR', $e->getMessage(), 500);
+        }
+    }
+
+    public function getMonthlyRevenueReport(ReportRequest $request)
+    {
+        try {
+            $filters = $request->validated();
+            $data = $this->reportService->getMonthlyRevenueReport($filters);
+            return $this->successResponse(
+                MonthlyRevenueReportResource::collection($data),
+                'GET_MONTHLY_REVENUE_REPORT_SUCCESS'
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse('MONTHLY_REVENUE_REPORT_ERROR', $e->getMessage(), 500);
+        }
+    }
+
+    public function getCancelRate(ReportRequest $request)
+    {
+        try {
+            $filters = $request->validated();
+            $data = $this->reportService->getCancelRate($filters);
+            return $this->successResponse($data, 'GET_CANCEL_RATE_SUCCESS');
+        } catch (\Exception $e) {
+            return $this->errorResponse('CANCEL_RATE_ERROR', $e->getMessage(), 500);
+        }
+    }
+
+    public function getRevenueByCategory(ReportRequest $request)
+    {
+        try {
+            $filters = $request->validated();
+            $data = $this->reportService->getRevenueByCategory($filters);
+            Log::debug($data);
+            return $this->successResponse(
+                RevenueByCategoryResource::collection($data),
+                'GET_REVENUE_BY_CATEGORY_SUCCESS'
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse('REVENUE_BY_CATEGORY_ERROR', $e->getMessage(), 500);
+        }
+    }
+
+    public function getDailyAverageOrderValue(ReportRequest $request)
+    {
+        try {
+            $filters = $request->validated();
+            $data = $this->reportService->getDailyAverageOrderValue($filters);
+            return $this->successResponse(
+                DailyAverageOrderResource::collection($data),
+                'GET_DAILY_AVG_ORDER_SUCCESS'
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse('DAILY_AVG_ORDER_ERROR', $e->getMessage(), 500);
         }
     }
 }
