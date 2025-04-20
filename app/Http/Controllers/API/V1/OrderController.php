@@ -94,4 +94,17 @@ class OrderController extends BaseController
 
         return $this->successResponse($result['order'], 'Đơn hàng đã được hủy');
     }
+
+    public function checkVoucher(Request $request)
+    {
+        $request->validate([
+            'voucher_code' => 'nullable|string',
+            'selected_sku_ids' => 'required|array',
+            'selected_sku_ids.*' => 'integer|exists:skus,id',
+        ]);
+
+        $result = $this->orderService->checkVoucher($request->voucher_code, $request->selected_sku_ids);
+
+        return response()->json($result);
+    }
 }

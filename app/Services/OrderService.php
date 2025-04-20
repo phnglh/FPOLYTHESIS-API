@@ -298,4 +298,80 @@ class OrderService
             return ['success' => true, 'order' => $order];
         });
     }
+
+    public function checkVoucher($voucherCode, $selectedSkuIds)
+    {
+        $userId = Auth::id();
+        $cart = Cart::where('user_id', $userId)->with('items.sku')->first();
+
+        if (!$cart || $cart->items->isEmpty()) {
+            return ['error' => 'CART_EMPTY', 'message' => 'Giỏ hàng trống'];
+        }
+
+        // Tính tổng tiền của các sản phẩm được chọn
+        $subtotal = 0;
+        foreach ($selectedSkuIds as $skuId) {
+            $cartItem = $cart->items->where('sku_id', $skuId)->first();
+            if (!$cartItem) {
+                return ['error' => 'ITEM_NOT_FOUND', 'message' => 'Sản phẩm không tồn tại trong giỏ hàng'];
+            }
+
+            if ($cartItem->sku->stock < $cartItem->quantity) {
+                return ['error' => 'OUT_OF_STOCK', 'message' => "Sản phẩm {$cartItem->sku->sku} không đủ tồn kho"];
+            }
+
+            $subtotal += $cartItem->quantity * $cartItem->sku->price;
+        }
+
+        // Kiểm tra mã giảm giá
+        $discount = 0;
+        $voucherDetails = null;
+
+        if (empty($voucherCode)) {
+            return [
+                'success' => true,
+                'subtotal' => $subtotal,
+                'discount' => $discount,
+                'final_total' => $subtotal,
+                'message' => 'Không có mã giảm giá được áp dụng'
+            ];
+        }
+
+        $voucher = Voucher::where('code', strtoupper($voucherCode))->first();
+        if (!$voucher) {
+            return ['error' => 'VOUCHER_NOT_FOUND', 'message' => 'Mã giảm giá không tồn tại'];
+        }
+
+        if (!$voucher->is_active) {
+            return ['error' => 'VOUCHER_INACTIVE', 'message' => 'Mã giảm giá đã bị vô hiệu hóa'];
+        }
+
+        if ($voucher->usage_limit !== null && $voucher->used_count >= $voucher->usage_limit) {
+            return ['error' => 'VOUCHER_EXPIRED', 'message' => 'Mã giảm giá đã đạt giới hạn sử dụng'];
+        }
+
+        if ($voucher->min_order_value && $subtotal < $voucher->min_order_value) {
+            return ['error' => 'VOUCHER_MIN_ORDER', 'message' => 'Đơn hàng không đủ điều kiện áp dụng mã giảm giá'];
+        }
+
+        $discount = ($voucher->type === 'percentage')
+            ? ($subtotal * $voucher->discount_value / 100)
+            : $voucher->discount_value;
+
+        $discount = min($discount, $subtotal);
+        $finalTotal = max($subtotal - $discount, 0);
+
+        return [
+            'success' => true,
+            'subtotal' => $subtotal,
+            'discount' => $discount,
+            'final_total' => $finalTotal,
+            'voucher' => [
+                'code' => $voucher->code,
+                'type' => $voucher->type,
+                'discount_value' => $voucher->discount_value,
+            ],
+            'message' => 'Mã giảm giá được áp dụng thành công'
+        ];
+    }
 }
