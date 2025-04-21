@@ -4,18 +4,14 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\API\BaseController;
 use App\Http\Requests\ReportRequest;
+use App\Services\ReportService;
 use App\Http\Resources\ReportFlames\{
-    RevenueReportResource,
-    OrderReportResource,
     ProductReportResource,
     CustomerReportResource,
-    InventoryReportResource,
-    MonthlyRevenueReportResource,
     RevenueByCategoryResource,
-    DailyAverageOrderResource
+    RevenueStatisticsResource
 };
-use App\Services\ReportService;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 
 class ReportController extends BaseController
 {
@@ -31,10 +27,7 @@ class ReportController extends BaseController
         try {
             $filters = $request->validated();
             $data = $this->reportService->getRevenueReport($filters);
-            return $this->successResponse(
-                RevenueReportResource::collection($data),
-                'GET_REVENUE_REPORT_SUCCESS'
-            );
+            return $this->successResponse($data, 'GET_REVENUE_REPORT_SUCCESS');
         } catch (\Exception $e) {
             return $this->errorResponse('REVENUE_REPORT_ERROR', $e->getMessage(), 500);
         }
@@ -45,68 +38,9 @@ class ReportController extends BaseController
         try {
             $filters = $request->validated();
             $data = $this->reportService->getOrderReport($filters);
-            return $this->successResponse(
-                OrderReportResource::collection($data),
-                'GET_ORDER_REPORT_SUCCESS'
-            );
+            return $this->successResponse($data, 'GET_ORDER_REPORT_SUCCESS');
         } catch (\Exception $e) {
             return $this->errorResponse('ORDER_REPORT_ERROR', $e->getMessage(), 500);
-        }
-    }
-
-    public function getProductReport(ReportRequest $request)
-    {
-        try {
-            $filters = $request->validated();
-            $data = $this->reportService->getProductReport($filters);
-            return $this->successResponse(
-                ProductReportResource::collection($data),
-                'GET_PRODUCT_REPORT_SUCCESS'
-            );
-        } catch (\Exception $e) {
-            return $this->errorResponse('PRODUCT_REPORT_ERROR', $e->getMessage(), 500);
-        }
-    }
-
-    public function getCustomerReport(ReportRequest $request)
-    {
-        try {
-            $filters = $request->validated();
-            $data = $this->reportService->getCustomerReport($filters);
-            return $this->successResponse(
-                CustomerReportResource::collection($data),
-                'GET_CUSTOMER_REPORT_SUCCESS'
-            );
-        } catch (\Exception $e) {
-            return $this->errorResponse('CUSTOMER_REPORT_ERROR', $e->getMessage(), 500);
-        }
-    }
-
-    public function getInventoryReport(ReportRequest $request)
-    {
-        try {
-            $filters = $request->validated();
-            $data = $this->reportService->getInventoryReport($filters);
-            return $this->successResponse(
-                InventoryReportResource::collection($data),
-                'GET_INVENTORY_REPORT_SUCCESS'
-            );
-        } catch (\Exception $e) {
-            return $this->errorResponse('INVENTORY_REPORT_ERROR', $e->getMessage(), 500);
-        }
-    }
-
-    public function getMonthlyRevenueReport(ReportRequest $request)
-    {
-        try {
-            $filters = $request->validated();
-            $data = $this->reportService->getMonthlyRevenueReport($filters);
-            return $this->successResponse(
-                MonthlyRevenueReportResource::collection($data),
-                'GET_MONTHLY_REVENUE_REPORT_SUCCESS'
-            );
-        } catch (\Exception $e) {
-            return $this->errorResponse('MONTHLY_REVENUE_REPORT_ERROR', $e->getMessage(), 500);
         }
     }
 
@@ -126,7 +60,6 @@ class ReportController extends BaseController
         try {
             $filters = $request->validated();
             $data = $this->reportService->getRevenueByCategory($filters);
-            Log::debug($data);
             return $this->successResponse(
                 RevenueByCategoryResource::collection($data),
                 'GET_REVENUE_BY_CATEGORY_SUCCESS'
@@ -136,17 +69,49 @@ class ReportController extends BaseController
         }
     }
 
-    public function getDailyAverageOrderValue(ReportRequest $request)
+    public function getTopProductReport(ReportRequest $request)
     {
         try {
             $filters = $request->validated();
-            $data = $this->reportService->getDailyAverageOrderValue($filters);
+            $data = $this->reportService->getTopProductReport($filters);
             return $this->successResponse(
-                DailyAverageOrderResource::collection($data),
-                'GET_DAILY_AVG_ORDER_SUCCESS'
+                ProductReportResource::collection($data),
+                'GET_TOP_PRODUCT_REPORT_SUCCESS'
             );
         } catch (\Exception $e) {
-            return $this->errorResponse('DAILY_AVG_ORDER_ERROR', $e->getMessage(), 500);
+            return $this->errorResponse('TOP_PRODUCT_REPORT_ERROR', $e->getMessage(), 500);
+        }
+    }
+
+    public function getTopCustomerReport(ReportRequest $request)
+    {
+        try {
+            $filters = $request->validated();
+            $data = $this->reportService->getTopCustomerReport($filters);
+            return $this->successResponse(
+                CustomerReportResource::collection($data),
+                'GET_TOP_CUSTOMER_REPORT_SUCCESS'
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse('TOP_CUSTOMER_REPORT_ERROR', $e->getMessage(), 500);
+        }
+    }
+
+    public function index(Request $request)
+    {
+        try {
+            $statistics = $this->reportService->getRevenueStatistics($request);
+            return response()->json([
+                'success' => true,
+                'data' => new RevenueStatisticsResource($statistics),
+                'message' => 'Lấy thống kê doanh thu thành công'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'ERROR',
+                'message' => $e->getMessage()
+            ], $e->getCode() ?: 500);
         }
     }
 }

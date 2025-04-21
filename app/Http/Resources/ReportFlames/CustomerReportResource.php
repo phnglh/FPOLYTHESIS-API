@@ -9,10 +9,8 @@ class CustomerReportResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'name' => $this->resource['name'],
-            'email' => $this->resource['email'],
-            'order_count' => (int) $this->resource['order_count'],
-            'total_spent' => (float) $this->resource['total_spent'],
+            'name' => $this->name ?? 'Không xác định',
+            'total_spent' => (float) $this->total_spent,
         ];
     }
 }

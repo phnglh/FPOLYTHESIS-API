@@ -7,7 +7,8 @@ use App\Http\Requests\VoucherRequest;
 use App\Services\VoucherService;
 use Illuminate\Http\Request;
 use App\Http\Resources\Voucher\VoucherResource;
-use App\Models\Voucher; // Thêm dòng này
+use App\Models\Voucher;
+use Illuminate\Support\Facades\Validator;
 
 class VoucherController extends BaseController
 {
@@ -43,7 +44,6 @@ class VoucherController extends BaseController
             return $this->errorResponse('FORBIDDEN', 'You do not have permission to perform this action.', 403);
         }
 
-        // Tìm voucher theo ID
         $voucherModel = Voucher::find($voucher);
         if (!$voucherModel) {
             return $this->errorResponse('NOT_FOUND', 'Voucher not found.', 404);
@@ -71,5 +71,33 @@ class VoucherController extends BaseController
         $result = $this->voucherService->apply($request->code, $request->order_total);
 
         return $this->successResponse($result, 'Voucher applied successfully.');
+    }
+
+    public function toggleActive(Request $request, $id)
+    {
+        if (!$request->user()) {
+            return $this->errorResponse('UNAUTHORIZED', 'Invalid token or user not logged in.', 401);
+        }
+
+        if (!$request->user()->hasRole('admin')) {
+            return $this->errorResponse('FORBIDDEN', 'You do not have permission to perform this action.', 403);
+        }
+
+        $voucher = Voucher::find($id);
+        if (!$voucher) {
+            return $this->errorResponse('NOT_FOUND', 'Voucher not found.', 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'is_active' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->errorResponse('VALIDATION_ERROR', $validator->errors()->first(), 422);
+        }
+
+        $updatedVoucher = $this->voucherService->toggleActive($voucher, $request->is_active);
+
+        return $this->successResponse(new VoucherResource($updatedVoucher), 'Voucher status updated successfully.');
     }
 }

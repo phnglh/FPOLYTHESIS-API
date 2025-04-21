@@ -164,6 +164,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/vouchers', [VoucherController::class, 'store']);
             Route::put('/vouchers/{voucher}', [VoucherController::class, 'update']);
             Route::delete('/vouchers/{voucher}', [VoucherController::class, 'destroy']);
+            Route::patch('/vouchers/{id}', [VoucherController::class, 'toggleActive']);
 
             // Attribute (CRUD)
             Route::post('/attributes', [AttributeController::class, 'store']);
@@ -176,13 +177,11 @@ Route::prefix('v1')->group(function () {
             Route::prefix('reports')->group(function () {
                 Route::get('/revenue', [ReportController::class, 'getRevenueReport']);
                 Route::get('/orders', [ReportController::class, 'getOrderReport']);
-                Route::get('/products', [ReportController::class, 'getProductReport']);
-                Route::get('/customers', [ReportController::class, 'getCustomerReport']);
-                Route::get('/inventory', [ReportController::class, 'getInventoryReport']);
-                Route::get('/monthly-revenue', [ReportController::class, 'getMonthlyRevenueReport']);
                 Route::get('/cancel-rate', [ReportController::class, 'getCancelRate']);
                 Route::get('/revenue-by-category', [ReportController::class, 'getRevenueByCategory']);
-                Route::get('/daily-average', [ReportController::class, 'getDailyAverageOrderValue']);
+                Route::get('/top-products', [ReportController::class, 'getTopProductReport']);
+                Route::get('/top-customers', [ReportController::class, 'getTopCustomerReport']);
+                Route::get('/revenue-statistics', [ReportController::class, 'index']);
             });
 
 

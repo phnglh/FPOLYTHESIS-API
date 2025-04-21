@@ -43,6 +43,17 @@ class VoucherService
         });
     }
 
+    public function toggleActive(Voucher $voucher, bool $isActive)
+    {
+        return DB::transaction(function () use ($voucher, $isActive) {
+            $voucher->update([
+                'is_active' => $isActive,
+            ]);
+
+            return $voucher;
+        });
+    }
+
     public function delete(Voucher $voucher)
     {
         return DB::transaction(function () use ($voucher) {
