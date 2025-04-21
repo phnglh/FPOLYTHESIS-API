@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Http\Resources\Orders\OrderResource;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Order;
@@ -155,7 +154,7 @@ class OrderService
         });
     }
 
-    public function getOrderList(Request $request)
+    public function getOrderList(Request $request, $perPage)
     {
         $query = Order::with([
             'items.sku.product',
@@ -179,9 +178,9 @@ class OrderService
             $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
         }
 
-        $orders = $query->paginate(10);
+        $orders = $query->paginate($perPage);
 
-        return OrderResource::collection($orders);
+        return $orders;
     }
 
     public function getOrderDetail($orderId, $role)

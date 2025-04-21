@@ -50,9 +50,10 @@ class OrderController extends BaseController
 
     public function index(Request $request)
     {
-        $orders = $this->orderService->getOrderList($request);
+        $perPage = $request->query('per_page', 10);
+        $orders = $this->orderService->getOrderList($request, $perPage);
 
-        return $this->successResponse(OrderResource::collection($orders), 'Danh sách đơn hàng');
+        return $this->paginatedResponse(OrderResource::collection($orders), 'Danh sách đơn hàng');
     }
 
 
