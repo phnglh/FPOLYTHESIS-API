@@ -46,6 +46,7 @@ Route::prefix('v1')->group(function () {
     // Product
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{id}', [ProductController::class, 'show']);
+    Route::get('/products/{productId}/reviews', [ReviewController::class, 'index']);
 
     // Review, Promotion (Public access)
     Route::apiResource('promotions', PromotionController::class);
@@ -63,7 +64,6 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/payment/vnpay-return', [PaymentController::class, 'vnPayCallback']);
 
-
     // -------------------------
     // Private API (Cần đăng nhập)
     // -------------------------
@@ -78,9 +78,7 @@ Route::prefix('v1')->group(function () {
 
 
         Route::get('/reviews', [ReviewController::class, 'index']);
-        Route::get('/reviews/{id}', [ReviewController::class, 'show']);
         Route::post('/reviews', [ReviewController::class, 'store']);
-        Route::put('/reviews/{id}', [ReviewController::class, 'update']);
         Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
 
         // order
