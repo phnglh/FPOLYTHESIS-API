@@ -16,113 +16,67 @@ class CartService
             ->with([
                 'items.sku.product',
                 'items.sku.attributeSkus.attribute',
-                'items.sku.attributeSkus.attributeValue'
+                'items.sku.attributeSkus.attributeValue',
             ])
             ->first();
 
         if (!$cart) {
             return [
-                'status' => 'error',
-                'message' => 'Giỏ hàng trống',
-                'data' => []
+                'success' => false,
+                'cart' => [
+                    'id' => null,
+                    'user_id' => Auth::id(),
+                    'items' => [],
+                ],
             ];
         }
 
-        $cartItems = $cart->items->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'cart_id' => $item->cart_id,
-                'sku_id' => $item->sku_id,
-                'product_name' => $item->sku->product->name ?? 'N/A',
-                'attributes' => $item->sku->attributeSkus->map(function ($attrSku) {
-                    return [
-                        'name' => $attrSku->attribute->name,
-                        'value' => $attrSku->attributeValue->value
-                    ];
-                }),
-                'quantity' => $item->quantity,
-                'unit_price' => $item->unit_price,
-                'sku' => [
-                    'id' => $item->sku->id,
-                    'sku' => $item->sku->sku,
-                    'product_id' => $item->sku->product_id,
-                    'image_url' => $item->sku->image_url,
-                    'price' => $item->sku->price,
-                    'stock' => $item->sku->stock,
-
-                ]
-            ];
-        });
-
-        return [
-            'id' => $cart->id,
-            'user_id' => $cart->user_id,
-            'created_at' => $cart->created_at,
-            'updated_at' => $cart->updated_at,
-            'items' => $cartItems
-        ];
+        return $cart;
     }
-
-
-
 
     public function addToCart($skuId, $quantity)
     {
         $userId = Auth::id();
         $cart = Cart::firstOrCreate(['user_id' => $userId]);
 
-        // Lấy SKU kèm theo product để có product_name
         $sku = Sku::with('product')->findOrFail($skuId);
 
+        // Kiểm tra kho trước khi thêm
         if ($sku->stock < $quantity) {
-            return response()->json([
+            return [
                 'error' => 'OUT_OF_STOCK',
-                'message' => 'Số lượng sản phẩm không đủ trong kho'
-            ], 400);
+                'message' => 'Số lượng sản phẩm không đủ trong kho',
+            ];
         }
 
-        // Kiểm tra sản phẩm đã có trong giỏ hàng chưa
         $cartItem = CartItem::where('cart_id', $cart->id)
             ->where('sku_id', $skuId)
             ->first();
 
         if ($cartItem) {
-            // Kiểm tra tổng số lượng có vượt kho không
+            // Kiểm tra số lượng trong giỏ hàng cộng thêm số lượng mới
             if ($sku->stock < $cartItem->quantity + $quantity) {
-                return response()->json([
+                return [
                     'error' => 'STOCK_NOT_ENOUGH',
-                    'message' => 'Số lượng sản phẩm trong kho không đủ'
-                ], 400);
+                    'message' => 'Số lượng sản phẩm trong kho không đủ',
+                ];
             }
+            // Cập nhật số lượng của sản phẩm trong giỏ hàng
             $cartItem->increment('quantity', $quantity);
         } else {
+            // Thêm sản phẩm mới vào giỏ hàng
             $cartItem = $cart->items()->create([
                 'sku_id' => $skuId,
                 'quantity' => $quantity,
-                'unit_price' => $sku->price
+                'unit_price' => $sku->price,
             ]);
         }
 
-        // Cập nhật kho
-        $sku->decrement('stock', $quantity);
+        // Không trừ stock tại đây nữa
+        $cart = $cartItem->cart()->with('items.sku.product')->first();
 
-        // Lấy danh sách giỏ hàng sau khi cập nhật
-        $cartItems = $cart->items()->with('sku.product')->get()->map(function ($item) {
-            return [
-                'sku_id' => $item->sku_id,
-                'product_name' => $item->sku->product->name ?? 'N/A',
-                'quantity' => $item->quantity,
-                'unit_price' => $item->unit_price,
-            ];
-        });
-
-        return response()->json([
-            'success' => true,
-            'cart' => $cartItems
-        ]);
+        return $cart;
     }
-
-
 
     public function incrementCartItem($itemId)
     {
@@ -188,7 +142,7 @@ class CartService
         if (!$cartItem) {
             return response()->json([
                 'error' => 'ITEM_NOT_FOUND',
-                'message' => 'Không tìm thấy sản phẩm trong giỏ hàng'
+                'message' => 'Không tìm thấy sản phẩm trong giỏ hàng',
             ], 404);
         }
 
@@ -196,7 +150,7 @@ class CartService
         if (!$sku) {
             return response()->json([
                 'error' => 'SKU_NOT_FOUND',
-                'message' => 'Không tìm thấy SKU sản phẩm'
+                'message' => 'Không tìm thấy SKU sản phẩm',
             ], 404);
         }
 
@@ -207,35 +161,33 @@ class CartService
             $cartItem->delete();
             return response()->json([
                 'success' => true,
-                'message' => 'Sản phẩm đã được xóa khỏi giỏ hàng'
+                'message' => 'Sản phẩm đã được xóa khỏi giỏ hàng',
             ], 200);
         }
 
-        // Kiểm tra tồn kho
         if ($newQuantity > $sku->stock) {
             return response()->json([
                 'error' => 'STOCK_NOT_ENOUGH',
-                'message' => 'Số lượng sản phẩm không đủ'
+                'message' => 'Số lượng sản phẩm không đủ',
             ], 400);
         }
 
-        // Dùng transaction để đảm bảo cả hai thao tác thành công
         DB::beginTransaction();
         try {
-            $sku->decrement('stock', $quantityChange); // Chỉ giảm stock khi quantityChange là số dương
+            // Không trừ stock tại đây
             $cartItem->update(['quantity' => $newQuantity]);
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'cart' => $cartItem->cart->load('items.sku')
-            ]);
+            $cart = $cartItem->cart()->with('items.sku')->first();
+
+            return $cart;
+
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'error' => 'UPDATE_FAILED',
-                'message' => 'Cập nhật giỏ hàng thất bại'
+                'message' => 'Cập nhật giỏ hàng thất bại',
             ], 500);
         }
     }
@@ -249,7 +201,7 @@ class CartService
         if (!$cartItem) {
             return response()->json([
                 'error' => 'ITEM_NOT_FOUND',
-                'message' => 'Không tìm thấy sản phẩm trong giỏ hàng'
+                'message' => 'Không tìm thấy sản phẩm trong giỏ hàng',
             ], 404);
         }
 
@@ -257,7 +209,7 @@ class CartService
         if (!$sku) {
             return response()->json([
                 'error' => 'SKU_NOT_FOUND',
-                'message' => 'Không tìm thấy SKU sản phẩm'
+                'message' => 'Không tìm thấy SKU sản phẩm',
             ], 404);
         }
 
@@ -265,28 +217,24 @@ class CartService
             $cartItem->delete();
             return response()->json([
                 'error' => 'ITEM_REMOVED',
-                'message' => 'Sản phẩm đã được xóa khỏi giỏ hàng'
+                'message' => 'Sản phẩm đã được xóa khỏi giỏ hàng',
             ], 200);
         }
 
         if ($sku->stock < ($quantity - $cartItem->quantity)) {
             return response()->json([
                 'error' => 'STOCK_NOT_ENOUGH',
-                'message' => 'Số lượng sản phẩm không đủ'
+                'message' => 'Số lượng sản phẩm không đủ',
             ], 400);
         }
 
-        $difference = $quantity - $cartItem->quantity;
-        if ($difference > 0) {
-            $sku->decrement('stock', $difference);
-        } elseif ($difference < 0) {
-            $sku->increment('stock', abs($difference));
-        }
-
+        // Không điều chỉnh stock tại đây
         $cartItem->update(['quantity' => $quantity]);
-        return response()->json(['success' => true, 'cart' => $cartItem->cart->load('items.sku')]);
-    }
+        $cart = $cartItem->cart()->with('items.sku')->first();
 
+        return $cart;
+
+    }
 
     public function removeCartItem($itemId)
     {
@@ -295,7 +243,9 @@ class CartService
         })->firstOrFail();
 
         $cartItem->delete();
-        return $cartItem->cart->load('items.sku');
+        $cart = $cartItem->cart()->with('items.sku')->first();
+
+        return $cart;
     }
 
     public function clearCart()

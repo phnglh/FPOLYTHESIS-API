@@ -11,8 +11,34 @@ class Voucher extends Model
     use HasFactory;
 
     protected $fillable = [
-        'code', 'type', 'discount_value', 'min_order_value',
-        'usage_limit', 'used_count', 'start_date', 'end_date', 'is_active',
+        'code',
+        'type',
+        'discount_value',
+        'min_order_value',
+        'usage_limit',
+        'used_count',
+        'start_date',
+        'end_date',
+        'is_active',
+    ];
+
+    protected $dates = [
+        'start_date',
+        'end_date',
+        'created_at',
+        'updated_at',
+    ];
+
+    protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'discount_value' => 'float',
+        'min_order_value' => 'float',
+        'usage_limit' => 'integer',
+        'used_count' => 'integer',
+        'is_active' => 'boolean',
     ];
 
     protected $dates = [

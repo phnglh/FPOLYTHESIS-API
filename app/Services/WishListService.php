@@ -11,18 +11,13 @@ class WishListService
     public function getAllWishLists()
     {
         $userId = Auth::id();
-        if (! $userId) {
+        if (!$userId) {
             throw new ApiException('Không lấy được dữ liệu', 404);
         }
 
         return WishList::where('user_id', $userId)->with('product')->get();
     }
-    public function updateWishList($id, $productId)
-        return WishList::where('user_id', $userId)
-            ->with('product')
-            ->get();
 
-    }
     public function updateWishList($id, $productId)
     {
         $userId = Auth::id();

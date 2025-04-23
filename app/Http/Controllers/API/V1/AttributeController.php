@@ -21,7 +21,7 @@ class AttributeController extends BaseController
     {
         $attribute = $this->attributeService->getAllAttributes();
 
-        return $this->successResponse($attribute, 'Attributes fetched successfully');
+        return $this->successResponse($attribute, 'GET_TO_ATTRIBUTES_SUCCESS');
     }
 
     // Tạo thuộc tính mới
@@ -29,7 +29,7 @@ class AttributeController extends BaseController
     {
         $attribute = $this->attributeService->createAttribute($request->validated());
 
-        return $this->successResponse($attribute, 'Attribute created successfully');
+        return $this->successResponse($attribute, 'ADD_TO_ATTRIBUTES_SUCCESS');
     }
 
     // Cập nhật thuộc tính
@@ -37,7 +37,7 @@ class AttributeController extends BaseController
     {
         $attribute = $this->attributeService->updateAttribute($id, $request->validated());
 
-        return $this->successResponse($attribute, 'Attribute updated successfully');
+        return $this->successResponse($attribute, 'UPDATE_TO_ATTRIBUTES_SUCCESS');
     }
 
     // Xóa thuộc tính
@@ -45,7 +45,7 @@ class AttributeController extends BaseController
     {
         $this->attributeService->deleteAttribute($id);
 
-        return $this->successResponse(null, 'Attribute deleted successfully');
+        return $this->successResponse(null, 'DELETE_TO_ATTRIBUTES_SUCCESS');
     }
 
     // -------------------------------
@@ -57,7 +57,7 @@ class AttributeController extends BaseController
     {
         $attributeValues = $this->attributeService->getAttributeValues($attributeId);
 
-        return $this->successResponse($attributeValues, 'Attribute values fetched successfully');
+        return $this->successResponse($attributeValues, 'GET_TO_ATTRIBUTES_SUCCESS');
     }
 
     // Tạo giá trị thuộc tính mới
@@ -65,7 +65,7 @@ class AttributeController extends BaseController
     {
         $attributeValue = $this->attributeService->createAttributeValue($attribute_id, $request->validated());
 
-        return $this->successResponse($attributeValue, 'Attribute value created successfully');
+        return $this->successResponse($attributeValue, 'ADD_TO_ATTRIBUTES_SUCCESS');
     }
 
     // Cập nhật giá trị thuộc tính
@@ -73,7 +73,7 @@ class AttributeController extends BaseController
     {
         $attributeValue = $this->attributeService->updateAttributeValue($id, $request->validated());
 
-        return $this->successResponse($attributeValue, 'Attribute value updated successfully');
+        return $this->successResponse($attributeValue, 'UPDATE_TO_ATTRIBUTES_SUCCESS');
     }
 
     // Xóa giá trị thuộc tính
@@ -81,6 +81,6 @@ class AttributeController extends BaseController
     {
         $this->attributeService->deleteAttributeValue($id);
 
-        return $this->successResponse(null, 'Attribute value deleted successfully');
+        return $this->successResponse(null, 'DELETE_TO_ATTRIBUTES_SUCCESS');
     }
 }

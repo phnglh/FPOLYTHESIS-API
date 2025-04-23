@@ -68,6 +68,30 @@ class WishListController extends BaseController
     }
 
     public function destroy($id)
+    {
+        $wishlist = WishList::find($id);
+
+        if (!$wishlist) {
+            return response()->json([
+                'status' => 'error',
+                'status_code' => 404,
+                'message' => 'Wishlist item not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $wishlist
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+        ]);
+
+        $response = $this->wishListService->updateWishList($id, $request->product_id);
 
         return $this->successResponse(null, $response['message']);
     }

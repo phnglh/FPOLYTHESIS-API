@@ -38,4 +38,21 @@ class UserAddressController extends BaseController
         $this->userAddressService->deleteUserAddress($id);
         return $this->successResponse(null, 'Địa chỉ đã được xóa');
     }
+
+    public function setDefault($id)
+    {
+        try {
+            $address = $this->userAddressService->updateUserAddress($id, ['is_default' => true]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Địa chỉ đã được đặt làm mặc định',
+                'data' => $this->userAddressService->getUserAddresses()
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $e->getCode() ?: 400);
+        }
+    }
 }

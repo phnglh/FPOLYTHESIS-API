@@ -4,7 +4,9 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\API\BaseController;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\Sku;
 use App\Services\PaymentService;
 use App\Services\VNPayService;
 use Illuminate\Http\Request;
@@ -13,6 +15,7 @@ class PaymentController extends BaseController
 {
     protected $paymentService;
     protected $vnpayService;
+    protected $orderService;
 
     public function __construct(PaymentService $paymentService, VNPayService $vnpayService)
     {
@@ -113,6 +116,20 @@ class PaymentController extends BaseController
         }
 
         if ($inputData['vnp_ResponseCode'] == '00') {
+            // Kiểm tra và trừ tồn kho
+            $orderItems = OrderItem::where('order_id', $order->id)->get();
+            foreach ($orderItems as $item) {
+                $sku = Sku::find($item->sku_id);
+                if (!$sku || $sku->stock < $item->quantity) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Sản phẩm không đủ tồn kho',
+                        'data' => null,
+                        'errors' => ['stock' => "Sản phẩm {$item->sku} không đủ tồn kho"]
+                    ], 400);
+                }
+                $sku->decrement('stock', $item->quantity);
+            }
 
             // Cập nhật trạng thái thanh toán của đơn hàng
             $order->update([
@@ -128,14 +145,16 @@ class PaymentController extends BaseController
                 'payment_details' => json_encode($inputData),
             ]);
 
-            return response()->json([
+
+
+            return redirect()->to('http://localhost:3000/order-status?' . http_build_query([
                 'success' => true,
                 'message' => 'Thanh toán thành công',
-                'data' => $order,
-                'errors' => null
-            ]);
-        } else {
+                'order_number' => $order->order_number,
+                "id" => $order->id
+            ]));
 
+        } else {
             // Nếu giao dịch thất bại
             $payment->update([
                 'status' => 'failed',
@@ -146,12 +165,12 @@ class PaymentController extends BaseController
                 'payment_status' => 'failed'
             ]);
 
-            return response()->json([
-                'success' => false,
+            return redirect()->to('http://localhost:3000/order-status?' . http_build_query([
+                'success' => 0,
                 'message' => 'Thanh toán thất bại',
-                'data' => $order,
-                'errors' => ['payment' => 'Transaction failed']
-            ]);
+                'order_number' => $order->order_number,
+                "id" => $order->id
+            ]));
         }
     }
 

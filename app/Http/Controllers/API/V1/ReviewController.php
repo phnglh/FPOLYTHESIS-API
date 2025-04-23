@@ -3,52 +3,44 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\API\BaseController;
-use App\Http\Requests\ReviewRequest;
+use Illuminate\Http\Request;
 use App\Services\ReviewService;
-use Illuminate\Http\JsonResponse;
 
 class ReviewController extends BaseController
 {
-    protected ReviewService $reviewService;
+    protected $reviewService;
 
     public function __construct(ReviewService $reviewService)
     {
         $this->reviewService = $reviewService;
     }
 
-
-    public function index(): JsonResponse
+    // Lấy danh sách review theo product
+    public function index($productId)
     {
-        $reviews = $this->reviewService->getAllReviews();
-        return response()->json(['status' => 'success', 'data' => $reviews], 200);
+        $reviews = $this->reviewService->getReviewsByProduct($productId);
+        return $this->successResponse($reviews, 'FETCH_REVIEWS_SUCCESS');
     }
 
-
-    public function show(int $id): JsonResponse
+    // Tạo mới review
+    public function store(Request $request)
     {
-        $review = $this->reviewService->getReviewById($id);
-        return response()->json(['status' => 'success', 'data' => $review], 200);
+        $validated = $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'rating' => 'required|integer|min:1|max:5',
+            'review' => 'nullable|string|max:1000',
+        ]);
+
+        $review = $this->reviewService->createReview($validated);
+
+        return response()->json($review, 201);
     }
 
-
-    public function store(ReviewRequest $request): JsonResponse
-    {
-        $data = array_merge($request->validated(), ['user_id' => auth()->id()]);
-        $review = $this->reviewService->createReview($data);
-        return response()->json(['status' => 'success', 'data' => $review], 201);
-    }
-
-
-    public function update(ReviewRequest $request, int $id): JsonResponse
-    {
-        $data = array_merge($request->validated(), ['user_id' => auth()->id()]);
-        $review = $this->reviewService->updateReview($id, $data);
-        return response()->json(['status' => 'success', 'data' => $review], 200);
-    }
-
-    public function destroy(int $id): JsonResponse
+    // Xoá review
+    public function destroy($id)
     {
         $this->reviewService->deleteReview($id);
-        return response()->json(['status' => 'success', 'message' => 'Review đã được xóa'], 200);
+
+        return response()->json(['message' => 'Xoá đánh giá thành công']);
     }
 }

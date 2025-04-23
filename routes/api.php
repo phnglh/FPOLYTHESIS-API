@@ -15,6 +15,7 @@ use App\Http\Controllers\API\V1\VoucherController;
 use App\Http\Controllers\API\V1\WishListController;
 use App\Http\Controllers\API\V2\CategoryController as V2CategoryController;
 use App\Http\Controllers\API\V1\CartController;
+use App\Http\Controllers\API\V1\ReportController;
 use App\Http\Controllers\API\V1\UserAddressController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +46,7 @@ Route::prefix('v1')->group(function () {
     // Product
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{id}', [ProductController::class, 'show']);
+    Route::get('/products/{productId}/reviews', [ReviewController::class, 'index']);
 
     // Review, Promotion (Public access)
     Route::apiResource('promotions', PromotionController::class);
@@ -62,7 +64,6 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/payment/vnpay-return', [PaymentController::class, 'vnPayCallback']);
 
-
     // -------------------------
     // Private API (Cần đăng nhập)
     // -------------------------
@@ -72,14 +73,12 @@ Route::prefix('v1')->group(function () {
         // User có thể cập nhật thông tin cá nhân
         Route::put('/users/profile', [UserController::class, 'updateProfile']);
         Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/check-user', fn(Request $request) => response()->json($request->user()));
+        Route::get('/check-user', fn (Request $request) => response()->json($request->user()));
         Route::post('/change-password', [AuthController::class, 'changePassword']);
 
 
         Route::get('/reviews', [ReviewController::class, 'index']);
-        Route::get('/reviews/{id}', [ReviewController::class, 'show']);
         Route::post('/reviews', [ReviewController::class, 'store']);
-        Route::put('/reviews/{id}', [ReviewController::class, 'update']);
         Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
 
         // order
@@ -88,11 +87,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/orders/{order_id}', [OrderController::class, 'show']); // xem chi tiết đơn hàng
         Route::delete('/orders/{orderId}', [OrderController::class, 'cancelOrder']); // Hủy đơn hàng của mình
 
-        // voucher
-        Route::post('/vouchers/apply', [VoucherController::class, 'apply']);
+        //voucher
+        Route::post('/voucher/check', [OrderController::class, 'checkVoucher']);
 
         // payment
         Route::post('/payment/pay', [PaymentController::class, 'payOrder']);
+        Route::post('/payment/retry/{orderId}', [PaymentController::class, 'retryPayment']); // thanh toán lại
 
         // Cart
         Route::get('/cart', [CartController::class, 'index']); // Lấy giỏ hàng
@@ -105,14 +105,21 @@ Route::prefix('v1')->group(function () {
 
         // user_address
         Route::apiResource('user-addresses', UserAddressController::class);
-        Route::post('/payment/retry/{orderId}', [PaymentController::class, 'retryPayment']); // thanh toán lại
+        Route::patch('/user-addresses/{id}/set-default', [UserAddressController::class, 'setDefault']);
 
 
         // wishlist
         Route::get('/wishlist', [WishListController::class, 'getWishList']);
         Route::post('/wishlist', [WishListController::class, 'addWishList']);
         Route::delete('/wishlist/{id}', [WishListController::class, 'deleteWishList']);
-      
+
+
+
+        // wishlist
+        Route::get('/wishlist', [WishListController::class, 'getWishList']);
+        Route::post('/wishlist', [WishListController::class, 'addWishList']);
+        Route::delete('/wishlist/{id}', [WishListController::class, 'deleteWishList']);
+
 
         // -------------------------
         // Role-based API (Admin Only)
@@ -139,8 +146,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/products', [ProductController::class, 'store']);
             Route::put('/products/{id}', [ProductController::class, 'update']);
             Route::patch('/products/{id}', [ProductController::class, 'updatePartial']);
-            Route::patch('/{id}/publish', [ProductController::class, 'togglePublish']);
+            Route::patch('products/{id}/publish', [ProductController::class, 'togglePublish']);
             Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+
+            // Route cho quản lý SKU
+            Route::get('/{product_id}/skus', [ProductController::class, 'getSkus']); // Lấy danh sách SKU của sản phẩm
+            Route::post('/{product_id}/skus', [ProductController::class, 'createSku']); // Thêm SKU mới
+            Route::put('/skus/{sku_id}', [ProductController::class, 'updateSku']); // Cập nhật SKU
+            Route::delete('/skus/{sku_id}', [ProductController::class, 'deleteSku']); // Xóa SKU
 
 
             // Orders
@@ -154,6 +167,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/vouchers', [VoucherController::class, 'store']);
             Route::put('/vouchers/{voucher}', [VoucherController::class, 'update']);
             Route::delete('/vouchers/{voucher}', [VoucherController::class, 'destroy']);
+            Route::patch('/vouchers/{id}', [VoucherController::class, 'toggleActive']);
 
             // Attribute (CRUD)
             Route::post('/attributes', [AttributeController::class, 'store']);
@@ -162,6 +176,24 @@ Route::prefix('v1')->group(function () {
             Route::post('/attributes/{attributeId}/values', [AttributeController::class, 'storeAttributeValue']);
             Route::put('/attributes/values/{id}', [AttributeController::class, 'updateAttributeValue']);
             Route::delete('/attributes/values/{id}', [AttributeController::class, 'destroyAttributeValue']);
+
+            Route::prefix('reports')->group(function () {
+                Route::get('/revenue', [ReportController::class, 'getRevenueReport']);
+                Route::get('/orders', [ReportController::class, 'getOrderReport']);
+                Route::get('/cancel-rate', [ReportController::class, 'getCancelRate']);
+                Route::get('/revenue-by-category', [ReportController::class, 'getRevenueByCategory']);
+                Route::get('/top-products', [ReportController::class, 'getTopProductReport']);
+                Route::get('/top-customers', [ReportController::class, 'getTopCustomerReport']);
+                Route::get('/revenue-statistics', [ReportController::class, 'index']);
+            });
+
+            // Voucher
+            Route::get('/vouchers', [VoucherController::class, 'index']);
+            Route::post('/vouchers/apply', [VoucherController::class, 'apply']);
+            Route::post('/vouchers', [VoucherController::class, 'store']);
+            Route::put('/vouchers/{voucher}', [VoucherController::class, 'update']);
+            Route::delete('/vouchers/{voucher}', [VoucherController::class, 'destroy']);
+
         });
     });
 });
