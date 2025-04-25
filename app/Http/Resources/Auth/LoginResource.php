@@ -2,9 +2,10 @@
 
 namespace App\Http\Resources\Auth;
 
+use App\Http\Resources\Orders\OrderItemResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class AuthResource extends JsonResource
+class LoginResource extends JsonResource
 {
     public function toArray($request)
     {

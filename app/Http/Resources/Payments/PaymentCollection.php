@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources\Payment;
+namespace App\Http\Resources\Payments;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
