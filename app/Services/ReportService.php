@@ -40,7 +40,7 @@ class ReportService
         $result = Cache::remember($cacheKey, $cacheMinutes, function () use ($startDate, $endDate, $groupBy) {
             // Truy vấn dữ liệu, đảm bảo múi giờ khớp
             $query = Order::whereBetween('ordered_at', [$startDate->toDateTimeString(), $endDate->toDateTimeString()])
-                ->whereIn('status', ['pending', 'processing', 'completed', 'delivered']);
+                ->whereIn('payment_status', ['paid']);
 
             if ($groupBy === 'day') {
                 $rawData = $query->groupByRaw('DATE(ordered_at)')
@@ -258,12 +258,12 @@ class ReportService
 
     public function getRevenueStatistics($request)
     {
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
+        $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
 
-        // Lấy thống kê doanh thu
-        $statistics = Order::whereNotIn('status', ['cancelled'])
-            ->whereBetween('created_at', [$startDate, $endDate])
+        $statistics = Order::where('payment_status', ['paid'])
+            ->where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)
             ->select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('SUM(final_total) as total_revenue'),
@@ -273,7 +273,6 @@ class ReportService
             ->orderBy('date', 'asc')
             ->get();
 
-        // Tính tổng doanh thu và số đơn hàng
         $totalRevenue = $statistics->sum('total_revenue');
         $totalOrders = $statistics->sum('order_count');
 
@@ -282,8 +281,8 @@ class ReportService
             'total_revenue' => $totalRevenue,
             'total_orders' => $totalOrders,
             'date_range' => [
-                'start_date' => $startDate,
-                'end_date' => $endDate
+                'start_date' => $startDate->toDateString(),
+                'end_date' => $endDate->toDateString(),
             ]
         ];
     }
