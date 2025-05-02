@@ -11,6 +11,8 @@ class CustomerReportResource extends JsonResource
         return [
             'name' => $this->name ?? 'Không xác định',
             'total_spent' => (float) $this->total_spent,
+            'order_count' => (int) $this->order_count,
+            'arpu' => (float) $this->arpu
         ];
     }
 }

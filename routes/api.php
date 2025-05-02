@@ -182,6 +182,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/top-products', [ReportController::class, 'getTopProductReport']);
                 Route::get('/top-customers', [ReportController::class, 'getTopCustomerReport']);
                 Route::get('/revenue-statistics', [ReportController::class, 'index']);
+                Route::get('/dashboard-summary', [ReportController::class, 'getDashboardSummary']);
             });
 
 

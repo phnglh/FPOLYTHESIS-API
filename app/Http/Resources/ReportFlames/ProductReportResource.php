@@ -11,6 +11,8 @@ class ProductReportResource extends JsonResource
         return [
             'product_name' => $this->product_name ?? 'Không xác định',
             'total_quantity' => (int) $this->total_quantity,
+            'stock' => (int) $this->stock,
+            'variant' => $this->variant
         ];
     }
 }

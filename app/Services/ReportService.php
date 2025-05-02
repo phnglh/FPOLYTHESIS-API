@@ -177,6 +177,7 @@ class ReportService
         return $result;
     }
 
+
     public function getTopProductReport($filters)
     {
         $startDate = $filters['start_date'] ?? Carbon::today()->startOfDay();
@@ -195,16 +196,26 @@ class ReportService
 
         $result = Cache::remember($cacheKey, $cacheMinutes, function () use ($startDate, $endDate) {
             $topProducts = OrderItem::join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->join('skus', 'order_items.sku_id', '=', 'skus.id')
+                ->leftJoin('attribute_skus', 'skus.id', '=', 'attribute_skus.sku_id')
+                ->leftJoin('attributes', 'attribute_skus.attribute_id', '=', 'attributes.id')
                 ->whereBetween('orders.ordered_at', [$startDate, $endDate])
-                ->whereIn('orders.status', ['pending', 'processing', 'completed', 'delivered'])
-                ->groupBy('order_items.product_name')
+                ->whereIn('orders.payment_status', ['paid'])
+                ->groupBy('order_items.product_name', 'skus.id', 'skus.stock')
                 ->orderByRaw('SUM(order_items.quantity) DESC')
-                ->selectRaw('order_items.product_name, SUM(order_items.quantity) as total_quantity')
+                ->selectRaw('
+                order_items.product_name,
+                GROUP_CONCAT(DISTINCT attribute_skus.value SEPARATOR ", ") as variant,
+                skus.stock as stock,
+                SUM(order_items.quantity) / 2 as total_quantity
+            ')
                 ->limit(10)
                 ->get()
                 ->map(function ($item) {
                     $obj = new stdClass();
                     $obj->product_name = $item->product_name ?? 'Không xác định';
+                    $obj->variant = $item->variant ?? 'Không xác định';
+                    $obj->stock = (int) $item->stock;
                     $obj->total_quantity = (int) $item->total_quantity;
                     return $obj;
                 });
@@ -215,6 +226,7 @@ class ReportService
 
         return $result;
     }
+
 
     public function getTopCustomerReport($filters)
     {
@@ -235,21 +247,31 @@ class ReportService
         $result = Cache::remember($cacheKey, $cacheMinutes, function () use ($startDate, $endDate) {
             $topCustomers = Order::join('users', 'orders.user_id', '=', 'users.id')
                 ->whereBetween('orders.ordered_at', [$startDate, $endDate])
-                ->whereIn('orders.status', ['pending', 'processing', 'completed', 'delivered'])
+                ->whereIn('orders.payment_status', ['paid'])
                 ->whereNotIn('users.email', ['admin@example.com', 'admin12@example.com'])
                 ->groupBy('users.id', 'users.name')
                 ->orderByRaw('SUM(orders.final_total) DESC')
-                ->selectRaw('users.name, SUM(orders.final_total) as total_spent')
+                ->selectRaw('
+                users.name, 
+                SUM(orders.final_total) as total_spent, 
+                COUNT(orders.id) as order_count
+            ')
                 ->limit(10)
                 ->get()
                 ->map(function ($item) {
                     $obj = new stdClass();
                     $obj->name = $item->name ?? 'Không xác định';
+                    $obj->order_count = (int) $item->order_count;
                     $obj->total_spent = (float) $item->total_spent;
+                    $obj->arpu = $item->order_count > 0 ? (float) ($item->total_spent / $item->order_count) : 0;
                     return $obj;
                 });
 
-            Log::info('Top customer report', ['start_date' => $startDate, 'end_date' => $endDate, 'data' => $topCustomers]);
+            Log::info('Top customer report', [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'data' => $topCustomers
+            ]);
             return $topCustomers;
         });
 
