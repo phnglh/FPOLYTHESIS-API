@@ -28,6 +28,16 @@ class ProductService
         $query = Product::with('category', 'brand', 'skus.attribute_values')
             ->withSum('skus', 'stock');
 
+        // Thêm subquery để lấy giá hiển thị (giá thấp nhất của SKU)
+        $query->select('products.*')
+              ->addSelect([
+                  'display_price' => function ($query) {
+                      $query->selectRaw('MIN(skus.price)')
+                            ->from('skus')
+                            ->whereColumn('skus.product_id', 'products.id');
+                  }
+              ]);
+
         // Filter theo category
         if ($request->has('category')) {
             $query->where('category_id', $request->category);
@@ -38,22 +48,26 @@ class ProductService
             $query->where('brand_id', $request->brand);
         }
 
-        // Filter theo khoảng giá (dựa vào sku min/max price)
+        // Filter theo khoảng giá (dựa vào giá hiển thị - giá thấp nhất của SKU)
         if ($request->has('min_price')) {
             $query->whereHas('skus', function ($q) use ($request) {
                 $q->where('price', '>=', $request->min_price);
-            });
+            })->having('display_price', '>=', $request->min_price);
         }
 
         if ($request->has('max_price')) {
             $query->whereHas('skus', function ($q) use ($request) {
                 $q->where('price', '<=', $request->max_price);
-            });
+            })->having('display_price', '<=', $request->max_price);
         }
 
-        // Sort theo mới nhất
+        // Sort theo giá hoặc mới nhất
         if ($request->sort === 'newest') {
             $query->orderBy('created_at', 'desc');
+        } elseif ($request->sort === 'asc') {
+            $query->orderBy('display_price', 'asc');
+        } elseif ($request->sort === 'desc') {
+            $query->orderBy('display_price', 'desc');
         }
 
         $products = $query->paginate($perPage);
@@ -64,7 +78,6 @@ class ProductService
 
         return $products;
     }
-
 
     public function getProductById($id)
     {
