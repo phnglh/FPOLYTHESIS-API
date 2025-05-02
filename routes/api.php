@@ -83,9 +83,11 @@ Route::prefix('v1')->group(function () {
 
         // order
         Route::post('/orders/create', [OrderController::class, 'createOrder']); // Tạo đơn hàng
-        Route::get('/orders', [OrderController::class, 'index']); // Xem đơn hàng của mình
-        Route::get('/orders/{order_id}', [OrderController::class, 'show']); // xem chi tiết đơn hàng
+        Route::get('/orders', [OrderController::class, 'index']); // Xem đơn hàng admin
+        Route::get('/orders/{order_id}', [OrderController::class, 'show']); // xem chi tiết đơn hàng admin
         Route::delete('/orders/{orderId}', [OrderController::class, 'cancelOrder']); // Hủy đơn hàng của mình
+        Route::get('/customer/orders', [OrderController::class, 'customerIndex']); // danh sách đơn hàng
+        Route::get('/customer/orders/{orderId}', [OrderController::class, 'customerShow']); // chi tiết đơn hàng
 
         //voucher
         Route::post('/voucher/check', [OrderController::class, 'checkVoucher']);

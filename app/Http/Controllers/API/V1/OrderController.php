@@ -69,6 +69,25 @@ class OrderController extends BaseController
         return $this->successResponse($order, 'Chi tiết đơn hàng');
     }
 
+    public function customerIndex(Request $request)
+    {
+        $perPage = $request->query('per_page', 10);
+        $orders = $this->orderService->getCustomerOrderList($request, $perPage);
+
+        return $this->paginatedResponse(OrderResource::collection($orders), 'Danh sách đơn hàng khách hàng');
+    }
+
+    public function customerShow(Request $request, $orderId)
+    {
+        $order = $this->orderService->getCustomerOrderDetail($orderId);
+
+        if (isset($order['error'])) {
+            return $this->errorResponse($order['error'], $order['message'], 400);
+        }
+
+        return $this->successResponse($order, 'Chi tiết đơn hàng');
+    }
+
 
     public function updateStatus(Request $request, $orderId)
     {

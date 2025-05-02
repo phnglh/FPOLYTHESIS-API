@@ -211,6 +211,61 @@ class OrderService
         return $order;
     }
 
+    public function getCustomerOrderList(Request $request, $perPage)
+    {
+        $query = Order::with([
+            'items.sku.product',
+            'items.sku.attributeSkus.attribute',
+            'items.sku.attributeSkus.attributeValue',
+            'user',
+            'address',
+            'payment',
+            'voucher'
+        ]);
+
+        // Luôn giới hạn theo user_id
+        $query->where('user_id', Auth::id());
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+        }
+
+        $orders = $query->paginate($perPage);
+
+        return $orders;
+    }
+
+    public function getCustomerOrderDetail($orderId)
+    {
+        $query = Order::with([
+            'items.sku.attributeSkus.attribute',
+            'items.sku.attributeSkus.attributeValue',
+            'items.sku.product',
+            'user',
+            'address',
+            'payment',
+            'voucher'
+        ])->where('id', $orderId);
+
+        // Luôn giới hạn theo user_id
+        $query->where('user_id', Auth::id());
+
+        $order = $query->first();
+
+        if (!$order) {
+            return [
+                'error' => 'ORDER_NOT_FOUND',
+                'message' => 'Đơn hàng không tồn tại hoặc bạn không có quyền xem'
+            ];
+        }
+
+        return $order;
+    }
+
     public function updateOrderStatus($orderId, $status)
     {
         $order = Order::findOrFail($orderId);
