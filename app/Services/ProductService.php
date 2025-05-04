@@ -28,16 +28,6 @@ class ProductService
         $query = Product::with('category', 'brand', 'skus.attribute_values')
             ->withSum('skus', 'stock');
 
-        // Thêm subquery để lấy giá hiển thị (giá thấp nhất của SKU)
-        $query->select('products.*')
-              ->addSelect([
-                  'display_price' => function ($query) {
-                      $query->selectRaw('MIN(skus.price)')
-                            ->from('skus')
-                            ->whereColumn('skus.product_id', 'products.id');
-                  }
-              ]);
-
         // Filter theo category
         if ($request->has('category')) {
             $query->where('category_id', $request->category);
@@ -61,14 +51,7 @@ class ProductService
             })->having('display_price', '<=', $request->max_price);
         }
 
-        // Sort theo giá hoặc mới nhất
-        if ($request->sort === 'newest') {
-            $query->orderBy('created_at', 'desc');
-        } elseif ($request->sort === 'asc') {
-            $query->orderBy('display_price', 'asc');
-        } elseif ($request->sort === 'desc') {
-            $query->orderBy('display_price', 'desc');
-        }
+
 
         $products = $query->paginate($perPage);
 
